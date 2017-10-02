@@ -1,0 +1,10 @@
+chardet
+certifi
+idna
+setuptools
+urllib3
+beautifulsoup4
+pytelegrsdambotapi
+six
+requests
+
