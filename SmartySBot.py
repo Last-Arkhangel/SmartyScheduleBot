@@ -1007,6 +1007,8 @@ def select_teachers(message):
 @bot.message_handler(content_types=["text"])
 def main_menu(message):
 
+    bot.send_chat_action(message.chat.id, "typing")
+
     if get_user_group(message.chat.id):
 
         log(message.chat, '> {}'.format(message.text))
