@@ -4,7 +4,7 @@ VERSION = '8.0'
 
 DATABASE_NAME = 'users_db.sqlite'
 
-BOT_TOKEN = '187670526:AAHbjPv-hhzLlVpjQM2q6b33gAG4W-D-axQ'
+BOT_TOKEN = '<TOKEN>'
 
 POLLING_INTERVAL = 3
 
