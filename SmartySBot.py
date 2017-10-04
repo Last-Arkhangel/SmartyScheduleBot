@@ -221,7 +221,7 @@ def to_date(message):
         bot.send_message(message.chat.id, 'Щоб вказати групу жми -> /start')
         return
 
-    date = message.text + '.' + settings.YEAR
+    date = message.text + '.' + str(datetime.date.today().year)
     rozklad_data = get_rozklad(group=group, edate=date, sdate=date)
 
     log(chat=message.chat, m='Розклад по даті {}'.format(date))
@@ -248,8 +248,8 @@ def from_date_to_date(message):
         bot.send_message(message.chat.id, 'Щоб вказати групу жми -> /start')
         return
 
-    _sdate = message.text.split('-')[0] + '.' + settings.YEAR
-    _edate = message.text.split('-')[1] + '.' + settings.YEAR
+    _sdate = message.text.split('-')[0] + '.' + str(datetime.date.today().year)
+    _edate = message.text.split('-')[1] + '.' + str(datetime.date.today().year)
 
     rozklad_data = get_rozklad(group=group, sdate=_sdate, edate=_edate)
 
@@ -292,8 +292,6 @@ def show_teachers(chat_id, name):
     today = datetime.date.today().strftime('%d.%m.%Y')
 
     rozklad_data = get_rozklad(teacher=name, sdate=today, edate=in_week_day)
-
-    rozklad_for_week = ''
 
     if rozklad_data:
         rozklad_for_week = 'Розклад на тиждень у <b>{}</b>:\n\n'.format(name)

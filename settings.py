@@ -2,11 +2,9 @@ import os
 
 VERSION = '8.0'
 
-YEAR = '2017'
-
 DATABASE_NAME = 'users_db.sqlite'
 
-BOT_TOKEN = '<TOKEN>'
+BOT_TOKEN = '187670526:AAHbjPv-hhzLlVpjQM2q6b33gAG4W-D-axQ'
 
 POLLING_INTERVAL = 3
 
