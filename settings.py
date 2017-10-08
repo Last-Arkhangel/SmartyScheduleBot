@@ -2,7 +2,7 @@ import os
 
 VERSION = '8.0'
 
-DATABASE_NAME = 'users_db.sqlite'
+DATABASE = 'SmartyS_DB.sqlite'
 
 BOT_TOKEN = '<TOKEN>'
 
@@ -10,7 +10,7 @@ POLLING_INTERVAL = 3
 
 TIMETABLE_URL = 'https://dekanat.zu.edu.ua/cgi-bin/timetable.cgi'
 
-HTTP_USER_AGENT = 'ZDU_Dekanat_Bot'
+HTTP_USER_AGENT = 'Telegram-SmartySBot'
 
 SEND_ERRORS_TO_ADMIN = True
 

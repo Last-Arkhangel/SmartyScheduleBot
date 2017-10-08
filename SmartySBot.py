@@ -3,17 +3,22 @@ from bs4 import BeautifulSoup
 import requests
 import telebot
 import datetime
-import sqlite3
 import os
 import settings
+import core
+import re
 
-#  __________________________________________________ROZKLAD__________________________________________________________
+bot = telebot.TeleBot(settings.BOT_TOKEN)
+
+keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+keyboard.row('\U0001F4D7 Сьогодні', '\U0001F4D8 Завтра', '\U0001F4DA На тижні')
+keyboard.row('\U0001F464 По викладачу', '\U0001F570 Час пар', '\U0001F465 По групі')
+keyboard.row('\U00002699 Зм. групу', '\U0001F308 Погода', '\U0001f4ac Довідка')
+
+emoji_numbers = ['0⃣', '1⃣', '2⃣', '3⃣', '4⃣', '5⃣', '6⃣', '7⃣', '8⃣', '9⃣']
 
 
-def get_rozklad(faculty='', teacher='', group='', sdate='', edate=''):
-
-    med_url = 'http://46.219.3.50:8080/cgi-bin/timetable.cgi?n=700'
-    med_groups = ['302сс/бак\n', ]
+def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=None):
 
     http_headers = {
             'User-Agent': settings.HTTP_USER_AGENT,
@@ -30,247 +35,88 @@ def get_rozklad(faculty='', teacher='', group='', sdate='', edate=''):
             'n': 700,
         }
     except Exception as ex:
-
-        log(m='Помилка в роботі із словником post_data - {}\n'.format(str(ex)))
+        core.log(m='Error encoding request parameters: {}\n'.format(str(ex)))
+        bot.send_message(user_id, 'Помилка надсилання запиту, вкажіть коректні параметри.')
         return False
 
     try:
-
-        if group in med_groups:
-            page = requests.post(med_url, post_data, headers=http_headers)
-        else:
-            page = requests.post(settings.TIMETABLE_URL, post_data, headers=http_headers, timeout=5)
+        page = requests.post(settings.TIMETABLE_URL, post_data, headers=http_headers, timeout=4)
     except Exception as ex:
-
-        log(m='Помилка з підключенням - {}\n'.format(str(ex)))
+        core.log(m='Error with Dekanat site connection: {}\n'.format(str(ex)))
+        bot.send_message(user_id, 'Помилка з\'єднання із сайтом Деканату. Спробуй пізніше.')
         return False
 
     parsed_page = BeautifulSoup(page.content, 'html.parser')
     all_days_list = parsed_page.find_all('div', class_='col-md-6')[1:]
     all_days_lessons = []
 
-    for day_table in all_days_list:
+    for one_day_table in all_days_list:
         all_days_lessons.append({
-            'day': day_table.find('h4').find('small').text,
-            'date': day_table.find('h4').text[:10],
-            'lessons': [' '.join(lesson.text.split()) for lesson in day_table.find_all('td')[1::2]]
+            'day': one_day_table.find('h4').find('small').text,
+            'date': one_day_table.find('h4').text[:10],
+            'lessons': [' '.join(lesson.text.split()) for lesson in one_day_table.find_all('td')[1::2]]
         })
 
     return all_days_lessons
 
-#  ____________________________________________________BOT__________________________________________________________
-connection = sqlite3.connect(os.path.join(settings.BASE_DIR, settings.DATABASE_NAME), check_same_thread=False)
 
-bot = telebot.TeleBot(settings.BOT_TOKEN)
+def render_day_timetable(day_data):
 
-keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-keyboard.row('\U0001F4D7 Сьогодні', '\U0001F4D8 Завтра', '\U0001F4DA На тижні')
-keyboard.row('\U0001F464 По викладачу', '\U0001F570 Час пар', '\U0001F465 По групі')
-keyboard.row('\U00002699 Зм. групу', '\U0001F308 Погода', '\U0001f4ac Довідка')
-
-emoji_numbers = ['0⃣', '1⃣', '2⃣', '3⃣', '4⃣', '5⃣', '6⃣', '7⃣', '8⃣', '9⃣']
-
-
-def log(chat=None, m=''):
-
-    now_time = datetime.datetime.now().strftime('%d-%m %H:%M:%S')
-
-    with open(os.path.join(settings.BASE_DIR, 'bot_log.txt'), 'a') as log_file:
-        if chat:
-            log_file.write('[{}]: ({} {}) {}\n'.format(now_time, chat.first_name, chat.last_name, m))
-        else:
-            log_file.write('[{}]: (Server) {}\n'.format(now_time, m))
-
-    if not chat:
-        return
-
-    try:
-        cursor = connection.cursor()
-        cursor.execute("""UPDATE users SET requests_count=requests_count+1, last_use_date=?, first_name=?, last_name=? 
-        WHERE t_id=?""", (now_time, chat.first_name, chat.last_name, chat.id))
-        connection.commit()
-        cursor.close()
-
-    except Exception as ex:
-        log(m='Помилка при оновленні даних про користувача: ' + str(ex))
-
-
-def create_database():
-
-    cursor = connection.cursor()
-    cursor.execute("""CREATE TABLE IF NOT EXISTS users(
-                      t_id TEXT PRIMARY KEY NOT NULL,
-                      username TEXT,
-                      first_name TEXT,
-                      last_name TEXT,
-                      u_group TEXT,
-                      register_date TEXT,
-                      last_use_date TEXT,
-                      requests_count INTEGER DEFAULT 0) WITHOUT ROWID""")
-    connection.commit()
-    cursor.close()
-
-
-def get_user_group(user_id):
-
-    try:
-        cursor = connection.cursor()
-        cursor.execute("""SELECT u_group FROM users WHERE t_id=?""", (user_id,))
-        connection.commit()
-        user_group = cursor.fetchone()
-        cursor.close()
-    except Exception as ex:
-        connection.rollback()
-        log(m='Помилка при отриманні групи - {}'.format(str(ex)))
-        return False
-
-    if not user_group:
-        return False
-    return user_group[0]
-
-
-def add_or_update_user_to_db(chat, group):
-
-    if not get_user_group(chat.id):
-
-        now_time = datetime.datetime.now().strftime('%d-%m-%Y %H:%M:%S')
-        try:
-            cursor = connection.cursor()
-            cursor.execute("INSERT INTO users (t_id, username, first_name, last_name, u_group, register_date) "
-                           "VALUES (?, ?, ?, ?, ?, ?)",
-                           (chat.id, chat.username, chat.first_name, chat.last_name, group, now_time))
-            connection.commit()
-            cursor.close()
-
-            log(chat=chat, m='вказав свою групу - {}'.format(group))
-
-        except Exception as ex:
-            connection.rollback()
-            log(m='Помилка при додаванні користувача - {}'.format(str(ex)))
-
-    else:
-
-        try:
-            cursor = connection.cursor()
-            cursor.execute("""UPDATE users SET u_group=? WHERE t_id=?""", (group, chat.id))
-            connection.commit()
-            cursor.close()
-            log(chat=chat, m='змінив свою групу на - {}'.format(group))
-
-        except Exception as ex:
-            connection.rollback()
-            log(m='Помилка при оновленні групи користувача - {}'.format(str(ex)))
-
-
-def show_day_rozklad(day_data):
-
-    rozklad = '.....::::: <b>\U0001F4CB {}</b> ({}) :::::.....\n\n'.format(day_data['day'], day_data['date'][:-5:])
-
+    day_timetable = '.....::::: <b>\U0001F4CB {}</b> ({}) :::::.....\n\n'.format(day_data['day'], day_data['date'])
     lessons = day_data['lessons']
+
+    start_index = 0
+    end_index = 7
 
     for i in range(8):
         if lessons[i]:
-            s_index = i
+            start_index = i
             break
 
     for i in range(7, -1, -1):
         if lessons[i]:
-            e_index = i
+            end_index = i
             break
 
-    for i in range(s_index, e_index + 1):
+    for i in range(start_index, end_index + 1):
         if lessons[i]:
-            rozklad += '{} {}\n\n'.format(emoji_numbers[i + 1], lessons[i])
+            day_timetable += '{} {}\n\n'.format(emoji_numbers[i + 1], lessons[i])
         else:
-            rozklad += '{} Вікно \U0001F643\n\n'.format(emoji_numbers[i + 1])
+            day_timetable += '{} Вікно \U0001F643\n\n'.format(emoji_numbers[i + 1])
 
-    return rozklad
+    return day_timetable
 
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    sent = bot.send_message(message.chat.id, 'Йоу, {} 😊. Я Бот який допоможе тобі швидко дізнаватись свій розклад прямо тут.'
-                                             ' Для початку скажи мені свою групу (Напр. 44_і_д)'.format(message.chat.first_name))
+    sent = bot.send_message(message.chat.id, 'Йоу, {} 😊. Я Бот, який допоможе тобі швидко дізнаватись свій розклад '
+                                             'прямо тут. Для початку '
+                                             'скажи мені свою групу (Напр. 44_і_д)'.format(message.chat.first_name))
     bot.register_next_step_handler(sent, set_group)
 
 
 def set_group(message):
 
-    if message.text == 'Відміна':
-        user_group = get_user_group(message.chat.id)
-        bot.send_message(message.chat.id, 'Добре, залишимо групу {}.'.format(user_group), reply_markup=keyboard)
+    user = core.User(message.chat)
+    group = message.text
+
+    if group == 'Відміна':
+        current_user_group = user.get_group()
+        bot.send_message(message.chat.id, 'Добре, залишимо групу {}.'.format(current_user_group), reply_markup=keyboard)
         return
 
-    if ' ' in message.text:
+    if ' ' in group :
         bot.send_message(message.chat.id, 'Група вказується без пробілів. А точно так, як на сайті.',
                          reply_markup=keyboard)
         return
 
-    add_or_update_user_to_db(message.chat, message.text)
+    if user.get_group():
+        user.update_group(group)
+    else:
+        user.registration(group)
 
     bot.send_message(message.chat.id, 'Чудово 👍, відтепер я буду показувати розклад для групи {}.'.
-                     format(message.text), reply_markup=keyboard)
-
-
-@bot.message_handler(regexp='^(\d{1,2})\.(\d{1,2})$')
-def to_date(message):
-
-    group = get_user_group(message.chat.id)
-
-    if not group:
-        bot.send_message(message.chat.id, 'Щоб вказати групу жми -> /start')
-        return
-
-    date = message.text + '.' + str(datetime.date.today().year)
-    rozklad_data = get_rozklad(group=group, edate=date, sdate=date)
-
-    log(chat=message.chat, m='Розклад по даті {}'.format(date))
-
-    if rozklad_data:
-        rozklad_for_date = show_day_rozklad(rozklad_data[0])
-    else:
-        msg = 'Щоб подивитися розклад на конкретний день, введи дату в одному із таких форматів:' \
-              '\n<b>05.03</b>\n<b>27.03</b>\n<b>5.3</b>' \
-              '\nДля відображення по кільком дням (рекомендується не більше 8 днів підряд):\n<b>20.03-22.03</b>\n' \
-              '\n<i>Вводиться без пробілів (день.місяць)</i><b> рік вводити не треба</b> ' \
-              '<i>Якщо розклад по кільком дням не працює - введіть меншу кількість днів.</i>'
-        rozklad_for_date = 'На <b>{}</b>, для групи <b>{}</b> пар не знайдено.\n\n{}'.format(date, group, msg)
-
-    bot.send_message(message.chat.id, rozklad_for_date, parse_mode='HTML', reply_markup=keyboard)
-
-
-@bot.message_handler(regexp='^(\d{1,2})\.(\d{1,2})-(\d{1,2})\.(\d{1,2})$')
-def from_date_to_date(message):
-
-    group = get_user_group(message.chat.id)
-
-    if not group:
-        bot.send_message(message.chat.id, 'Щоб вказати групу жми -> /start')
-        return
-
-    _sdate = message.text.split('-')[0] + '.' + str(datetime.date.today().year)
-    _edate = message.text.split('-')[1] + '.' + str(datetime.date.today().year)
-
-    rozklad_data = get_rozklad(group=group, sdate=_sdate, edate=_edate)
-
-    rozklad_for_days = ''
-
-    log(chat=message.chat, m='Розклад по датах {}'.format(message.text))
-
-    if rozklad_data:
-        for rozklad_day in rozklad_data:
-            rozklad_for_days += show_day_rozklad(rozklad_day)
-
-    else:
-        msg = 'Щоб подивитися розклад на конкретний день, введи дату в одному із таких форматів:' \
-              '\n<b>05.03</b>\n<b>27.03</b>\n<b>5.3</b>' \
-              '\nДля відображення по кільком дням (рекомендується не більше 8 днів підряд):\n<b>20.03-22.03</b>\n' \
-              '\n<i>Вводиться без пробілів (день.місяць)</i><b> рік вводити не треба.</b> ' \
-              '<i>Якщо розклад по кільком дням не працює - введіть меншу кількість днів.</i>'
-        rozklad_for_days = 'На <b>{}-{}</b>, для групи <b>{}</b> пар не знайдено.\n\n{}'.format(_sdate, _edate,
-                                                                                                group, msg)
-
-    bot.send_message(message.chat.id, rozklad_for_days, parse_mode='HTML', reply_markup=keyboard)
+                     format(group), reply_markup=keyboard)
 
 
 def get_teachers_name(surname):
@@ -291,12 +137,12 @@ def show_teachers(chat_id, name):
     in_week_day = in_week.strftime('%d.%m.%Y')
     today = datetime.date.today().strftime('%d.%m.%Y')
 
-    rozklad_data = get_rozklad(teacher=name, sdate=today, edate=in_week_day)
+    rozklad_data = get_timetable(teacher=name, sdate=today, edate=in_week_day)
 
     if rozklad_data:
         rozklad_for_week = 'Розклад на тиждень у <b>{}</b>:\n\n'.format(name)
         for rozklad_day in rozklad_data:
-            rozklad_for_week += show_day_rozklad(rozklad_day)
+            rozklad_for_week += render_day_timetable(rozklad_day)
     else:
         rozklad_for_week = 'На тиждень пар у викладача <b>{}</b> не знайдено.'.format(name)
 
@@ -339,66 +185,68 @@ def main_menu(message):
 
     bot.send_chat_action(message.chat.id, "typing")
 
-    if get_user_group(message.chat.id):
+    user = core.User(message.chat)
+    user_group = user.get_group()
+    request = message.text
 
-        log(message.chat, '> {}'.format(message.text))
+    if user_group:
 
-        if message.text == '\U0001F4D7 Сьогодні':
-            group = get_user_group(message.chat.id)
-            rozklad_data = get_rozklad(group=group)
+        core.log(message.chat, '> {}'.format(message.text))
 
-            if rozklad_data:
-                rozklad_for_today = show_day_rozklad(rozklad_data[0])
+        if request == '\U0001F4D7 Сьогодні':
+
+            timetable_data = get_timetable(group=user_group, user_id=user.get_id())
+
+            if timetable_data:
+                timetable_for_today = render_day_timetable(timetable_data[0])
+            elif isinstance(timetable_data, list) and not len(timetable_data):
+                timetable_for_today = "На сьогодні пар не знайдено."
             else:
-                rozklad_for_today = "На сьогодні пар не знайдено."
+                return
 
-            bot.send_message(message.chat.id, rozklad_for_today, parse_mode='HTML', reply_markup=keyboard)
+            bot.send_message(user.get_id(), timetable_for_today, parse_mode='HTML', reply_markup=keyboard)
 
-        elif message.text == '\U0001F4D8 Завтра':
+        elif request == '\U0001F4D8 Завтра':
 
             tomorrow = datetime.date.today() + datetime.timedelta(days=1)
             tom_day = tomorrow.strftime('%d.%m.%Y')
 
-            group = get_user_group(message.chat.id)
-            rozklad_data = get_rozklad(group=group, sdate=tom_day, edate=tom_day)
+            timetable_data = get_timetable(group=user_group, sdate=tom_day, edate=tom_day, user_id=user.get_id())
 
-            if rozklad_data:
-                rozklad_for_tom = show_day_rozklad(rozklad_data[0])
+            if timetable_data:
+                timetable_for_tomorrow = render_day_timetable(timetable_data[0])
+            elif isinstance(timetable_data, list) and not len(timetable_data):
+                timetable_for_tomorrow = "На завтра пар не знайдено."
             else:
-                rozklad_for_tom = 'На завтра пар не знайдено.'
+                return
 
-            bot.send_message(message.chat.id, rozklad_for_tom, parse_mode='HTML', reply_markup=keyboard)
+            bot.send_message(user.get_id(), timetable_for_tomorrow, parse_mode='HTML', reply_markup=keyboard)
 
-        elif message.text == '\U0001F4DA На тижні':
+        elif request == '\U0001F4DA На тижні':
 
-            in_week = datetime.date.today() + datetime.timedelta(days=7)
-
-            in_week_day = in_week.strftime('%d.%m.%Y')
             today = datetime.date.today().strftime('%d.%m.%Y')
+            in_week_day = (datetime.date.today() + datetime.timedelta(days=7)).strftime('%d.%m.%Y')
 
-            group = get_user_group(message.chat.id)
-            rozklad_data = get_rozklad(group=group, sdate=today, edate=in_week_day)
+            timetable_data = get_timetable(group=user_group, sdate=today, edate=in_week_day, user_id=user.get_id())
+            timetable_for_week = ''
 
-            rozklad_for_week = ''
+            if timetable_data:
+                for timetable_day in timetable_data:
+                    timetable_for_week += render_day_timetable(timetable_day)
 
-            if rozklad_data:
-                for rozklad_day in rozklad_data:
-                    rozklad_for_week += show_day_rozklad(rozklad_day)
+                if len(timetable_for_week) > 5000:
+                    msg = "Перевищена кількість допустимих символів ({} із 5000).".format(len(timetable_for_week))
+                    bot.send_message(user.get_id(), msg, parse_mode='HTML', reply_markup=keyboard)
+                    return
+
+            elif isinstance(timetable_data, list) and not len(timetable_data):
+                timetable_for_week = "На тиждень пар не знайдено."
             else:
-                rozklad_for_week = 'На тиждень пар не знайдено.'
+                return
 
-            if len(rozklad_for_week) < 4100:
-                bot.send_message(message.chat.id, rozklad_for_week, parse_mode='HTML', reply_markup=keyboard)
+            bot.send_message(user.get_id(), timetable_for_week, parse_mode='HTML', reply_markup=keyboard)
 
-            else:
-                rozklad_for_week = ''
-
-                for rozklad_day in rozklad_data[1:]:
-                    rozklad_for_week += show_day_rozklad(rozklad_day)
-
-                bot.send_message(message.chat.id, rozklad_for_week, parse_mode='HTML', reply_markup=keyboard)
-
-        elif message.text == '\U0001F570 Час пар':
+        elif request == '\U0001F570 Час пар':
             lessons_time = "<b>Час пар:</b>\n" \
                            "{} 08:30-09:50\n{} 10:00-11:20\n" \
                            "{} 11:40-13:00\n{} 13:10-14:30\n" \
@@ -407,11 +255,11 @@ def main_menu(message):
                                                                    emoji_numbers[4], emoji_numbers[5], emoji_numbers[6],
                                                                    emoji_numbers[7], emoji_numbers[8])
 
-            bot.send_message(message.chat.id, lessons_time, parse_mode='HTML', reply_markup=keyboard)
+            bot.send_message(user.get_id(), lessons_time, parse_mode='HTML', reply_markup=keyboard)
 
-        elif message.text == '\U00002699 Зм. групу':
+        elif request == '\U00002699 Зм. групу':
 
-            user_group = get_user_group(message.chat.id)
+            user_group = user.get_group()
 
             cancel_kb = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             cancel_kb.row('Відміна')
@@ -421,7 +269,7 @@ def main_menu(message):
             sent = bot.send_message(message.chat.id, msg, parse_mode='HTML', reply_markup=cancel_kb)
             bot.register_next_step_handler(sent, set_group)
 
-        elif message.text == '\U0001f4ac Довідка':
+        elif request == '\U0001f4ac Довідка':
 
             try:
                 forecast_update_date = os.path.getmtime(os.path.join(settings.BASE_DIR, 'forecast.txt'))
@@ -437,25 +285,16 @@ def main_menu(message):
                   "пиши сюди:\n <b>Телеграм:</b> @Koocherov \n <b>VK:</b> vk.com/koocherov\n" \
                   "__________________________\n<b>Версія:</b> {}\n<b>Оновлення погоди:</b> {}"
 
-            bot.send_message(message.chat.id, msg.format(settings.VERSION, mod_time), reply_markup=keyboard, parse_mode='HTML')
+            bot.send_message(message.chat.id, msg.format(settings.VERSION, mod_time),
+                             reply_markup=keyboard, parse_mode='HTML')
 
-        elif message.text == '\U0001F465 По групі':
+        elif request == '\U0001F465 По групі':
             sent = bot.send_message(message.chat.id,
                                     'Для того щоб подивитись розклад будь якої групи на тиждень введи її назву',
                                     reply_markup=keyboard)
             bot.register_next_step_handler(sent, show_other_group)
 
-        elif message.text == '\U0001F4C5 По даті':
-
-            msg = 'Щоб подивитися розклад на конкретний день, введи дату в одному із таких форматів:' \
-                  '\n<b>05.03</b>\n<b>27.03</b>\n<b>5.3</b>' \
-                  '\nДля відображення по кільком дням (рекомендується не більше 8 днів підряд):\n<b>20.03-22.03</b>\n' \
-                  '\n<i>Вводиться без пробілів (день.місяць) </i><b>рік вводити не треба</b>. ' \
-                  '<i>Якщо розклад по кільком дням не працює - введіть меншу кількість днів.</i>'
-
-            bot.send_message(message.chat.id, msg, reply_markup=keyboard, parse_mode='HTML')
-
-        elif message.text == '\U0001F308 Погода':
+        elif request == '\U0001F308 Погода':
 
             try:
                 with open(os.path.join(settings.BASE_DIR, 'forecast.txt'), 'r') as forecast_file:
@@ -466,7 +305,7 @@ def main_menu(message):
 
                 bot.send_message(message.chat.id, 'Погоду не завантажено.', reply_markup=keyboard, parse_mode='HTML')
 
-        elif message.text == '\U0001F464 По викладачу':
+        elif request == '\U0001F464 По викладачу':
 
             sent = bot.send_message(message.chat.id,
                                     'Для того щоб подивитись розклад викладача на поточний тиждень - '
@@ -474,8 +313,58 @@ def main_menu(message):
                                     reply_markup=keyboard)
             bot.register_next_step_handler(sent, select_teachers)
 
+        elif re.search(r'^(\d{1,2})\.(\d{1,2})$', request):
+
+            date = request + '.' + str(datetime.date.today().year)
+            timetable_data = get_timetable(group=user_group, edate=date, sdate=date, user_id=user.get_id())
+
+            if timetable_data:
+                timetable_for_date = render_day_timetable(timetable_data[0])
+            elif isinstance(timetable_data, list) and not len(timetable_data):
+                msg = 'Щоб подивитися розклад на конкретний день, введи дату в такому форматі:' \
+                      '\n<b>05.03</b> або <b>5.3</b>\nПо кільком дням: \n<b>5.03-15.03</b>\n' \
+                      '\nЯкщо розклад не приходить введи меншу кількість днів ' \
+                      '\nДата вводиться без пробілів (день.місяць)<b> рік вводити не треба</b> ' \
+
+                timetable_for_date = 'На <b>{}</b>, для групи <b>{}</b> пар не знайдено.\n\n{}'.format(date,
+                                                                                                       user_group,
+                                                                                                       msg)
+            else:
+                return
+
+            bot.send_message(message.chat.id, timetable_for_date, parse_mode='HTML', reply_markup=keyboard)
+
+        elif re.search(r'^(\d{1,2})\.(\d{1,2})-(\d{1,2})\.(\d{1,2})$', request):
+
+            s_date = message.text.split('-')[0] + '.' + str(datetime.date.today().year)
+            e_date = message.text.split('-')[1] + '.' + str(datetime.date.today().year)
+            timetable_for_days = ''
+            timetable_data = get_timetable(group=user_group, sdate=s_date, edate=e_date, user_id=user.get_id())
+
+            if timetable_data:
+                for timetable_day in timetable_data:
+                    timetable_for_days += render_day_timetable(timetable_day)
+
+                if len(timetable_for_days) > 5000:
+                    msg = "Введи меншу кількість днів." \
+                          " Перевищена кількість допустимих символів ({} із 5000).".format(len(timetable_for_days))
+                    bot.send_message(user.get_id(), msg, parse_mode='HTML', reply_markup=keyboard)
+                    return
+
+            elif isinstance(timetable_data, list) and not len(timetable_data):
+                msg = 'Щоб подивитися розклад на конкретний день, введи дату в такому форматі:' \
+                      '\n<b>05.03</b> або <b>5.3</b>\nПо кільком дням: \n<b>5.03-15.03</b>\n' \
+                      '\nЯкщо розклад не приходить введи меншу кількість днів.' \
+                      '\nДата вводиться без пробілів (день.місяць)<b> рік вводити не треба</b> '
+                timetable_for_days = 'На <b>{} - {}</b>, для групи <b>{}</b> пар не знайдено.\n\n{}'.format(s_date, e_date,
+                                                                                                            user_group, msg)
+            else:
+                return
+
+            bot.send_message(user.get_id(), timetable_for_days, parse_mode='HTML', reply_markup=keyboard)
+
         else:
-            bot.send_message(message.chat.id, '\U0001F440')
+            bot.send_message(user.get_id(), '\U0001F440')
 
     else:
         bot.send_message(message.chat.id, 'Щоб вказати групу жми -> /start')
@@ -495,42 +384,30 @@ def show_other_group(message):
 
     today = datetime.date.today().strftime('%d.%m.%Y')
 
-    rozklad_data = get_rozklad(group=group, sdate=today, edate=in_week_day)
+    timetable_data = get_timetable(group=group, sdate=today, edate=in_week_day, user_id=message.chat.id)
 
-    rozklad_for_week = '<b>Розклад на тиждень групи {}:</b>\n\n'.format(message.text)
+    timetable_for_week = '<b>Розклад на тиждень для групи {}:</b>\n\n'.format(message.text)
 
-    if rozklad_data:
-        for rozklad_day in rozklad_data:
-            rozklad_for_week += show_day_rozklad(rozklad_day)
+    if timetable_data:
+        for timetable_day in timetable_data:
+            timetable_for_week += render_day_timetable(timetable_day)
     else:
-        rozklad_for_week = 'На тиждень пар для групи {} не знайдено.'.format(group)
+        timetable_for_week = 'На тиждень пар для групи {} не знайдено.'.format(group)
 
-    if len(rozklad_for_week) < 4100:
-        bot.send_message(message.chat.id, rozklad_for_week, parse_mode='HTML', reply_markup=keyboard)
-
-    else:
-        rozklad_for_week = ''
-
-        for rozklad_day in rozklad_data[1:]:
-            rozklad_for_week += show_day_rozklad(rozklad_day)
-
-        bot.send_message(message.chat.id, rozklad_for_week, parse_mode='HTML', reply_markup=keyboard)
+    bot.send_message(message.chat.id, timetable_for_week, parse_mode='HTML', reply_markup=keyboard)
 
 
-#  ____________________________________________________SERVER__________________________________________________________
+def main():
 
-
-if __name__ == '__main__':
-
-    create_database()
+    core.User.create_user_table_if_not_exists()
 
     try:
-        log(m='Запуск..')
+        core.log(m='Running..')
         bot.polling(none_stop=True, interval=settings.POLLING_INTERVAL)
 
     except Exception as ex:
 
-        log(m='Помилка - {}\n'.format(str(ex)))
+        core.log(m='Working error: {}\n'.format(str(ex)))
         bot.stop_polling()
 
         if settings.SEND_ERRORS_TO_ADMIN:
@@ -541,3 +418,6 @@ if __name__ == '__main__':
                 }
 
                 requests.get('https://api.telegram.org/bot{}/sendMessage'.format(settings.BOT_TOKEN), params=data)
+
+if __name__ == '__main__':
+    main()
