@@ -35,14 +35,14 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
             'n': 700,
         }
     except Exception as ex:
-        core.log(m='Error encoding request parameters: {}\n'.format(str(ex)))
+        core.log(m='Error encoding request parameters: {}'.format(str(ex)))
         bot.send_message(user_id, 'Помилка надсилання запиту, вкажіть коректні параметри.')
         return False
 
     try:
         page = requests.post(settings.TIMETABLE_URL, post_data, headers=http_headers, timeout=4)
     except Exception as ex:
-        core.log(m='Error with Dekanat site connection: {}\n'.format(str(ex)))
+        core.log(m='Error with Dekanat site connection: {}'.format(str(ex)))
         bot.send_message(user_id, 'Помилка з\'єднання із сайтом Деканату. Спробуй пізніше.')
         return False
 
