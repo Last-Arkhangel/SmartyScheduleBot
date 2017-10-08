@@ -105,7 +105,7 @@ def set_group(message):
         bot.send_message(message.chat.id, 'Добре, залишимо групу {}.'.format(current_user_group), reply_markup=keyboard)
         return
 
-    if ' ' in group :
+    if ' ' in group:
         bot.send_message(message.chat.id, 'Група вказується без пробілів. А точно так, як на сайті.',
                          reply_markup=keyboard)
         return
@@ -391,8 +391,10 @@ def show_other_group(message):
     if timetable_data:
         for timetable_day in timetable_data:
             timetable_for_week += render_day_timetable(timetable_day)
-    else:
+    elif isinstance(timetable_data, list) and not len(timetable_data):
         timetable_for_week = 'На тиждень пар для групи {} не знайдено.'.format(group)
+    else:
+        return
 
     bot.send_message(message.chat.id, timetable_for_week, parse_mode='HTML', reply_markup=keyboard)
 
