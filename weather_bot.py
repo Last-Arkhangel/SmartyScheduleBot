@@ -115,7 +115,7 @@ def update_forecast():
 
 def log(m=''):
 
-    now_time = datetime.datetime.now().strftime('%d-%m / %H:%M:%S')
+    now_time = datetime.datetime.now().strftime('%d-%m %H:%M:%S')
 
     with open('bot_log.txt', 'a') as log_file:
 
