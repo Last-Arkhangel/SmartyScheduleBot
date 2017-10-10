@@ -35,15 +35,18 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
             'n': 700,
         }
     except Exception as ex:
-        core.log(m='Error encoding request parameters: {}\n'.format(str(ex)))
-        bot.send_message(user_id, 'Помилка надсилання запиту, вкажіть коректні параметри.')
+        core.log(m='Error encoding request parameters: {}'.format(str(ex)))
+        bot.send_message(user_id, 'Помилка надсилання запиту, вкажіть коректні параметри.', reply_markup=keyboard)
         return False
+
+    # TODO cache module
+    # key_param = 'G:{}|T:{}|SD:{}|ED:{}'.format(group.lower(), teacher, sdate, edate)
 
     try:
         page = requests.post(settings.TIMETABLE_URL, post_data, headers=http_headers, timeout=4)
     except Exception as ex:
-        core.log(m='Error with Dekanat site connection: {}\n'.format(str(ex)))
-        bot.send_message(user_id, 'Помилка з\'єднання із сайтом Деканату. Спробуй пізніше.')
+        core.log(m='Error with Dekanat site connection: {}'.format(str(ex)))
+        bot.send_message(user_id, 'Помилка з\'єднання із сайтом Деканату. Спробуй пізніше.', reply_markup=keyboard)
         return False
 
     parsed_page = BeautifulSoup(page.content, 'html.parser')
@@ -53,7 +56,7 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
     for one_day_table in all_days_list:
         all_days_lessons.append({
             'day': one_day_table.find('h4').find('small').text,
-            'date': one_day_table.find('h4').text[:10],
+            'date': one_day_table.find('h4').text[:5],
             'lessons': [' '.join(lesson.text.split()) for lesson in one_day_table.find_all('td')[1::2]]
         })
 
@@ -62,7 +65,7 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
 
 def render_day_timetable(day_data):
 
-    day_timetable = '.....::::: <b>\U0001F4CB {}</b> ({}) :::::.....\n\n'.format(day_data['day'], day_data['date'])
+    day_timetable = '.....::::: <b>\U0001F4CB {}</b> {} :::::.....\n\n'.format(day_data['day'], day_data['date'])
     lessons = day_data['lessons']
 
     start_index = 0
@@ -137,7 +140,7 @@ def show_teachers(chat_id, name):
     in_week_day = in_week.strftime('%d.%m.%Y')
     today = datetime.date.today().strftime('%d.%m.%Y')
 
-    rozklad_data = get_timetable(teacher=name, sdate=today, edate=in_week_day)
+    rozklad_data = get_timetable(teacher=name, sdate=today, edate=in_week_day, user_id=chat_id)
 
     if rozklad_data:
         rozklad_for_week = 'Розклад на тиждень у <b>{}</b>:\n\n'.format(name)
@@ -290,8 +293,7 @@ def main_menu(message):
 
         elif request == '\U0001F465 По групі':
             sent = bot.send_message(message.chat.id,
-                                    'Для того щоб подивитись розклад будь якої групи на тиждень введи її назву',
-                                    reply_markup=keyboard)
+                                    'Для того щоб подивитись розклад будь якої групи на тиждень введи її назву')
             bot.register_next_step_handler(sent, show_other_group)
 
         elif request == '\U0001F308 Погода':
@@ -364,7 +366,7 @@ def main_menu(message):
             bot.send_message(user.get_id(), timetable_for_days, parse_mode='HTML', reply_markup=keyboard)
 
         else:
-            bot.send_message(user.get_id(), '\U0001F440')
+            bot.send_message(user.get_id(), '\U0001F440', reply_markup=keyboard)
 
     else:
         bot.send_message(message.chat.id, 'Щоб вказати групу жми -> /start')
