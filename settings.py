@@ -8,6 +8,8 @@ BOT_TOKEN = '<TOKEN>'
 
 POLLING_INTERVAL = 3
 
+USE_CACHE = False
+
 TIMETABLE_URL = 'https://dekanat.zu.edu.ua/cgi-bin/timetable.cgi'
 
 HTTP_USER_AGENT = 'Telegram-SmartySBot'
