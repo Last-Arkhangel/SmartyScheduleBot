@@ -103,6 +103,26 @@ def render_day_timetable(day_data):
     return day_timetable
 
 
+@bot.message_handler(commands=['ci'])
+def start(message):
+
+    user = core.User(message.chat)
+
+    cache_items_count = len(cache.Cache.get_keys() or '')
+
+    bot.send_message(user.get_id(), 'In cache: {} rows'.format(cache_items_count))
+
+
+@bot.message_handler(commands=['cc'])
+def start(message):
+
+    user = core.User(message.chat)
+
+    cache.Cache.clear_cache()
+
+    bot.send_message(user.get_id(), 'Cache have been cleared.')
+
+
 @bot.message_handler(commands=['start'])
 def start(message):
     sent = bot.send_message(message.chat.id, 'Йоу, {} 😊. Я Бот, який допоможе тобі швидко дізнаватись свій розклад '
@@ -419,7 +439,7 @@ def main():
     core.User.create_user_table_if_not_exists()
     if settings.USE_CACHE:
         cache.Cache.create_cache_table_if_not_exists()
-        cache.Cache.clear_cache()
+        # cache.Cache.clear_cache()
 
     try:
         core.log(m='Running..')
