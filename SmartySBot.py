@@ -419,6 +419,7 @@ def main():
     core.User.create_user_table_if_not_exists()
     if settings.USE_CACHE:
         cache.Cache.create_cache_table_if_not_exists()
+        cache.Cache.clear_cache()
 
     try:
         core.log(m='Running..')
