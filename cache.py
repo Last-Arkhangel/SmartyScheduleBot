@@ -44,4 +44,9 @@ class Cache:
         query = "SELECT key FROM cache"
         return core.DBManager.execute_query(query, )
 
+    @classmethod
+    def clear_cache(cls):
+
+        query = "DELETE FROM cache"
+        return core.DBManager.execute_query(query, )
 
