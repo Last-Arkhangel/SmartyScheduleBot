@@ -7,6 +7,9 @@ import os
 import settings
 import core
 import re
+import cache
+import json
+import copy
 
 bot = telebot.TeleBot(settings.BOT_TOKEN)
 
@@ -39,8 +42,12 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
         bot.send_message(user_id, 'Помилка надсилання запиту, вкажіть коректні параметри.', reply_markup=keyboard)
         return False
 
-    # TODO cache module
-    # key_param = 'G:{}|T:{}|SD:{}|ED:{}'.format(group.lower(), teacher, sdate, edate)
+    if settings.USE_CACHE:
+        request_key = 'G:{}|T:{}|SD:{}|ED:{}'.format(group.lower(), teacher, sdate, edate)
+        cached_timetable = cache.Cache.get_from_cache(request_key)
+
+        if cached_timetable:
+            return json.loads(cached_timetable[0][1])
 
     try:
         page = requests.post(settings.TIMETABLE_URL, post_data, headers=http_headers, timeout=4)
@@ -59,6 +66,12 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
             'date': one_day_table.find('h4').text[:5],
             'lessons': [' '.join(lesson.text.split()) for lesson in one_day_table.find_all('td')[1::2]]
         })
+
+    if all_days_lessons and settings.USE_CACHE:  # if timetable exists, put it to cache
+        cached_all_days_lessons = copy.deepcopy(all_days_lessons)
+        cached_all_days_lessons[0]['day'] += '*'
+        _json = json.dumps(cached_all_days_lessons, sort_keys=True, ensure_ascii=False, separators=(',', ':'), indent=2)
+        cache.Cache.put_in_cache(request_key, _json)
 
     return all_days_lessons
 
@@ -404,6 +417,8 @@ def show_other_group(message):
 def main():
 
     core.User.create_user_table_if_not_exists()
+    if settings.USE_CACHE:
+        cache.Cache.create_cache_table_if_not_exists()
 
     try:
         core.log(m='Running..')
@@ -423,5 +438,5 @@ def main():
 
                 requests.get('https://api.telegram.org/bot{}/sendMessage'.format(settings.BOT_TOKEN), params=data)
 
-if __name__ == '__main__':
-    main()
+
+main()
