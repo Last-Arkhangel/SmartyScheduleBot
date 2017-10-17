@@ -1,14 +1,20 @@
 import os
 
-VERSION = '8.1'
+VERSION = '8.2'
 
 DATABASE = 'SmartyS_DB.sqlite'
 
 BOT_TOKEN = '<TOKEN>'
 
-POLLING_INTERVAL = 3
+POLLING_INTERVAL = 2
 
 USE_CACHE = False
+
+USE_WEBHOOK = True
+
+WEBHOOK_URL = ''
+
+WEBHOOK_PATH = '/whook'
 
 TIMETABLE_URL = 'https://dekanat.zu.edu.ua/cgi-bin/timetable.cgi'
 

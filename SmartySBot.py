@@ -10,8 +10,10 @@ import re
 import cache
 import json
 import copy
+import flask
 
-bot = telebot.TeleBot(settings.BOT_TOKEN)
+app = flask.Flask(__name__)
+bot = telebot.TeleBot(settings.BOT_TOKEN, threaded=False)
 
 keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
 keyboard.row('\U0001F4D7 Сьогодні', '\U0001F4D8 Завтра', '\U0001F4DA На тижні')
@@ -216,7 +218,7 @@ def select_teachers(message):
         bot.register_next_step_handler(sent, select_teacher_from_request)
 
 
-@bot.message_handler(content_types=["text"])
+@bot.message_handler(func=lambda message: True, content_types=["text"])
 def main_menu(message):
 
     bot.send_chat_action(message.chat.id, "typing")
@@ -434,12 +436,37 @@ def show_other_group(message):
     bot.send_message(message.chat.id, timetable_for_week, parse_mode='HTML', reply_markup=keyboard)
 
 
+@app.route('/')
+def index():
+    return 'index'
+
+
+@app.route(settings.WEBHOOK_PATH, methods=['POST'])
+def webhook():
+    json_string = flask.request.get_data().decode('utf-8')
+    update = telebot.types.Update.de_json(json_string)
+    bot.process_new_updates([update])
+
+    return "!", 200
+
+
 def main():
 
     core.User.create_user_table_if_not_exists()
+    bot.delete_webhook()
+
     if settings.USE_CACHE:
         cache.Cache.create_cache_table_if_not_exists()
         # cache.Cache.clear_cache()
+
+    if settings.USE_WEBHOOK:
+        try:
+            bot.set_webhook(settings.WEBHOOK_URL+settings.WEBHOOK_PATH)
+            core.log(m='Webhook is setting: {}'.format(bot.get_webhook_info().url))
+            return
+
+        except Exception as ex:
+            core.log(m='Error while setting webhook: {}'.format(str(ex)))
 
     try:
         core.log(m='Running..')
