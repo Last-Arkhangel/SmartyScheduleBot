@@ -1,6 +1,6 @@
 import os
 
-VERSION = '8.0'
+VERSION = '8.1'
 
 DATABASE = 'SmartyS_DB.sqlite'
 

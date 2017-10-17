@@ -35,7 +35,7 @@ class Cache:
     @classmethod
     def put_in_cache(cls, key, data):
 
-        query = "INSERT INTO cache (key, data, create_time) VALUES (?, ?, CURRENT_TIMESTAMP)"
+        query = "INSERT or IGNORE INTO cache (key, data, create_time) VALUES (?, ?, CURRENT_TIMESTAMP)"
         return core.DBManager.execute_query(query, (key, data))
 
     @classmethod

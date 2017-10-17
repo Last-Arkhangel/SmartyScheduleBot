@@ -22,6 +22,9 @@ class User:
         if type(result) == bool:
             return False
 
+        # TODO add return error code if there are problems getting the group
+        # something like - if type(result) == bool: return -1
+
         self.update_user_metadata()
 
         return result[0][0]
@@ -67,17 +70,18 @@ class User:
 
 class DBManager:
 
-    connection = sqlite3.connect(os.path.join(settings.BASE_DIR, settings.DATABASE), check_same_thread=False)
-
     @classmethod
-    def execute_query(cls, query, *args):  # returns result or true if success, or false if something go wrong
+    def execute_query(cls, query, *args):  # returns result or true if success, or false when something go wrong
 
         try:
-            cursor = cls.connection.cursor()
+            connection = sqlite3.connect(os.path.join(settings.BASE_DIR, settings.DATABASE), check_same_thread=False)
+
+            cursor = connection.cursor()
             cursor.execute(query, *args)
-            cls.connection.commit()
+            connection.commit()
             query_result = cursor.fetchall()
             cursor.close()
+            connection.close()
 
             if query_result:
                 return query_result
