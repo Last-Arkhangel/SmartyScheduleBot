@@ -11,7 +11,7 @@ import cache
 import json
 import copy
 
-bot = telebot.TeleBot(settings.BOT_TOKEN)
+bot = telebot.TeleBot(settings.BOT_TOKEN, threaded=False)
 
 keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
 keyboard.row('\U0001F4D7 Сьогодні', '\U0001F4D8 Завтра', '\U0001F4DA На тижні')
@@ -216,7 +216,7 @@ def select_teachers(message):
         bot.register_next_step_handler(sent, select_teacher_from_request)
 
 
-@bot.message_handler(content_types=["text"])
+@bot.message_handler(func=lambda message: True, content_types=["text"])
 def main_menu(message):
 
     bot.send_chat_action(message.chat.id, "typing")
