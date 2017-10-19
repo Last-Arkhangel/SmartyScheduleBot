@@ -16,7 +16,7 @@ app = flask.Flask(__name__)
 bot = telebot.TeleBot(settings.BOT_TOKEN, threaded=False)
 
 keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-keyboard.row('\U0001F4D7 Сьогодні', '\U0001F4D8 Завтра', '\U0001F4DA На тижні')
+keyboard.row('\U0001F4D7 Сьогодні', '\U0001F4D8 Завтра', '\U0001F4DA На тиждень')
 keyboard.row('\U0001F464 По викладачу', '\U0001F570 Час пар', '\U0001F465 По групі')
 keyboard.row('\U00002699 Зм. групу', '\U0001F308 Погода', '\U0001f4ac Довідка')
 
@@ -131,6 +131,55 @@ def start(message):
                                              'прямо тут. Для початку '
                                              'скажи мені свою групу (Напр. 44_і_д)'.format(message.chat.first_name))
     bot.register_next_step_handler(sent, set_group)
+
+
+@bot.callback_query_handler(func=lambda call_back: call_back.data in ('Поточний', 'Наступний'))
+def week_schedule_handler(call_back):
+
+    # bot.send_chat_action(call_back.message.chat.id, "typing")
+
+    user = core.User(call_back.message.chat)
+    user_group = user.get_group()
+    request = call_back.data
+
+    today = datetime.date.today()
+    current_week_day = today.isoweekday()
+    last_week_day_delta = 5 - current_week_day  # difference in days between friday and the current day
+    last_week_day = today + datetime.timedelta(days=last_week_day_delta)
+
+    next_week_first_day = today + datetime.timedelta(days=last_week_day_delta + 3)
+    next_week_last_day = today + datetime.timedelta(days=last_week_day_delta + 7)
+
+    if last_week_day_delta < 0:
+        bot.edit_message_text(text='Цей навчальний тиждень закінчивсь, дивись наступний.',
+                              chat_id=user.get_id(), message_id=call_back.message.message_id, parse_mode="HTML")
+        return
+
+    if request == 'Поточний':
+        timetable_data = get_timetable(group=user_group, sdate=today.strftime('%d.%m.%Y'),
+                                       edate=last_week_day.strftime('%d.%m.%Y'), user_id=user.get_id())
+    else:
+        timetable_data = get_timetable(group=user_group, sdate=next_week_first_day.strftime('%d.%m.%Y'),
+                                       edate=next_week_last_day.strftime('%d.%m.%Y'), user_id=user.get_id())
+
+    timetable_for_week = ''
+
+    if timetable_data:
+        for timetable_day in timetable_data:
+            timetable_for_week += render_day_timetable(timetable_day)
+
+        if len(timetable_for_week) > 5000:
+            msg = "Перевищена кількість допустимих символів ({} із 5000).".format(len(timetable_for_week))
+            bot.send_message(user.get_id(), msg, parse_mode='HTML', reply_markup=keyboard)
+            return
+
+    elif isinstance(timetable_data, list) and not len(timetable_data):
+        timetable_for_week = "На тиждень пар не знайдено."
+    else:
+        return
+
+    bot.edit_message_text(text=timetable_for_week, chat_id=user.get_id(),
+                          message_id=call_back.message.message_id, parse_mode="HTML")
 
 
 def set_group(message):
@@ -260,29 +309,15 @@ def main_menu(message):
 
             bot.send_message(user.get_id(), timetable_for_tomorrow, parse_mode='HTML', reply_markup=keyboard)
 
-        elif request == '\U0001F4DA На тижні':
+        elif request == '\U0001F4DA На тижні' or request == '\U0001F4DA На тиждень':
 
-            today = datetime.date.today().strftime('%d.%m.%Y')
-            in_week_day = (datetime.date.today() + datetime.timedelta(days=7)).strftime('%d.%m.%Y')
+            week_type_keyboard = telebot.types.InlineKeyboardMarkup()
+            week_type_keyboard.row(
+                *[telebot.types.InlineKeyboardButton(text=name, callback_data=name) for
+                  name in ["Поточний", "Наступний"]]
+            )
 
-            timetable_data = get_timetable(group=user_group, sdate=today, edate=in_week_day, user_id=user.get_id())
-            timetable_for_week = ''
-
-            if timetable_data:
-                for timetable_day in timetable_data:
-                    timetable_for_week += render_day_timetable(timetable_day)
-
-                if len(timetable_for_week) > 5000:
-                    msg = "Перевищена кількість допустимих символів ({} із 5000).".format(len(timetable_for_week))
-                    bot.send_message(user.get_id(), msg, parse_mode='HTML', reply_markup=keyboard)
-                    return
-
-            elif isinstance(timetable_data, list) and not len(timetable_data):
-                timetable_for_week = "На тиждень пар не знайдено."
-            else:
-                return
-
-            bot.send_message(user.get_id(), timetable_for_week, parse_mode='HTML', reply_markup=keyboard)
+            bot.send_message(user.get_id(), 'На який саме?', reply_markup=week_type_keyboard)
 
         elif request == '\U0001F570 Час пар':
             lessons_time = "<b>Час пар:</b>\n" \
