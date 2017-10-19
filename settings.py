@@ -1,6 +1,7 @@
+# -*- coding: utf-8 -*-
 import os
 
-VERSION = '8.2'
+VERSION = '8.3'
 
 DATABASE = 'SmartyS_DB.sqlite'
 
