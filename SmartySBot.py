@@ -136,29 +136,28 @@ def start(message):
 @bot.callback_query_handler(func=lambda call_back: call_back.data in ('Поточний', 'Наступний'))
 def week_schedule_handler(call_back):
 
-    # bot.send_chat_action(call_back.message.chat.id, "typing")
-
     user = core.User(call_back.message.chat)
     user_group = user.get_group()
     request = call_back.data
 
     today = datetime.date.today()
-    current_week_day = today.isoweekday()
-    last_week_day_delta = 5 - current_week_day  # difference in days between friday and the current day
-    last_week_day = today + datetime.timedelta(days=last_week_day_delta)
+    current_week_day_number = today.isoweekday()
+    diff_between_friday_and_today = 5 - current_week_day_number
+    last_week_day = today + datetime.timedelta(days=diff_between_friday_and_today)
 
-    next_week_first_day = today + datetime.timedelta(days=last_week_day_delta + 3)
-    next_week_last_day = today + datetime.timedelta(days=last_week_day_delta + 7)
-
-    if last_week_day_delta < 0:
-        bot.edit_message_text(text='Цей навчальний тиждень закінчивсь, дивись наступний.',
-                              chat_id=user.get_id(), message_id=call_back.message.message_id, parse_mode="HTML")
-        return
+    next_week_first_day = today + datetime.timedelta(days=diff_between_friday_and_today + 3)
+    next_week_last_day = today + datetime.timedelta(days=diff_between_friday_and_today + 7)
 
     if request == 'Поточний':
+
+        if diff_between_friday_and_today < 0:
+            bot.edit_message_text(text='Цей навчальний тиждень закінчивсь, дивись наступний.',
+                                  chat_id=user.get_id(), message_id=call_back.message.message_id, parse_mode="HTML")
+            return
+
         timetable_data = get_timetable(group=user_group, sdate=today.strftime('%d.%m.%Y'),
                                        edate=last_week_day.strftime('%d.%m.%Y'), user_id=user.get_id())
-    else:
+    if request == 'Наступний':
         timetable_data = get_timetable(group=user_group, sdate=next_week_first_day.strftime('%d.%m.%Y'),
                                        edate=next_week_last_day.strftime('%d.%m.%Y'), user_id=user.get_id())
 
@@ -267,7 +266,7 @@ def select_teachers(message):
         bot.register_next_step_handler(sent, select_teacher_from_request)
 
 
-@bot.message_handler(func=lambda message: True, content_types=["text"])
+@bot.message_handler(content_types=["text"])
 def main_menu(message):
 
     bot.send_chat_action(message.chat.id, "typing")
