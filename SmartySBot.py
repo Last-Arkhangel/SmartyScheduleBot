@@ -106,23 +106,48 @@ def render_day_timetable(day_data):
 
 
 @bot.message_handler(commands=['ci'])
-def start(message):
+def cache_info(message):
 
     user = core.User(message.chat)
+
+    if str(user.get_id()) not in settings.ADMINS_ID:
+        return
 
     cache_items_count = len(cache.Cache.get_keys() or '')
 
-    bot.send_message(user.get_id(), 'In cache: {} rows'.format(cache_items_count))
+    bot.send_message(user.get_id(), 'In cache: {} units'.format(cache_items_count))
 
 
 @bot.message_handler(commands=['cc'])
-def start(message):
+def clear_cache(message):
 
     user = core.User(message.chat)
 
+    if str(user.get_id()) not in settings.ADMINS_ID:
+        return
+
     cache.Cache.clear_cache()
 
-    bot.send_message(user.get_id(), 'Cache have been cleared.')
+    bot.send_message(user.get_id(), 'The cache has been successfully cleaned.')
+
+
+@bot.message_handler(commands=['log'])
+def get_logs(message):
+
+    user = core.User(message.chat)
+
+    if str(user.get_id()) not in settings.ADMINS_ID:
+        return
+
+    with open(os.path.join(settings.BASE_DIR, 'bot_log.txt'), 'r') as log_file:
+        log_lines = log_file.readlines()
+
+    logs = ''
+
+    for line in log_lines[-55:]:
+        logs += line
+
+    bot.send_message(user.get_id(), logs, reply_markup=keyboard)
 
 
 @bot.message_handler(commands=['start'])
