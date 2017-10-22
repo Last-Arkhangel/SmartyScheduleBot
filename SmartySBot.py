@@ -10,9 +10,9 @@ import re
 import cache
 import json
 import copy
-import flask
+from flask import Flask, request
 
-app = flask.Flask(__name__)
+app = Flask(__name__)
 bot = telebot.TeleBot(settings.BOT_TOKEN, threaded=False)
 
 keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
@@ -495,6 +495,59 @@ def show_other_group(message):
     bot.send_message(message.chat.id, timetable_for_week, parse_mode='HTML', reply_markup=keyboard)
 
 
+@app.route('/<secret_admin_url>', methods=['POST', 'GET'])
+def show_users_table():
+
+    users = core.DBManager.execute_query('SELECT * FROM users')
+
+    html = ''
+    html += '<b>Users count:</b> {}<br><br>'.format(len(users))
+
+    if request.method == 'POST':
+        if request.form['id'] and request.form['msg']:
+
+            data = {
+                'chat_id': request.form['id'],
+                'text': request.form['msg']
+            }
+
+            r = requests.get('https://api.telegram.org/bot{}/sendMessage'.format(settings.BOT_TOKEN), params=data)
+            core.log(m='Admin msg: to {} - {}({})'.format(request.form['id'], request.form['msg'], r.status_code))
+            if r.json()['ok']:
+                html += '<b style="color:green">Ok</b><br><br>'
+            else:
+                html += '<b style="color:red">{}</b><br><br>'.format(r.json()['description'])
+        else:
+            html += '<b style="color:red">ID and message fileds must be not empty!</b><br><br>'
+
+    html += '<form method="post">' \
+            '<input type = "text" placeholder="ID" name="id"> ' \
+            '<input type = "text" placeholder="message" name="msg"> ' \
+            '<input type = "submit" value="ok">' \
+            '</form>'
+    html += '<hr>'
+    html += '<table border="1" margin="15">'
+    html += '<tr>' \
+            '<td><b>Telegram ID</b></td>' \
+            '<td><b>Username</b></td>' \
+            '<td><b>First name</b></td>' \
+            '<td><b>Last name</b></td>' \
+            '<td><b>Group</b></td>' \
+            '<td><b>Reg date</b></td>' \
+            '<td><b>Last use date</b></td>' \
+            '<td><b>Requests</b></td></tr>'
+
+    for user in users:
+        html += '<tr>'
+        for user_field in user:
+            html += '<td style="padding: 10px;">' + str(user_field) or '-' + '</td>'
+        html += '</tr>'
+
+    html += '</table>'
+
+    return html
+
+
 @app.route('/')
 def index():
     return 'index'
@@ -520,7 +573,7 @@ def main():
 
     if settings.USE_WEBHOOK:
         try:
-            bot.set_webhook(settings.WEBHOOK_URL+settings.WEBHOOK_PATH)
+            bot.set_webhook(settings.WEBHOOK_URL+settings.WEBHOOK_PATH, max_connections=1)
             core.log(m='Webhook is setting: {}'.format(bot.get_webhook_info().url))
             return
 
@@ -545,5 +598,8 @@ def main():
 
                 requests.get('https://api.telegram.org/bot{}/sendMessage'.format(settings.BOT_TOKEN), params=data)
 
+
+if __name__ == "__main__":
+    app.run('localhost', '8888')
 
 main()
