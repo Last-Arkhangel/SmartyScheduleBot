@@ -344,15 +344,10 @@ def main_menu(message):
             bot.send_message(user.get_id(), 'На який саме?', reply_markup=week_type_keyboard)
 
         elif request == '\U0001F570 Час пар':
-            lessons_time = "<b>Час пар:</b>\n" \
-                           "{} 08:30-09:50\n{} 10:00-11:20\n" \
-                           "{} 11:40-13:00\n{} 13:10-14:30\n" \
-                           "{} 14:40-16:00\n{} 16:20-17:40 \n" \
-                           "{} 17:50-19:10\n{} 19:20-20:40".format(emoji_numbers[1], emoji_numbers[2], emoji_numbers[3],
-                                                                   emoji_numbers[4], emoji_numbers[5], emoji_numbers[6],
-                                                                   emoji_numbers[7], emoji_numbers[8])
 
-            bot.send_message(user.get_id(), lessons_time, parse_mode='HTML', reply_markup=keyboard)
+            img = open('timetable.png', 'rb')
+
+            bot.send_photo(user.get_id(), img, reply_markup=keyboard)
 
         elif request == '\U00002699 Зм. групу':
 
@@ -405,8 +400,7 @@ def main_menu(message):
 
             sent = bot.send_message(message.chat.id,
                                     'Для того щоб подивитись розклад викладача на поточний тиждень - '
-                                    'введи його прізвище.',
-                                    reply_markup=keyboard)
+                                    'введи його прізвище.')
             bot.register_next_step_handler(sent, select_teachers)
 
         elif re.search(r'^(\d{1,2})\.(\d{1,2})$', request):
@@ -460,7 +454,7 @@ def main_menu(message):
             bot.send_message(user.get_id(), timetable_for_days, parse_mode='HTML', reply_markup=keyboard)
 
         else:
-            bot.send_message(user.get_id(), '\U0001F440', reply_markup=keyboard)
+            bot.send_message(user.get_id(), '\U0001F914', reply_markup=keyboard)
 
     else:
         bot.send_message(message.chat.id, 'Щоб вказати групу жми -> /start')
@@ -599,7 +593,7 @@ def main():
                 requests.get('https://api.telegram.org/bot{}/sendMessage'.format(settings.BOT_TOKEN), params=data)
 
 
-if __name__ == "__main__":
-    app.run('localhost', '8888')
+#if __name__ == "__main__":
+#    app.run('localhost', '8888')
 
 main()
