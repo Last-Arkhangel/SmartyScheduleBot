@@ -16,9 +16,9 @@ app = Flask(__name__)
 bot = telebot.TeleBot(settings.BOT_TOKEN, threaded=False)
 
 keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-keyboard.row('\U0001F4D7 Сьогодні', '\U0001F4D8 Завтра', '\U0001F4DA На тиждень')
-keyboard.row('\U0001F464 По викладачу', '\U0001F570 Час пар', '\U0001F465 По групі')
-keyboard.row('\U00002699 Зм. групу', '\U0001F308 Погода', '\U0001f4ac Довідка')
+keyboard.row('\U0001F4D7', '\U0001F4D8', '\U0001F4DA')
+keyboard.row('\U0001F464', '\U0001F552', '\U0001F465')
+keyboard.row('\U00002699', '\U00002744', '\U00002753')
 
 emoji_numbers = ['0⃣', '1⃣', '2⃣', '3⃣', '4⃣', '5⃣', '6⃣', '7⃣', '8⃣', '9⃣']
 
@@ -304,7 +304,7 @@ def main_menu(message):
 
         core.log(message.chat, '> {}'.format(message.text))
 
-        if request == '\U0001F4D7 Сьогодні':
+        if request == '\U0001F4D7 Сьогодні' or request == '\U0001F4D7':  # Today
 
             timetable_data = get_timetable(group=user_group, user_id=user.get_id())
 
@@ -317,7 +317,7 @@ def main_menu(message):
 
             bot.send_message(user.get_id(), timetable_for_today, parse_mode='HTML', reply_markup=keyboard)
 
-        elif request == '\U0001F4D8 Завтра':
+        elif request == '\U0001F4D8 Завтра' or request == '\U0001F4D8':  # Tomorrow
 
             tomorrow = datetime.date.today() + datetime.timedelta(days=1)
             tom_day = tomorrow.strftime('%d.%m.%Y')
@@ -333,7 +333,7 @@ def main_menu(message):
 
             bot.send_message(user.get_id(), timetable_for_tomorrow, parse_mode='HTML', reply_markup=keyboard)
 
-        elif request == '\U0001F4DA На тижні' or request == '\U0001F4DA На тиждень':
+        elif request == '\U0001F4DA' or request == '\U0001F4DA На тиждень':  # Week
 
             week_type_keyboard = telebot.types.InlineKeyboardMarkup()
             week_type_keyboard.row(
@@ -341,15 +341,15 @@ def main_menu(message):
                   name in ["Поточний", "Наступний"]]
             )
 
-            bot.send_message(user.get_id(), 'На який саме?', reply_markup=week_type_keyboard)
+            bot.send_message(user.get_id(), 'На який тижень?', reply_markup=week_type_keyboard)
 
-        elif request == '\U0001F570 Час пар':
+        elif request == '\U0001F570 Час пар' or request == '\U0001F552':
 
             img = open('timetable.png', 'rb')
 
             bot.send_photo(user.get_id(), img, reply_markup=keyboard)
 
-        elif request == '\U00002699 Зм. групу':
+        elif request == '\U00002699 Зм. групу' or request == '\U00002699':
 
             user_group = user.get_group()
 
@@ -361,7 +361,7 @@ def main_menu(message):
             sent = bot.send_message(message.chat.id, msg, parse_mode='HTML', reply_markup=cancel_kb)
             bot.register_next_step_handler(sent, set_group)
 
-        elif request == '\U0001f4ac Довідка':
+        elif request == '\U0001f4ac Довідка' or request == '\U00002753':
 
             try:
                 forecast_update_date = os.path.getmtime(os.path.join(settings.BASE_DIR, 'forecast.txt'))
@@ -370,22 +370,19 @@ def main_menu(message):
             except Exception:
                 mod_time = '-'
 
-            msg = "Для пошуку розкладу по конкретним датам вводь:\n " \
-                  "<b> 15.05</b> - по дню\n <b> 15.05-22.05</b> - по кільком дням\n" \
-                  "__________________________\n" \
-                  "Якщо ти маєш пропозиції щодо покращення, повідомлення про помилки " \
-                  "пиши сюди:\n <b>Телеграм:</b> @Koocherov \n <b>VK:</b> vk.com/koocherov\n" \
-                  "__________________________\n<b>Версія:</b> {}\n<b>Оновлення погоди:</b> {}"
+            msg = "Для пошуку по датам : <b>15.05</b> або <b>15.05-22.05</b>\n\n" \
+                  "<b>Версія:</b> {}\n<b>Оновлення погоди:</b> {}\n" \
+                  "<b>Розробник:</b> @Koocherov\n"
 
             bot.send_message(message.chat.id, msg.format(settings.VERSION, mod_time),
                              reply_markup=keyboard, parse_mode='HTML')
 
-        elif request == '\U0001F465 По групі':
+        elif request == '\U0001F465 По групі' or request == '\U0001F465':
             sent = bot.send_message(message.chat.id,
                                     'Для того щоб подивитись розклад будь якої групи на тиждень введи її назву')
             bot.register_next_step_handler(sent, show_other_group)
 
-        elif request == '\U0001F308 Погода':
+        elif request == '\U0001F308 Погода' or request == '\U00002744':
 
             try:
                 with open(os.path.join(settings.BASE_DIR, 'forecast.txt'), 'r') as forecast_file:
@@ -396,7 +393,7 @@ def main_menu(message):
 
                 bot.send_message(message.chat.id, 'Погоду не завантажено.', reply_markup=keyboard, parse_mode='HTML')
 
-        elif request == '\U0001F464 По викладачу':
+        elif request == '\U0001F464 По викладачу' or request == '\U0001F464':
 
             sent = bot.send_message(message.chat.id,
                                     'Для того щоб подивитись розклад викладача на поточний тиждень - '
