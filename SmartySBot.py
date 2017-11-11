@@ -345,7 +345,7 @@ def main_menu(message):
 
         elif request == '\U0001F570 Час пар' or request == '\U0001F552':
 
-            img = open('timetable.png', 'rb')
+            img = open(os.path.join(settings.BASE_DIR, 'timetable.png'), 'rb')
 
             bot.send_photo(user.get_id(), img, reply_markup=keyboard)
 
