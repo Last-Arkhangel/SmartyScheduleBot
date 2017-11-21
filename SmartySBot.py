@@ -16,9 +16,9 @@ app = Flask(__name__)
 bot = telebot.TeleBot(settings.BOT_TOKEN, threaded=False)
 
 keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-keyboard.row('\U0001F4D7', '\U0001F4D8', '\U0001F4DA')
-keyboard.row('\U0001F464', '\U0001F552', '\U0001F465')
-keyboard.row('\U00002699', '\U00002744', '\U00002753')
+keyboard.row('\U0001F4D7 Сьогодні', '\U0001F4D8 Завтра', '\U0001F4DA На тиждень')
+keyboard.row('\U0001F464 По викладачу', '\U0001F552 Час пар', '\U0001F465 По групі')
+keyboard.row('\U00002699 Зм. групу', '\U00002744 Погода', '\U00002753 Довідка')
 
 emoji_numbers = ['0⃣', '1⃣', '2⃣', '3⃣', '4⃣', '5⃣', '6⃣', '7⃣', '8⃣', '9⃣']
 
@@ -343,7 +343,7 @@ def main_menu(message):
 
             bot.send_message(user.get_id(), 'На який тижень?', reply_markup=week_type_keyboard)
 
-        elif request == '\U0001F570 Час пар' or request == '\U0001F552':
+        elif request == '\U0001F552 Час пар' or request == '\U0001F552':
 
             img = open(os.path.join(settings.BASE_DIR, 'timetable.png'), 'rb')
 
@@ -361,7 +361,7 @@ def main_menu(message):
             sent = bot.send_message(message.chat.id, msg, parse_mode='HTML', reply_markup=cancel_kb)
             bot.register_next_step_handler(sent, set_group)
 
-        elif request == '\U0001f4ac Довідка' or request == '\U00002753':
+        elif request == '\U00002753 Довідка' or request == '\U00002753':
 
             try:
                 forecast_update_date = os.path.getmtime(os.path.join(settings.BASE_DIR, 'forecast.txt'))
@@ -382,7 +382,7 @@ def main_menu(message):
                                     'Для того щоб подивитись розклад будь якої групи на тиждень введи її назву')
             bot.register_next_step_handler(sent, show_other_group)
 
-        elif request == '\U0001F308 Погода' or request == '\U00002744':
+        elif request == '\U00002744 Погода' or request == '\U00002744':
 
             try:
                 with open(os.path.join(settings.BASE_DIR, 'forecast.txt'), 'r') as forecast_file:
