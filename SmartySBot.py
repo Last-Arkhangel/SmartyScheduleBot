@@ -58,7 +58,7 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
         bot.send_message(user_id, 'Помилка з\'єднання із сайтом Деканату. Спробуй пізніше.', reply_markup=keyboard)
         return False
 
-    parsed_page = BeautifulSoup(page.content, 'html.parser')
+    parsed_page = BeautifulSoup(page.content, 'html5lib')
     all_days_list = parsed_page.find_all('div', class_='col-md-6')[1:]
     all_days_lessons = []
 
@@ -66,7 +66,7 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
         all_days_lessons.append({
             'day': one_day_table.find('h4').find('small').text,
             'date': one_day_table.find('h4').text[:5],
-            'lessons': [' '.join(lesson.text.split()) for lesson in one_day_table.find_all('td')[1::2]]
+            'lessons': [' '.join(lesson.text.split()) for lesson in one_day_table.find_all('td')[2::3]]
         })
 
     if all_days_lessons and settings.USE_CACHE:  # if timetable exists, put it to cache
@@ -84,14 +84,14 @@ def render_day_timetable(day_data):
     lessons = day_data['lessons']
 
     start_index = 0
-    end_index = 7
+    end_index = len(lessons) - 1
 
     for i in range(8):
         if lessons[i]:
             start_index = i
             break
 
-    for i in range(7, -1, -1):
+    for i in range(end_index, -1, -1):
         if lessons[i]:
             end_index = i
             break
