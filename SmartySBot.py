@@ -58,7 +58,7 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
         bot.send_message(user_id, 'Помилка з\'єднання із сайтом Деканату. Спробуй пізніше.', reply_markup=keyboard)
         return False
 
-    parsed_page = BeautifulSoup(page.content, 'html.parser')
+    parsed_page = BeautifulSoup(page.content, 'html5lib')
     all_days_list = parsed_page.find_all('div', class_='col-md-6')[1:]
     all_days_lessons = []
 
@@ -66,7 +66,7 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
         all_days_lessons.append({
             'day': one_day_table.find('h4').find('small').text,
             'date': one_day_table.find('h4').text[:5],
-            'lessons': [' '.join(lesson.text.split()) for lesson in one_day_table.find_all('td')[1::2]]
+            'lessons': [' '.join(lesson.text.split()) for lesson in one_day_table.find_all('td')[2::3]]
         })
 
     if all_days_lessons and settings.USE_CACHE:  # if timetable exists, put it to cache
@@ -84,14 +84,14 @@ def render_day_timetable(day_data):
     lessons = day_data['lessons']
 
     start_index = 0
-    end_index = 7
+    end_index = len(lessons) - 1
 
     for i in range(8):
         if lessons[i]:
             start_index = i
             break
 
-    for i in range(7, -1, -1):
+    for i in range(end_index, -1, -1):
         if lessons[i]:
             end_index = i
             break
@@ -370,7 +370,7 @@ def main_menu(message):
             except Exception:
                 mod_time = '-'
 
-            msg = "Для пошуку по датам : <b>15.05</b> або <b>15.05-22.05</b>\n\n" \
+            msg = "Для пошуку по датам : <b>15.05</b> або <b>15.05-22.05</b> або <b>1.1.18-10.1.18</b>\n\n" \
                   "<b>Версія:</b> {}\n<b>Оновлення погоди:</b> {}\n" \
                   "<b>Розробник:</b> @Koocherov\n"
 
@@ -425,6 +425,56 @@ def main_menu(message):
 
             s_date = message.text.split('-')[0] + '.' + str(datetime.date.today().year)
             e_date = message.text.split('-')[1] + '.' + str(datetime.date.today().year)
+            timetable_for_days = ''
+            timetable_data = get_timetable(group=user_group, sdate=s_date, edate=e_date, user_id=user.get_id())
+
+            if timetable_data:
+                for timetable_day in timetable_data:
+                    timetable_for_days += render_day_timetable(timetable_day)
+
+                if len(timetable_for_days) > 5000:
+                    msg = "Введи меншу кількість днів." \
+                          " Перевищена кількість допустимих символів ({} із 5000).".format(len(timetable_for_days))
+                    bot.send_message(user.get_id(), msg, parse_mode='HTML', reply_markup=keyboard)
+                    return
+
+            elif isinstance(timetable_data, list) and not len(timetable_data):
+                msg = 'Щоб подивитися розклад на конкретний день, введи дату в такому форматі:' \
+                      '\n<b>05.03</b> або <b>5.3</b>\nПо кільком дням: \n<b>5.03-15.03</b>\n' \
+                      '\nЯкщо розклад не приходить введи меншу кількість днів.' \
+                      '\nДата вводиться без пробілів (день.місяць)<b> рік вводити не треба</b> '
+                timetable_for_days = 'На <b>{} - {}</b>, для групи <b>{}</b> пар не знайдено.\n\n{}'.format(s_date, e_date,
+                                                                                                            user_group, msg)
+            else:
+                return
+
+            bot.send_message(user.get_id(), timetable_for_days, parse_mode='HTML', reply_markup=keyboard)
+
+        elif re.search(r'^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$', request):
+
+            date = request
+            timetable_data = get_timetable(group=user_group, edate=date, sdate=date, user_id=user.get_id())
+
+            if timetable_data:
+                timetable_for_date = render_day_timetable(timetable_data[0])
+            elif isinstance(timetable_data, list) and not len(timetable_data):
+                msg = 'Щоб подивитися розклад на конкретний день, введи дату в такому форматі:' \
+                      '\n<b>05.03</b> або <b>5.3</b>\nПо кільком дням: \n<b>5.03-15.03</b>\n' \
+                      '\nЯкщо розклад не приходить введи меншу кількість днів ' \
+                      '\nДата вводиться без пробілів (день.місяць)<b> рік вводити не треба</b> ' \
+
+                timetable_for_date = 'На <b>{}</b>, для групи <b>{}</b> пар не знайдено.\n\n{}'.format(date,
+                                                                                                       user_group,
+                                                                                                       msg)
+            else:
+                return
+
+            bot.send_message(message.chat.id, timetable_for_date, parse_mode='HTML', reply_markup=keyboard)
+
+        elif re.search(r'^(\d{1,2})\.(\d{1,2})\.(\d{2,4})-(\d{1,2})\.(\d{1,2})\.(\d{2,4})$', request):
+
+            s_date = request.split('-')[0]
+            e_date = request.split('-')[1]
             timetable_for_days = ''
             timetable_data = get_timetable(group=user_group, sdate=s_date, edate=e_date, user_id=user.get_id())
 
@@ -541,7 +591,7 @@ def show_users_table():
 
 @app.route('/')
 def index():
-    return 'index'
+    return 'Main page.'
 
 
 @app.route(settings.WEBHOOK_PATH, methods=['POST'])
