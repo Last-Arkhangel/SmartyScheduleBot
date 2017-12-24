@@ -304,7 +304,7 @@ def main_menu(message):
 
         core.log(message.chat, '> {}'.format(message.text))
 
-        if request == '\U0001F4D7 Сьогодні' or request == '\U0001F4D7':  # Today
+        if request == '\U0001F4D7 Сьогодні':  # Today
 
             timetable_data = get_timetable(group=user_group, user_id=user.get_id())
 
@@ -317,7 +317,7 @@ def main_menu(message):
 
             bot.send_message(user.get_id(), timetable_for_today, parse_mode='HTML', reply_markup=keyboard)
 
-        elif request == '\U0001F4D8 Завтра' or request == '\U0001F4D8':  # Tomorrow
+        elif request == '\U0001F4D8 Завтра':  # Tomorrow
 
             tomorrow = datetime.date.today() + datetime.timedelta(days=1)
             tom_day = tomorrow.strftime('%d.%m.%Y')
@@ -333,7 +333,7 @@ def main_menu(message):
 
             bot.send_message(user.get_id(), timetable_for_tomorrow, parse_mode='HTML', reply_markup=keyboard)
 
-        elif request == '\U0001F4DA' or request == '\U0001F4DA На тиждень':  # For a week
+        elif request == '\U0001F4DA На тиждень':  # For a week
 
             if datetime.date.today().isoweekday() in (6, 7):  # If current day is Saturday or Sunday
 
@@ -373,13 +373,13 @@ def main_menu(message):
 
             bot.send_message(user.get_id(), 'На який тиждень?', reply_markup=week_type_keyboard)
 
-        elif request == '\U0001F552 Час пар' or request == '\U0001F552':
+        elif request == '\U0001F552 Час пар':
 
             img = open(os.path.join(settings.BASE_DIR, 'timetable.png'), 'rb')
 
             bot.send_photo(user.get_id(), img, reply_markup=keyboard)
 
-        elif request == '\U00002699 Зм. групу' or request == '\U00002699':
+        elif request == '\U00002699 Зм. групу':
 
             user_group = user.get_group()
 
@@ -391,7 +391,7 @@ def main_menu(message):
             sent = bot.send_message(message.chat.id, msg, parse_mode='HTML', reply_markup=cancel_kb)
             bot.register_next_step_handler(sent, set_group)
 
-        elif request == '\U00002753 Довідка' or request == '\U00002753':
+        elif request == '\U00002753 Довідка':
 
             try:
                 forecast_update_date = os.path.getmtime(os.path.join(settings.BASE_DIR, 'forecast.txt'))
@@ -407,12 +407,12 @@ def main_menu(message):
             bot.send_message(message.chat.id, msg.format(settings.VERSION, mod_time),
                              reply_markup=keyboard, parse_mode='HTML')
 
-        elif request == '\U0001F465 По групі' or request == '\U0001F465':
+        elif request == '\U0001F465 По групі':
             sent = bot.send_message(message.chat.id,
                                     'Для того щоб подивитись розклад будь якої групи на тиждень введи її назву')
             bot.register_next_step_handler(sent, show_other_group)
 
-        elif request == '\U00002744 Погода' or request == '\U00002744':
+        elif request == '\U00002744 Погода':
 
             try:
                 with open(os.path.join(settings.BASE_DIR, 'forecast.txt'), 'r') as forecast_file:
@@ -423,7 +423,7 @@ def main_menu(message):
 
                 bot.send_message(message.chat.id, 'Погоду не завантажено.', reply_markup=keyboard, parse_mode='HTML')
 
-        elif request == '\U0001F464 По викладачу' or request == '\U0001F464':
+        elif request == '\U0001F464 По викладачу':
 
             sent = bot.send_message(message.chat.id,
                                     'Для того щоб подивитись розклад викладача на поточний тиждень - '
@@ -670,7 +670,7 @@ def main():
                 requests.get('https://api.telegram.org/bot{}/sendMessage'.format(settings.BOT_TOKEN), params=data)
 
 
-#if __name__ == "__main__":
-#    app.run('localhost', '8888')
+# if __name__ == "__main__":
+#     app.run('localhost', '8888')
 
 main()
