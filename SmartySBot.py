@@ -175,7 +175,7 @@ def week_schedule_handler(call_back):
 
     if request == 'Поточний':
 
-        if diff_between_friday_and_today < 0:
+        if diff_between_friday_and_today < 0:  # TODO Del this condition
             bot.edit_message_text(text='Цей навчальний тиждень закінчивсь, дивись наступний.',
                                   chat_id=user.get_id(), message_id=call_back.message.message_id, parse_mode="HTML")
             return
@@ -304,7 +304,7 @@ def main_menu(message):
 
         core.log(message.chat, '> {}'.format(message.text))
 
-        if request == '\U0001F4D7 Сьогодні' or request == '\U0001F4D7':  # Today
+        if request == '\U0001F4D7 Сьогодні':  # Today
 
             timetable_data = get_timetable(group=user_group, user_id=user.get_id())
 
@@ -317,7 +317,7 @@ def main_menu(message):
 
             bot.send_message(user.get_id(), timetable_for_today, parse_mode='HTML', reply_markup=keyboard)
 
-        elif request == '\U0001F4D8 Завтра' or request == '\U0001F4D8':  # Tomorrow
+        elif request == '\U0001F4D8 Завтра':  # Tomorrow
 
             tomorrow = datetime.date.today() + datetime.timedelta(days=1)
             tom_day = tomorrow.strftime('%d.%m.%Y')
@@ -333,7 +333,37 @@ def main_menu(message):
 
             bot.send_message(user.get_id(), timetable_for_tomorrow, parse_mode='HTML', reply_markup=keyboard)
 
-        elif request == '\U0001F4DA' or request == '\U0001F4DA На тиждень':  # Week
+        elif request == '\U0001F4DA На тиждень':  # For a week
+
+            if datetime.date.today().isoweekday() in (6, 7):  # If current day is Saturday or Sunday
+
+                timetable_for_week = ''
+                today = datetime.date.today()
+                current_week_day_number = today.isoweekday()
+                diff_between_friday_and_today = 5 - current_week_day_number
+                next_week_first_day = today + datetime.timedelta(days=diff_between_friday_and_today + 3)
+                next_week_last_day = today + datetime.timedelta(days=diff_between_friday_and_today + 7)
+
+                timetable_data = get_timetable(group=user_group, sdate=next_week_first_day.strftime('%d.%m.%Y'),
+                                               edate=next_week_last_day.strftime('%d.%m.%Y'), user_id=user.get_id())
+
+                if timetable_data:
+                    for timetable_day in timetable_data:
+                        timetable_for_week += render_day_timetable(timetable_day)
+
+                    if len(timetable_for_week) > 5000:
+                        msg = "Перевищена кількість допустимих символів ({} із 5000).".format(len(timetable_for_week))
+                        bot.send_message(user.get_id(), msg, parse_mode='HTML', reply_markup=keyboard)
+                        return
+
+                elif isinstance(timetable_data, list) and not len(timetable_data):
+                    timetable_for_week = "На тиждень, з {} по {} пар не знайдено.".format(
+                        next_week_first_day.strftime('%d.%m'), next_week_last_day.strftime('%d.%m'))
+
+                bot.send_message(text=timetable_for_week, chat_id=user.get_id(),
+                                 reply_markup=keyboard, parse_mode="HTML")
+
+                return
 
             week_type_keyboard = telebot.types.InlineKeyboardMarkup()
             week_type_keyboard.row(
@@ -341,15 +371,15 @@ def main_menu(message):
                   name in ["Поточний", "Наступний"]]
             )
 
-            bot.send_message(user.get_id(), 'На який тижень?', reply_markup=week_type_keyboard)
+            bot.send_message(user.get_id(), 'На який тиждень?', reply_markup=week_type_keyboard)
 
-        elif request == '\U0001F552 Час пар' or request == '\U0001F552':
+        elif request == '\U0001F552 Час пар':
 
             img = open(os.path.join(settings.BASE_DIR, 'timetable.png'), 'rb')
 
             bot.send_photo(user.get_id(), img, reply_markup=keyboard)
 
-        elif request == '\U00002699 Зм. групу' or request == '\U00002699':
+        elif request == '\U00002699 Зм. групу':
 
             user_group = user.get_group()
 
@@ -361,7 +391,7 @@ def main_menu(message):
             sent = bot.send_message(message.chat.id, msg, parse_mode='HTML', reply_markup=cancel_kb)
             bot.register_next_step_handler(sent, set_group)
 
-        elif request == '\U00002753 Довідка' or request == '\U00002753':
+        elif request == '\U00002753 Довідка':
 
             try:
                 forecast_update_date = os.path.getmtime(os.path.join(settings.BASE_DIR, 'forecast.txt'))
@@ -377,12 +407,12 @@ def main_menu(message):
             bot.send_message(message.chat.id, msg.format(settings.VERSION, mod_time),
                              reply_markup=keyboard, parse_mode='HTML')
 
-        elif request == '\U0001F465 По групі' or request == '\U0001F465':
+        elif request == '\U0001F465 По групі':
             sent = bot.send_message(message.chat.id,
                                     'Для того щоб подивитись розклад будь якої групи на тиждень введи її назву')
             bot.register_next_step_handler(sent, show_other_group)
 
-        elif request == '\U00002744 Погода' or request == '\U00002744':
+        elif request == '\U00002744 Погода':
 
             try:
                 with open(os.path.join(settings.BASE_DIR, 'forecast.txt'), 'r') as forecast_file:
@@ -393,7 +423,7 @@ def main_menu(message):
 
                 bot.send_message(message.chat.id, 'Погоду не завантажено.', reply_markup=keyboard, parse_mode='HTML')
 
-        elif request == '\U0001F464 По викладачу' or request == '\U0001F464':
+        elif request == '\U0001F464 По викладачу':
 
             sent = bot.send_message(message.chat.id,
                                     'Для того щоб подивитись розклад викладача на поточний тиждень - '
@@ -536,7 +566,7 @@ def show_other_group(message):
     bot.send_message(message.chat.id, timetable_for_week, parse_mode='HTML', reply_markup=keyboard)
 
 
-@app.route('/<secret_admin_url>', methods=['POST', 'GET'])
+@app.route(settings.ADMIN_PATH, methods=['POST', 'GET'])
 def show_users_table():
 
     users = core.DBManager.execute_query('SELECT * FROM users')
@@ -640,7 +670,7 @@ def main():
                 requests.get('https://api.telegram.org/bot{}/sendMessage'.format(settings.BOT_TOKEN), params=data)
 
 
-#if __name__ == "__main__":
-#    app.run('localhost', '8888')
+# if __name__ == "__main__":
+#     app.run('localhost', '8888')
 
 main()
