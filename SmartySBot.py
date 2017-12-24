@@ -175,7 +175,7 @@ def week_schedule_handler(call_back):
 
     if request == 'Поточний':
 
-        if diff_between_friday_and_today < 0:
+        if diff_between_friday_and_today < 0:  # TODO Del this condition
             bot.edit_message_text(text='Цей навчальний тиждень закінчивсь, дивись наступний.',
                                   chat_id=user.get_id(), message_id=call_back.message.message_id, parse_mode="HTML")
             return
@@ -333,7 +333,37 @@ def main_menu(message):
 
             bot.send_message(user.get_id(), timetable_for_tomorrow, parse_mode='HTML', reply_markup=keyboard)
 
-        elif request == '\U0001F4DA' or request == '\U0001F4DA На тиждень':  # Week
+        elif request == '\U0001F4DA' or request == '\U0001F4DA На тиждень':  # For a week
+
+            if datetime.date.today().isoweekday() in (6, 7):  # If current day is Saturday or Sunday
+
+                timetable_for_week = ''
+                today = datetime.date.today()
+                current_week_day_number = today.isoweekday()
+                diff_between_friday_and_today = 5 - current_week_day_number
+                next_week_first_day = today + datetime.timedelta(days=diff_between_friday_and_today + 3)
+                next_week_last_day = today + datetime.timedelta(days=diff_between_friday_and_today + 7)
+
+                timetable_data = get_timetable(group=user_group, sdate=next_week_first_day.strftime('%d.%m.%Y'),
+                                               edate=next_week_last_day.strftime('%d.%m.%Y'), user_id=user.get_id())
+
+                if timetable_data:
+                    for timetable_day in timetable_data:
+                        timetable_for_week += render_day_timetable(timetable_day)
+
+                    if len(timetable_for_week) > 5000:
+                        msg = "Перевищена кількість допустимих символів ({} із 5000).".format(len(timetable_for_week))
+                        bot.send_message(user.get_id(), msg, parse_mode='HTML', reply_markup=keyboard)
+                        return
+
+                elif isinstance(timetable_data, list) and not len(timetable_data):
+                    timetable_for_week = "На тиждень, з {} по {} пар не знайдено.".format(
+                        next_week_first_day.strftime('%d.%m'), next_week_last_day.strftime('%d.%m'))
+
+                bot.send_message(text=timetable_for_week, chat_id=user.get_id(),
+                                 reply_markup=keyboard, parse_mode="HTML")
+
+                return
 
             week_type_keyboard = telebot.types.InlineKeyboardMarkup()
             week_type_keyboard.row(
@@ -341,7 +371,7 @@ def main_menu(message):
                   name in ["Поточний", "Наступний"]]
             )
 
-            bot.send_message(user.get_id(), 'На який тижень?', reply_markup=week_type_keyboard)
+            bot.send_message(user.get_id(), 'На який тиждень?', reply_markup=week_type_keyboard)
 
         elif request == '\U0001F552 Час пар' or request == '\U0001F552':
 
@@ -536,7 +566,7 @@ def show_other_group(message):
     bot.send_message(message.chat.id, timetable_for_week, parse_mode='HTML', reply_markup=keyboard)
 
 
-@app.route('/<secret_admin_url>', methods=['POST', 'GET'])
+@app.route(settings.ADMIN_PATH, methods=['POST', 'GET'])
 def show_users_table():
 
     users = core.DBManager.execute_query('SELECT * FROM users')

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 
-VERSION = '8.9'
+VERSION = '8.10'
 
 DATABASE = 'SmartyS_DB.sqlite'
 
@@ -13,9 +13,11 @@ USE_CACHE = False
 
 USE_WEBHOOK = True
 
-WEBHOOK_URL = ''
+WEBHOOK_URL = '/<url>'
 
-WEBHOOK_PATH = '/whook'
+WEBHOOK_PATH = '/<url>'
+
+ADMIN_PATH = '/<url>'
 
 TIMETABLE_URL = 'https://dekanat.zu.edu.ua/cgi-bin/timetable.cgi'
 
