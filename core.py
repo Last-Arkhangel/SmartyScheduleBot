@@ -38,7 +38,7 @@ class User:
 
     def registration(self, group):
 
-        log(self.chat, 'Has been registered')
+        log(self.chat, 'Has been registered ({})'.format(group))
 
         query = "INSERT INTO users (t_id, username, first_name, last_name, u_group, register_date) " \
                 "VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'))"
@@ -97,7 +97,7 @@ def log(chat=None, m=''):
 
     now_time = datetime.datetime.now().strftime('%d-%m %H:%M:%S')
 
-    with open(os.path.join(settings.BASE_DIR, 'bot_log.txt'), 'a') as log_file:
+    with open(os.path.join(settings.BASE_DIR, 'bot_log.txt'), 'a', encoding="utf-8") as log_file:
         if chat:
             log_file.write('[{}]: ({} {}) {}\n'.format(now_time, chat.first_name, chat.last_name, m))
         else:
