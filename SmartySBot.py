@@ -10,6 +10,7 @@ import re
 import cache
 import json
 import copy
+from WeatherManager import WeatherManager
 from flask import Flask, request
 
 app = Flask(__name__)
@@ -52,7 +53,7 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
             return json.loads(cached_timetable[0][1])
 
     try:
-        page = requests.post(settings.TIMETABLE_URL, post_data, headers=http_headers, timeout=4)
+        page = requests.post(settings.TIMETABLE_URL, post_data, headers=http_headers, timeout=6)
     except Exception as ex:
         core.log(m='Error with Dekanat site connection: {}'.format(str(ex)))
         bot.send_message(user_id, 'Помилка з\'єднання із сайтом Деканату. Спробуй пізніше.', reply_markup=keyboard)
@@ -415,12 +416,16 @@ def main_menu(message):
         elif request == '\U00002744 Погода':
 
             try:
+
+                weather_manager = WeatherManager()
+                weather_manager.process_weather()
+
                 with open(os.path.join(settings.BASE_DIR, 'forecast.txt'), 'r') as forecast_file:
                     forecast = forecast_file.read()
 
                 bot.send_message(message.chat.id, forecast, reply_markup=keyboard, parse_mode='HTML')
-            except Exception:
 
+            except Exception:
                 bot.send_message(message.chat.id, 'Погоду не завантажено.', reply_markup=keyboard, parse_mode='HTML')
 
         elif request == '\U0001F464 По викладачу':
