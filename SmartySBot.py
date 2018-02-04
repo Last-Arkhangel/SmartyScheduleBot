@@ -420,7 +420,7 @@ def main_menu(message):
                 weather_manager = WeatherManager()
                 weather_manager.process_weather()
 
-                with open(os.path.join(settings.BASE_DIR, 'forecast.txt'), 'r') as forecast_file:
+                with open(os.path.join(settings.BASE_DIR, 'forecast.txt'), 'r', encoding="utf-8") as forecast_file:
                     forecast = forecast_file.read()
 
                 bot.send_message(message.chat.id, forecast, reply_markup=keyboard, parse_mode='HTML')
