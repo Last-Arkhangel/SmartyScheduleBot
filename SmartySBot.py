@@ -10,6 +10,7 @@ import re
 import cache
 import json
 import copy
+from WeatherManager import WeatherManager
 from flask import Flask, request
 
 app = Flask(__name__)
@@ -52,7 +53,7 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
             return json.loads(cached_timetable[0][1])
 
     try:
-        page = requests.post(settings.TIMETABLE_URL, post_data, headers=http_headers, timeout=4)
+        page = requests.post(settings.TIMETABLE_URL, post_data, headers=http_headers, timeout=6)
     except Exception as ex:
         core.log(m='Error with Dekanat site connection: {}'.format(str(ex)))
         bot.send_message(user_id, 'Помилка з\'єднання із сайтом Деканату. Спробуй пізніше.', reply_markup=keyboard)
@@ -139,7 +140,7 @@ def get_logs(message):
     if str(user.get_id()) not in settings.ADMINS_ID:
         return
 
-    with open(os.path.join(settings.BASE_DIR, 'bot_log.txt'), 'r') as log_file:
+    with open(os.path.join(settings.BASE_DIR, 'bot_log.txt'), 'r', encoding="utf-8") as log_file:
         log_lines = log_file.readlines()
 
     logs = ''
@@ -415,12 +416,16 @@ def main_menu(message):
         elif request == '\U00002744 Погода':
 
             try:
-                with open(os.path.join(settings.BASE_DIR, 'forecast.txt'), 'r') as forecast_file:
+
+                weather_manager = WeatherManager()
+                weather_manager.process_weather()
+
+                with open(os.path.join(settings.BASE_DIR, 'forecast.txt'), 'r', encoding="utf-8") as forecast_file:
                     forecast = forecast_file.read()
 
                 bot.send_message(message.chat.id, forecast, reply_markup=keyboard, parse_mode='HTML')
-            except Exception:
 
+            except Exception:
                 bot.send_message(message.chat.id, 'Погоду не завантажено.', reply_markup=keyboard, parse_mode='HTML')
 
         elif request == '\U0001F464 По викладачу':
@@ -473,8 +478,10 @@ def main_menu(message):
                       '\n<b>05.03</b> або <b>5.3</b>\nПо кільком дням: \n<b>5.03-15.03</b>\n' \
                       '\nЯкщо розклад не приходить введи меншу кількість днів.' \
                       '\nДата вводиться без пробілів (день.місяць)<b> рік вводити не треба</b> '
-                timetable_for_days = 'На <b>{} - {}</b>, для групи <b>{}</b> пар не знайдено.\n\n{}'.format(s_date, e_date,
-                                                                                                            user_group, msg)
+                timetable_for_days = 'На <b>{} - {}</b>, для групи <b>{}</b> пар не знайдено.\n\n{}'.format(s_date,
+                                                                                                            e_date,
+                                                                                                            user_group,
+                                                                                                            msg)
             else:
                 return
 
@@ -523,8 +530,10 @@ def main_menu(message):
                       '\n<b>05.03</b> або <b>5.3</b>\nПо кільком дням: \n<b>5.03-15.03</b>\n' \
                       '\nЯкщо розклад не приходить введи меншу кількість днів.' \
                       '\nДата вводиться без пробілів (день.місяць)<b> рік вводити не треба</b> '
-                timetable_for_days = 'На <b>{} - {}</b>, для групи <b>{}</b> пар не знайдено.\n\n{}'.format(s_date, e_date,
-                                                                                                            user_group, msg)
+                timetable_for_days = 'На <b>{} - {}</b>, для групи <b>{}</b> пар не знайдено.\n\n{}'.format(s_date,
+                                                                                                            e_date,
+                                                                                                            user_group,
+                                                                                                            msg)
             else:
                 return
 
@@ -619,12 +628,16 @@ def show_users_table():
     return html
 
 
-@app.route('/')
+@app.route('<Run url>')
 def index():
-    return 'Main page.'
+    core.User.create_user_table_if_not_exists()
+    bot.delete_webhook()
+    bot.set_webhook(settings.WEBHOOK_URL + settings.WEBHOOK_PATH, max_connections=1)
+    core.log(m='Webhook is setting: {}'.format(bot.get_webhook_info().url))
+    return 'ok'
 
 
-@app.route(settings.WEBHOOK_PATH, methods=['POST'])
+@app.route(settings.WEBHOOK_PATH, methods=['POST', 'GET'])
 def webhook():
     json_string = request.get_data().decode('utf-8')
     update = telebot.types.Update.de_json(json_string)
@@ -644,9 +657,9 @@ def main():
 
     if settings.USE_WEBHOOK:
         try:
-            bot.set_webhook(settings.WEBHOOK_URL+settings.WEBHOOK_PATH, max_connections=1)
+            bot.set_webhook(settings.WEBHOOK_URL + settings.WEBHOOK_PATH, max_connections=1)
             core.log(m='Webhook is setting: {}'.format(bot.get_webhook_info().url))
-            return
+            app.run()
 
         except Exception as ex:
             core.log(m='Error while setting webhook: {}'.format(str(ex)))
@@ -670,7 +683,5 @@ def main():
                 requests.get('https://api.telegram.org/bot{}/sendMessage'.format(settings.BOT_TOKEN), params=data)
 
 
-# if __name__ == "__main__":
-#     app.run('localhost', '8888')
-
-main()
+if __name__ == "__main__":
+    main()

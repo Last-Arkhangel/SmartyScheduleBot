@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 import os
 
-VERSION = '8.10'
+VERSION = '8.11'
 
 DATABASE = 'SmartyS_DB.sqlite'
 
-BOT_TOKEN = '<TOKEN>'
+BOT_TOKEN = '<token>'
+
+OPEN_WEATHER_MAP_TOKEN = '<token>'
 
 POLLING_INTERVAL = 2
 
@@ -25,7 +27,7 @@ HTTP_USER_AGENT = 'Telegram-SmartySBot'
 
 SEND_ERRORS_TO_ADMIN = True
 
-ADMINS_ID = ['204560928']
+ADMINS_ID = ['204560928', '203448442']
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
