@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 
-VERSION = '8.11'
+VERSION = '8.12'
 
 DATABASE = 'SmartyS_DB.sqlite'
 
@@ -30,6 +30,18 @@ SEND_ERRORS_TO_ADMIN = True
 ADMINS_ID = ['204560928', '203448442']
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+KEYBOARD = {
+    'TODAY': '\U0001F4D7 Сьогодні',
+    'TOMORROW': '\U0001F4D8 Завтра',
+    'FOR_A_WEEK': '\U0001F4DA На тиждень',
+    'FOR_A_TEACHER': '\U0001F464 По викладачу',
+    'TIMETABLE': '\U0001F552 Час пар',
+    'FOR_A_GROUP': '\U0001F465 По групі',
+    'CHANGE_GROUP': '\U00002699 Зм. групу',
+    'WEATHER': '\U00002744 Погода',
+    'HELP': '\U00002753 Довідка',
+}
 
 TEACHERS = [
     'Франовський Анатолій Цезарович',

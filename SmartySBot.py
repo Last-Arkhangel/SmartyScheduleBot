@@ -11,15 +11,16 @@ import cache
 import json
 import copy
 from WeatherManager import WeatherManager
+from settings import KEYBOARD
 from flask import Flask, request
 
 app = Flask(__name__)
 bot = telebot.TeleBot(settings.BOT_TOKEN, threaded=False)
 
 keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-keyboard.row('\U0001F4D7 Сьогодні', '\U0001F4D8 Завтра', '\U0001F4DA На тиждень')
-keyboard.row('\U0001F464 По викладачу', '\U0001F552 Час пар', '\U0001F465 По групі')
-keyboard.row('\U00002699 Зм. групу', '\U00002744 Погода', '\U00002753 Довідка')
+keyboard.row(KEYBOARD['TODAY'], KEYBOARD['TOMORROW'], KEYBOARD['FOR_A_WEEK'])
+keyboard.row(KEYBOARD['FOR_A_TEACHER'], KEYBOARD['TIMETABLE'], KEYBOARD['FOR_A_GROUP'])
+keyboard.row(KEYBOARD['CHANGE_GROUP'], KEYBOARD['WEATHER'], KEYBOARD['HELP'])
 
 emoji_numbers = ['0⃣', '1⃣', '2⃣', '3⃣', '4⃣', '5⃣', '6⃣', '7⃣', '8⃣', '9⃣']
 
@@ -305,7 +306,7 @@ def main_menu(message):
 
         core.log(message.chat, '> {}'.format(message.text))
 
-        if request == '\U0001F4D7 Сьогодні':  # Today
+        if request == KEYBOARD['TODAY']:  # Today
 
             timetable_data = get_timetable(group=user_group, user_id=user.get_id())
 
@@ -318,7 +319,7 @@ def main_menu(message):
 
             bot.send_message(user.get_id(), timetable_for_today, parse_mode='HTML', reply_markup=keyboard)
 
-        elif request == '\U0001F4D8 Завтра':  # Tomorrow
+        elif request == KEYBOARD['TOMORROW']:  # Tomorrow
 
             tomorrow = datetime.date.today() + datetime.timedelta(days=1)
             tom_day = tomorrow.strftime('%d.%m.%Y')
@@ -334,7 +335,7 @@ def main_menu(message):
 
             bot.send_message(user.get_id(), timetable_for_tomorrow, parse_mode='HTML', reply_markup=keyboard)
 
-        elif request == '\U0001F4DA На тиждень':  # For a week
+        elif request == KEYBOARD['FOR_A_WEEK']:  # For a week
 
             if datetime.date.today().isoweekday() in (6, 7):  # If current day is Saturday or Sunday
 
@@ -374,13 +375,13 @@ def main_menu(message):
 
             bot.send_message(user.get_id(), 'На який тиждень?', reply_markup=week_type_keyboard)
 
-        elif request == '\U0001F552 Час пар':
+        elif request == KEYBOARD['TIMETABLE']:
 
             img = open(os.path.join(settings.BASE_DIR, 'timetable.png'), 'rb')
 
             bot.send_photo(user.get_id(), img, reply_markup=keyboard)
 
-        elif request == '\U00002699 Зм. групу':
+        elif request == KEYBOARD['CHANGE_GROUP']:
 
             user_group = user.get_group()
 
@@ -392,7 +393,7 @@ def main_menu(message):
             sent = bot.send_message(message.chat.id, msg, parse_mode='HTML', reply_markup=cancel_kb)
             bot.register_next_step_handler(sent, set_group)
 
-        elif request == '\U00002753 Довідка':
+        elif request == KEYBOARD['HELP']:
 
             try:
                 forecast_update_date = os.path.getmtime(os.path.join(settings.BASE_DIR, 'forecast.txt'))
@@ -408,12 +409,12 @@ def main_menu(message):
             bot.send_message(message.chat.id, msg.format(settings.VERSION, mod_time),
                              reply_markup=keyboard, parse_mode='HTML')
 
-        elif request == '\U0001F465 По групі':
+        elif request == KEYBOARD['FOR_A_GROUP']:
             sent = bot.send_message(message.chat.id,
                                     'Для того щоб подивитись розклад будь якої групи на тиждень введи її назву')
             bot.register_next_step_handler(sent, show_other_group)
 
-        elif request == '\U00002744 Погода':
+        elif request == KEYBOARD['WEATHER']:
 
             try:
 
@@ -428,7 +429,7 @@ def main_menu(message):
             except Exception:
                 bot.send_message(message.chat.id, 'Погоду не завантажено.', reply_markup=keyboard, parse_mode='HTML')
 
-        elif request == '\U0001F464 По викладачу':
+        elif request == KEYBOARD['FOR_A_TEACHER']:
 
             sent = bot.send_message(message.chat.id,
                                     'Для того щоб подивитись розклад викладача на поточний тиждень - '
@@ -649,11 +650,9 @@ def webhook():
 def main():
 
     core.User.create_user_table_if_not_exists()
-    bot.delete_webhook()
+    cache.Cache.create_cache_table_if_not_exists()
 
-    if settings.USE_CACHE:
-        cache.Cache.create_cache_table_if_not_exists()
-        # cache.Cache.clear_cache()
+    bot.delete_webhook()
 
     if settings.USE_WEBHOOK:
         try:
