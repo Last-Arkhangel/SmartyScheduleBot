@@ -82,7 +82,8 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
 
 def render_day_timetable(day_data):
 
-    day_timetable = '.....::::: <b>\U0001F4CB {}</b> {} :::::.....\n\n'.format(day_data['day'], day_data['date'])
+    # day_timetable = '.....::::: <b>\U0001F4CB {}</b> {} :::::.....\n\n'.format(day_data['day'], day_data['date'])
+    day_timetable = '❄☃️️❄️ <b>{}</b> {} ❄☃️️❄️\n\n'.format(day_data['day'], day_data['date'])
     lessons = day_data['lessons']
 
     start_index = 0
@@ -154,8 +155,7 @@ def get_logs(message):
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    sent = bot.send_message(message.chat.id, 'Йоу, {} 😊. Я Бот, який допоможе тобі швидко дізнаватись свій розклад '
-                                             'прямо тут. Для початку '
+    sent = bot.send_message(message.chat.id, 'Йоу, {} 😊. Я можу показати твій розклад прямо тут. Для початку '
                                              'скажи мені свою групу (Напр. 44_і_д)'.format(message.chat.first_name))
     bot.register_next_step_handler(sent, set_group)
 
@@ -228,7 +228,7 @@ def set_group(message):
     else:
         user.registration(group)
 
-    bot.send_message(message.chat.id, 'Чудово 👍, відтепер я буду показувати розклад для групи {}.'.
+    bot.send_message(message.chat.id, 'Добро 👍, відтепер я буду показувати розклад для групи {}.'.
                      format(group), reply_markup=keyboard)
 
 
@@ -304,8 +304,19 @@ def main_menu(message):
 
     if user_group:
 
+        def is_date_request_or_other():
+
+            if re.search(r'^(\d{1,2})\.(\d{1,2})$', request) or \
+               re.search(r'^(\d{1,2})\.(\d{1,2})-(\d{1,2})\.(\d{1,2})$', request) or \
+               re.search(r'^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$', request) or \
+               re.search(r'^(\d{1,2})\.(\d{1,2})\.(\d{2,4})-(\d{1,2})\.(\d{1,2})\.(\d{2,4})$', request):
+
+                return 'FOR_A_DATE'
+
+            return 'OTHER'
+
         # Reversed keys and values in dictionary
-        request_code = {v: k for k, v in KEYBOARD.items()}.get(request, 'OTHER')
+        request_code = {v: k for k, v in KEYBOARD.items()}.get(request, is_date_request_or_other())
         core.MetricsManager.track(user.get_id(), request_code, user_group)
 
         core.log(message.chat, '> {}'.format(message.text))
@@ -377,7 +388,7 @@ def main_menu(message):
                   name in ["Поточний", "Наступний"]]
             )
 
-            bot.send_message(user.get_id(), 'На який тиждень?', reply_markup=week_type_keyboard)
+            bot.send_message(user.get_id(), 'На який?', reply_markup=week_type_keyboard)
 
         elif request == KEYBOARD['TIMETABLE']:
 
@@ -548,7 +559,7 @@ def main_menu(message):
             bot.send_message(user.get_id(), '\U0001F914', reply_markup=keyboard)
 
     else:
-        bot.send_message(message.chat.id, 'Щоб вказати групу жми -> /start')
+        bot.send_message(user.get_id(), 'Не знайшов твою групу, щоб вказати - введи /start')
 
 
 def show_other_group(message):
@@ -683,4 +694,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-    #app.run(debug=True)
+    app.run(debug=True)
