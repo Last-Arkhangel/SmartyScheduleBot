@@ -106,7 +106,7 @@ class WeatherManager:
                                                    self.getEmoji(hour_forecast['weather'][0]['id']),
                                                    hour_forecast['weather'][0]['description'])
 
-        with open('forecast.txt', 'w', encoding="utf-8") as f_file:
+        with open(os.path.join(settings.BASE_DIR, 'forecast.txt'), 'w', encoding="utf-8") as f_file:
             f_file.write(result)
 
     def write_to_log(self):
@@ -115,7 +115,7 @@ class WeatherManager:
 
         now_time = datetime.datetime.now().strftime('%d-%m %H:%M:%S')
 
-        with open('bot_log.txt', 'a', encoding="utf-8") as log_file:
+        with open(os.path.join(settings.BASE_DIR, 'bot_log.txt'), 'a', encoding="utf-8") as log_file:
             log_file.write('[{}]: (Server) > {}\n'.format(now_time, m))
 
     def check_if_forecast_need_update(self):

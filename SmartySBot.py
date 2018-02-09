@@ -12,9 +12,9 @@ import json
 import copy
 from WeatherManager import WeatherManager
 from settings import KEYBOARD
-from flask import Flask, request
+from flask import Flask, request, render_template, jsonify
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='site', static_folder='site/static', static_url_path='/fl/static')
 bot = telebot.TeleBot(settings.BOT_TOKEN, threaded=False)
 
 keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
@@ -304,6 +304,10 @@ def main_menu(message):
 
     if user_group:
 
+        # Reversed keys and values in dictionary
+        request_code = {v: k for k, v in KEYBOARD.items()}.get(request, 'OTHER')
+        core.MetricsManager.track(user.get_id(), request_code, user_group)
+
         core.log(message.chat, '> {}'.format(message.text))
 
         if request == KEYBOARD['TODAY']:  # Today
@@ -576,65 +580,60 @@ def show_other_group(message):
     bot.send_message(message.chat.id, timetable_for_week, parse_mode='HTML', reply_markup=keyboard)
 
 
-@app.route(settings.ADMIN_PATH, methods=['POST', 'GET'])
-def show_users_table():
+@app.route('/fl/metrics')
+def admin_metrics():
 
-    users = core.DBManager.execute_query('SELECT * FROM users')
+    all_users_count = core.MetricsManager.get_all_users_count()
+    all_groups_count = core.MetricsManager.get_all_groups_count()
+    users_registered_week = core.MetricsManager.get_number_of_users_registered_during_the_week()
+    active_today_users_count = core.MetricsManager.get_active_today_users_count()
+    active_yesterday_users_count = core.MetricsManager.get_active_yesterday_users_count()
+    active_week_users_count = core.MetricsManager.get_active_week_users_count()
 
-    html = ''
-    html += '<b>Users count:</b> {}<br><br>'.format(len(users))
+    metrics_values = {
+        'all_users_count': all_users_count,
+        'all_groups_count': all_groups_count,
+        'users_registered_week': users_registered_week,
+        'active_today_users_count': active_today_users_count,
+        'active_yesterday_users_count': active_yesterday_users_count,
+        'active_week_users_count': active_week_users_count,
+    }
 
-    if request.method == 'POST':
-        if request.form['id'] and request.form['msg']:
-
-            data = {
-                'chat_id': request.form['id'],
-                'text': request.form['msg']
-            }
-
-            r = requests.get('https://api.telegram.org/bot{}/sendMessage'.format(settings.BOT_TOKEN), params=data)
-            core.log(m='Admin msg: to {} - {}({})'.format(request.form['id'], request.form['msg'], r.status_code))
-            if r.json()['ok']:
-                html += '<b style="color:green">Ok</b><br><br>'
-            else:
-                html += '<b style="color:red">{}</b><br><br>'.format(r.json()['description'])
-        else:
-            html += '<b style="color:red">ID and message fileds must be not empty!</b><br><br>'
-
-    html += '<form method="post">' \
-            '<input type = "text" placeholder="ID" name="id"> ' \
-            '<input type = "text" placeholder="message" name="msg"> ' \
-            '<input type = "submit" value="ok">' \
-            '</form>'
-    html += '<hr>'
-    html += '<table border="1" margin="15">'
-    html += '<tr>' \
-            '<td><b>Telegram ID</b></td>' \
-            '<td><b>Username</b></td>' \
-            '<td><b>First name</b></td>' \
-            '<td><b>Last name</b></td>' \
-            '<td><b>Group</b></td>' \
-            '<td><b>Reg date</b></td>' \
-            '<td><b>Last use date</b></td>' \
-            '<td><b>Requests</b></td></tr>'
-
-    for user in users:
-        html += '<tr>'
-        for user_field in user:
-            html += '<td style="padding: 10px;">' + str(user_field) or '-' + '</td>'
-        html += '</tr>'
-
-    html += '</table>'
-
-    return html
+    return render_template('metrics.html', data=metrics_values)
 
 
-@app.route('<Run url>')
+@app.route('/fl/statistics_by_types_during_the_week')
+def statistics_by_types_during_the_week():
+
+    stats = core.MetricsManager.get_statistics_by_types_during_the_week()
+
+    return jsonify(data=stats)
+
+
+@app.route('/fl/last_days_statistics')
+def last_days_statistics():
+
+    days_statistics = core.MetricsManager.get_last_days_statistics()
+
+    stats = {'labels': [], 'data': []}
+
+    # Sorting by dates
+    for day_stat in sorted(days_statistics):
+
+        stats['labels'].append(day_stat)
+        stats['data'].append(days_statistics[day_stat])
+
+    return jsonify(data=stats)
+
+
+@app.route('/fl/run')
 def index():
     core.User.create_user_table_if_not_exists()
+    core.MetricsManager.create_metrics_table_if_not_exists()
     bot.delete_webhook()
     bot.set_webhook(settings.WEBHOOK_URL + settings.WEBHOOK_PATH, max_connections=1)
-    core.log(m='Webhook is setting: {}'.format(bot.get_webhook_info().url))
+    bot.send_message('204560928', 'Running...')
+    core.log(m='Webhook is setting: {} by run url'.format(bot.get_webhook_info().url))
     return 'ok'
 
 
@@ -651,6 +650,7 @@ def main():
 
     core.User.create_user_table_if_not_exists()
     cache.Cache.create_cache_table_if_not_exists()
+    core.MetricsManager.create_metrics_table_if_not_exists()
 
     bot.delete_webhook()
 
@@ -658,7 +658,6 @@ def main():
         try:
             bot.set_webhook(settings.WEBHOOK_URL + settings.WEBHOOK_PATH, max_connections=1)
             core.log(m='Webhook is setting: {}'.format(bot.get_webhook_info().url))
-            app.run()
 
         except Exception as ex:
             core.log(m='Error while setting webhook: {}'.format(str(ex)))
@@ -684,3 +683,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    #app.run(debug=True)
