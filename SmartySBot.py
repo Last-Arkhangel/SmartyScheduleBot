@@ -12,15 +12,15 @@ import json
 import copy
 from WeatherManager import WeatherManager
 from settings import KEYBOARD
-from flask import Flask, request
+from flask import Flask, request, render_template, jsonify
 
-app = Flask(__name__)
-bot = telebot.TeleBot(settings.BOT_TOKEN, threaded=False)
+app = Flask(__name__, template_folder='site', static_folder='site/static', static_url_path='/fl/static')
+bot = telebot.TeleBot(settings.BOT_TOKEN, threaded=True)
 
 keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
 keyboard.row(KEYBOARD['TODAY'], KEYBOARD['TOMORROW'], KEYBOARD['FOR_A_WEEK'])
-keyboard.row(KEYBOARD['FOR_A_TEACHER'], KEYBOARD['TIMETABLE'], KEYBOARD['FOR_A_GROUP'])
-keyboard.row(KEYBOARD['CHANGE_GROUP'], KEYBOARD['WEATHER'], KEYBOARD['HELP'])
+keyboard.row(KEYBOARD['FOR_A_TEACHER'], KEYBOARD['BOT_CHANEL'], KEYBOARD['FOR_A_GROUP'])
+keyboard.row(KEYBOARD['TIMETABLE'], KEYBOARD['WEATHER'], KEYBOARD['HELP'])
 
 emoji_numbers = ['0⃣', '1⃣', '2⃣', '3⃣', '4⃣', '5⃣', '6⃣', '7⃣', '8⃣', '9⃣']
 
@@ -82,7 +82,8 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
 
 def render_day_timetable(day_data):
 
-    day_timetable = '.....::::: <b>\U0001F4CB {}</b> {} :::::.....\n\n'.format(day_data['day'], day_data['date'])
+    # day_timetable = '.....::::: <b>\U0001F4CB {}</b> {} :::::.....\n\n'.format(day_data['day'], day_data['date'])
+    day_timetable = '❄☃️️❄️ <b>{}</b> {} ❄☃️️❄️\n\n'.format(day_data['day'], day_data['date'])
     lessons = day_data['lessons']
 
     start_index = 0
@@ -154,8 +155,7 @@ def get_logs(message):
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    sent = bot.send_message(message.chat.id, 'Йоу, {} 😊. Я Бот, який допоможе тобі швидко дізнаватись свій розклад '
-                                             'прямо тут. Для початку '
+    sent = bot.send_message(message.chat.id, 'Йоу, {} 😊. Я можу показати твій розклад прямо тут. Для початку '
                                              'скажи мені свою групу (Напр. 44_і_д)'.format(message.chat.first_name))
     bot.register_next_step_handler(sent, set_group)
 
@@ -228,7 +228,7 @@ def set_group(message):
     else:
         user.registration(group)
 
-    bot.send_message(message.chat.id, 'Чудово 👍, відтепер я буду показувати розклад для групи {}.'.
+    bot.send_message(message.chat.id, 'Добро 👍, відтепер я буду показувати розклад для групи {}.'.
                      format(group), reply_markup=keyboard)
 
 
@@ -293,6 +293,16 @@ def select_teachers(message):
         bot.register_next_step_handler(sent, select_teacher_from_request)
 
 
+@bot.message_handler(func=lambda mess: mess.text == KEYBOARD['BOT_CHANEL'], content_types=["text"])
+def channel_handler(message):
+
+    text = 'Хєй, ✋🏻\n' \
+           'Давайте спробуємо створити канал, де будуть публікуватися оголошення і новини щодо розробки цього бота,' \
+           ' та деяких інших проектів (про їх трохи згодом \U0001F62E).\nА посилання опублікуємо ось тут: @zdu_news'
+
+    bot.send_message(message.chat.id, text, reply_markup=keyboard)
+
+
 @bot.message_handler(content_types=["text"])
 def main_menu(message):
 
@@ -303,6 +313,21 @@ def main_menu(message):
     request = message.text
 
     if user_group:
+
+        def is_date_request_or_other():
+
+            if re.search(r'^(\d{1,2})\.(\d{1,2})$', request) or \
+               re.search(r'^(\d{1,2})\.(\d{1,2})-(\d{1,2})\.(\d{1,2})$', request) or \
+               re.search(r'^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$', request) or \
+               re.search(r'^(\d{1,2})\.(\d{1,2})\.(\d{2,4})-(\d{1,2})\.(\d{1,2})\.(\d{2,4})$', request):
+
+                return 'FOR_A_DATE'
+
+            return 'OTHER'
+
+        # Reversed keys and values in dictionary
+        request_code = {v: k for k, v in KEYBOARD.items()}.get(request, is_date_request_or_other())
+        core.MetricsManager.track(user.get_id(), request_code, user_group)
 
         core.log(message.chat, '> {}'.format(message.text))
 
@@ -373,7 +398,7 @@ def main_menu(message):
                   name in ["Поточний", "Наступний"]]
             )
 
-            bot.send_message(user.get_id(), 'На який тиждень?', reply_markup=week_type_keyboard)
+            bot.send_message(user.get_id(), 'На який?', reply_markup=week_type_keyboard)
 
         elif request == KEYBOARD['TIMETABLE']:
 
@@ -403,11 +428,17 @@ def main_menu(message):
                 mod_time = '-'
 
             msg = "Для пошуку по датам : <b>15.05</b> або <b>15.05-22.05</b> або <b>1.1.18-10.1.18</b>\n\n" \
+                  "<b>Група:</b> {}\n\n" \
                   "<b>Версія:</b> {}\n<b>Оновлення погоди:</b> {}\n" \
+                  "<b>Наш канал:</b> @zdu_news\n" \
                   "<b>Розробник:</b> @Koocherov\n"
 
-            bot.send_message(message.chat.id, msg.format(settings.VERSION, mod_time),
-                             reply_markup=keyboard, parse_mode='HTML')
+            kb = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+            kb.row(KEYBOARD['MAIN_MENU'])
+            kb.row(KEYBOARD['CHANGE_GROUP'])
+
+            bot.send_message(message.chat.id, msg.format(user.get_group(), settings.VERSION, mod_time),
+                             reply_markup=kb, parse_mode='HTML')
 
         elif request == KEYBOARD['FOR_A_GROUP']:
             sent = bot.send_message(message.chat.id,
@@ -544,7 +575,7 @@ def main_menu(message):
             bot.send_message(user.get_id(), '\U0001F914', reply_markup=keyboard)
 
     else:
-        bot.send_message(message.chat.id, 'Щоб вказати групу жми -> /start')
+        bot.send_message(user.get_id(), 'Не знайшов твою групу, щоб вказати - введи /start')
 
 
 def show_other_group(message):
@@ -576,65 +607,68 @@ def show_other_group(message):
     bot.send_message(message.chat.id, timetable_for_week, parse_mode='HTML', reply_markup=keyboard)
 
 
-@app.route(settings.ADMIN_PATH, methods=['POST', 'GET'])
-def show_users_table():
+@app.route('/fl/metrics')
+def admin_metrics():
 
-    users = core.DBManager.execute_query('SELECT * FROM users')
+    all_users_count = core.MetricsManager.get_all_users_count()
+    all_groups_count = core.MetricsManager.get_all_groups_count()
+    users_registered_week = core.MetricsManager.get_number_of_users_registered_during_the_week()
+    active_today_users_count = core.MetricsManager.get_active_today_users_count()
+    active_yesterday_users_count = core.MetricsManager.get_active_yesterday_users_count()
+    active_week_users_count = core.MetricsManager.get_active_week_users_count()
 
-    html = ''
-    html += '<b>Users count:</b> {}<br><br>'.format(len(users))
+    metrics_values = {
+        'all_users_count': all_users_count,
+        'all_groups_count': all_groups_count,
+        'users_registered_week': users_registered_week,
+        'active_today_users_count': active_today_users_count,
+        'active_yesterday_users_count': active_yesterday_users_count,
+        'active_week_users_count': active_week_users_count,
+    }
 
-    if request.method == 'POST':
-        if request.form['id'] and request.form['msg']:
-
-            data = {
-                'chat_id': request.form['id'],
-                'text': request.form['msg']
-            }
-
-            r = requests.get('https://api.telegram.org/bot{}/sendMessage'.format(settings.BOT_TOKEN), params=data)
-            core.log(m='Admin msg: to {} - {}({})'.format(request.form['id'], request.form['msg'], r.status_code))
-            if r.json()['ok']:
-                html += '<b style="color:green">Ok</b><br><br>'
-            else:
-                html += '<b style="color:red">{}</b><br><br>'.format(r.json()['description'])
-        else:
-            html += '<b style="color:red">ID and message fileds must be not empty!</b><br><br>'
-
-    html += '<form method="post">' \
-            '<input type = "text" placeholder="ID" name="id"> ' \
-            '<input type = "text" placeholder="message" name="msg"> ' \
-            '<input type = "submit" value="ok">' \
-            '</form>'
-    html += '<hr>'
-    html += '<table border="1" margin="15">'
-    html += '<tr>' \
-            '<td><b>Telegram ID</b></td>' \
-            '<td><b>Username</b></td>' \
-            '<td><b>First name</b></td>' \
-            '<td><b>Last name</b></td>' \
-            '<td><b>Group</b></td>' \
-            '<td><b>Reg date</b></td>' \
-            '<td><b>Last use date</b></td>' \
-            '<td><b>Requests</b></td></tr>'
-
-    for user in users:
-        html += '<tr>'
-        for user_field in user:
-            html += '<td style="padding: 10px;">' + str(user_field) or '-' + '</td>'
-        html += '</tr>'
-
-    html += '</table>'
-
-    return html
+    return render_template('metrics.html', data=metrics_values)
 
 
-@app.route('<Run url>')
+@app.route('/fl/users')
+def admin_users():
+
+    users = core.MetricsManager.get_users()
+
+    return render_template('users.html', users=users)
+
+
+@app.route('/fl/statistics_by_types_during_the_week')
+def statistics_by_types_during_the_week():
+
+    stats = core.MetricsManager.get_statistics_by_types_during_the_week()
+
+    return jsonify(data=stats)
+
+
+@app.route('/fl/last_days_statistics')
+def last_days_statistics():
+
+    days_statistics = core.MetricsManager.get_last_days_statistics()
+
+    stats = {'labels': [], 'data': []}
+
+    # Sorting by dates
+    for day_stat in sorted(days_statistics):
+
+        stats['labels'].append(day_stat)
+        stats['data'].append(days_statistics[day_stat])
+
+    return jsonify(data=stats)
+
+
+@app.route('/fl/run')
 def index():
     core.User.create_user_table_if_not_exists()
+    core.MetricsManager.create_metrics_table_if_not_exists()
     bot.delete_webhook()
     bot.set_webhook(settings.WEBHOOK_URL + settings.WEBHOOK_PATH, max_connections=1)
-    core.log(m='Webhook is setting: {}'.format(bot.get_webhook_info().url))
+    bot.send_message('204560928', 'Running...')
+    core.log(m='Webhook is setting: {} by run url'.format(bot.get_webhook_info().url))
     return 'ok'
 
 
@@ -651,6 +685,7 @@ def main():
 
     core.User.create_user_table_if_not_exists()
     cache.Cache.create_cache_table_if_not_exists()
+    core.MetricsManager.create_metrics_table_if_not_exists()
 
     bot.delete_webhook()
 
@@ -658,7 +693,6 @@ def main():
         try:
             bot.set_webhook(settings.WEBHOOK_URL + settings.WEBHOOK_PATH, max_connections=1)
             core.log(m='Webhook is setting: {}'.format(bot.get_webhook_info().url))
-            app.run()
 
         except Exception as ex:
             core.log(m='Error while setting webhook: {}'.format(str(ex)))
@@ -684,3 +718,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    app.run(debug=True)
