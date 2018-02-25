@@ -3,6 +3,7 @@ import requests
 import datetime
 import settings
 import os
+import core
 
 
 class WeatherManager:
@@ -77,6 +78,13 @@ class WeatherManager:
         r = requests.get(self.API_LINK_FORECAST, params=request_params)
         five_days_weather_forecast = r.json()
 
+        try:
+            zdu_temperature = requests.get('https://zu.edu.ua/t.asp', timeout=2).text[:-1].strip()
+
+        except Exception as ex:
+            zdu_temperature = ''
+            core.log(m='Error with getting ZDU temperature: {}'.format(str(ex)))
+
         today_day = datetime.datetime.now().day
         tomorrow_date = datetime.datetime.now() + datetime.timedelta(days=1)
         tomorrow_day = tomorrow_date.day
@@ -84,6 +92,10 @@ class WeatherManager:
         hidden_hours = [2, 5]
 
         result = ''
+
+        if zdu_temperature:
+            result += 'Біля університету: %s°\n\n' % zdu_temperature
+
         result += ':::::: \U0001F30E <b>Сьогодні:</b> ::::::\n'
         for hour_forecast in five_days_weather_forecast['list']:
 
@@ -109,16 +121,11 @@ class WeatherManager:
         with open(os.path.join(settings.BASE_DIR, 'forecast.txt'), 'w', encoding="utf-8") as f_file:
             f_file.write(result)
 
-    def write_to_log(self):
-
-        m = 'Оновлення погоди.'
-
-        now_time = datetime.datetime.now().strftime('%d-%m %H:%M:%S')
-
-        with open(os.path.join(settings.BASE_DIR, 'bot_log.txt'), 'a', encoding="utf-8") as log_file:
-            log_file.write('[{}]: (Server) > {}\n'.format(now_time, m))
-
     def check_if_forecast_need_update(self):
+
+        # TODO Fix it
+
+        return True
 
         file_name = os.path.join(settings.BASE_DIR, 'forecast.txt')
         if not os.path.isfile(file_name):
@@ -133,4 +140,4 @@ class WeatherManager:
 
         if self.check_if_forecast_need_update():
             self.update_forecast()
-            self.write_to_log()
+            core.log(m='Оновлення погоди')
