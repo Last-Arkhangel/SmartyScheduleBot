@@ -1,0 +1,11 @@
+.content{
+  margin-top: 30px;
+}
+.header {
+  background-color: #fdd835;
+  color: #ff8f00;
+  border-radius: 15px;
+}
+.brand-title{
+  font-weight: bold;
+}
