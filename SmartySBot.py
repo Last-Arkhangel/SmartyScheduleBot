@@ -15,12 +15,12 @@ from settings import KEYBOARD
 from flask import Flask, request, render_template, jsonify
 
 app = Flask(__name__, template_folder='site', static_folder='site/static', static_url_path='/fl/static')
-bot = telebot.TeleBot(settings.BOT_TOKEN, threaded=False)
+bot = telebot.TeleBot(settings.BOT_TOKEN, threaded=True)
 
 keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
 keyboard.row(KEYBOARD['TODAY'], KEYBOARD['TOMORROW'], KEYBOARD['FOR_A_WEEK'])
-keyboard.row(KEYBOARD['FOR_A_TEACHER'], KEYBOARD['TIMETABLE'], KEYBOARD['FOR_A_GROUP'])
-keyboard.row(KEYBOARD['CHANGE_GROUP'], KEYBOARD['WEATHER'], KEYBOARD['HELP'])
+keyboard.row(KEYBOARD['FOR_A_TEACHER'], KEYBOARD['BOT_CHANEL'], KEYBOARD['FOR_A_GROUP'])
+keyboard.row(KEYBOARD['TIMETABLE'], KEYBOARD['WEATHER'], KEYBOARD['HELP'])
 
 emoji_numbers = ['0⃣', '1⃣', '2⃣', '3⃣', '4⃣', '5⃣', '6⃣', '7⃣', '8⃣', '9⃣']
 
@@ -293,6 +293,16 @@ def select_teachers(message):
         bot.register_next_step_handler(sent, select_teacher_from_request)
 
 
+@bot.message_handler(func=lambda mess: mess.text == KEYBOARD['BOT_CHANEL'], content_types=["text"])
+def channel_handler(message):
+
+    text = 'Хєй, ✋🏻\n' \
+           'Давайте спробуємо створити канал, де будуть публікуватися оголошення і новини щодо розробки цього бота,' \
+           ' та деяких інших проектів (про їх трохи згодом \U0001F62E).\nА посилання опублікуємо ось тут: @zdu_news'
+
+    bot.send_message(message.chat.id, text, reply_markup=keyboard)
+
+
 @bot.message_handler(content_types=["text"])
 def main_menu(message):
 
@@ -418,11 +428,17 @@ def main_menu(message):
                 mod_time = '-'
 
             msg = "Для пошуку по датам : <b>15.05</b> або <b>15.05-22.05</b> або <b>1.1.18-10.1.18</b>\n\n" \
+                  "<b>Група:</b> {}\n\n" \
                   "<b>Версія:</b> {}\n<b>Оновлення погоди:</b> {}\n" \
+                  "<b>Наш канал:</b> @zdu_news\n" \
                   "<b>Розробник:</b> @Koocherov\n"
 
-            bot.send_message(message.chat.id, msg.format(settings.VERSION, mod_time),
-                             reply_markup=keyboard, parse_mode='HTML')
+            kb = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+            kb.row(KEYBOARD['MAIN_MENU'])
+            kb.row(KEYBOARD['CHANGE_GROUP'])
+
+            bot.send_message(message.chat.id, msg.format(user.get_group(), settings.VERSION, mod_time),
+                             reply_markup=kb, parse_mode='HTML')
 
         elif request == KEYBOARD['FOR_A_GROUP']:
             sent = bot.send_message(message.chat.id,
@@ -611,6 +627,14 @@ def admin_metrics():
     }
 
     return render_template('metrics.html', data=metrics_values)
+
+
+@app.route('/fl/users')
+def admin_users():
+
+    users = core.MetricsManager.get_users()
+
+    return render_template('users.html', users=users)
 
 
 @app.route('/fl/statistics_by_types_during_the_week')

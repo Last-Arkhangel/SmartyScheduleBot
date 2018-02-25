@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 
-VERSION = '8.12'
+VERSION = '8.15'
 
 DATABASE = 'SmartyS_DB.sqlite'
 
@@ -9,7 +9,7 @@ BOT_TOKEN = '<token>'
 
 OPEN_WEATHER_MAP_TOKEN = '<token>'
 
-POLLING_INTERVAL = 2
+POLLING_INTERVAL = 1
 
 USE_CACHE = False
 
@@ -38,9 +38,12 @@ KEYBOARD = {
     'FOR_A_TEACHER': '\U0001F464 По викладачу',
     'TIMETABLE': '\U0001F552 Час пар',
     'FOR_A_GROUP': '\U0001F465 По групі',
-    'CHANGE_GROUP': '\U00002699 Зм. групу',
     'WEATHER': '\U00002744 Погода',
-    'HELP': '\U00002753 Довідка',
+    'HELP': '\U0001F4AC Довідка',
+
+    'CHANGE_GROUP': '\U00002699 Зм. групу',
+    'MAIN_MENU': '\U0001F519 Меню',
+    'BOT_CHANEL': '\U0001F4A1',
 }
 
 TEACHERS = [

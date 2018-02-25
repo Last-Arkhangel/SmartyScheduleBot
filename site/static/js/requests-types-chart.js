@@ -16,7 +16,7 @@ function update_request_types_chart(){
       for_a_teacher = response['data']['FOR_A_TEACHER'];
       timetable = response['data']['TIMETABLE'];
       for_a_group = response['data']['FOR_A_GROUP'];
-      change_group = response['data']['CHANGE_GROUP'];
+      // change_group = response['data']['CHANGE_GROUP'];
       weather = response['data']['WEATHER'];
       help = response['data']['HELP'];
       for_a_date = response['data']['FOR_A_DATE'];
@@ -34,7 +34,7 @@ function update_request_types_chart(){
                 'По викладачу',
                 'Час пар',
                 'По групі',
-                'Зм. групу',
+                //'Зм. групу',
                 'Погода',
                 'Довідка',
                 'По даті',
@@ -47,7 +47,7 @@ function update_request_types_chart(){
                        for_a_teacher,
                        timetable,
                        for_a_group,
-                       change_group,
+                       //change_group,
                        weather,
                        help,
                        for_a_date,
@@ -60,7 +60,7 @@ function update_request_types_chart(){
                   "#3cba9f",
                   "#F781D8",
                   '#9F81F7',
-                  "#c45850",
+                  //"#c45850",
                   '#01DF01',
                   '#FFFF00',
                   '#81DAF5',

@@ -213,6 +213,29 @@ class MetricsManager:
             and request_datetime < datetime('{}', '+1 days')""".format(previous_day_str,
                                                                        previous_day_str)
 
-            statistic[previous_day.strftime('%m.%d')] = DBManager.execute_query(query)[0][0]
+            statistic[previous_day.strftime('%d.%m')] = DBManager.execute_query(query)[0][0]
 
         return statistic
+
+    @classmethod
+    def get_users(cls):
+
+        query = """SELECT * From users"""
+
+        users_selection = DBManager.execute_query(query)
+
+        users = []
+
+        for user in users_selection:
+            users.append({
+                'telegram_id': user[0],
+                'username': user[1] or '-',
+                'first_name': user[2],
+                'last_name': user[3] or '-',
+                'group': user[4],
+                'register_date': user[5],
+                'last_use_date': user[6],
+                'requests_count': user[7],
+            })
+
+        return users
