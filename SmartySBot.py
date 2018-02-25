@@ -7,7 +7,6 @@ import os
 import settings
 import core
 import re
-import cache
 import json
 import copy
 from WeatherManager import WeatherManager
@@ -48,7 +47,7 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
 
     if settings.USE_CACHE:
         request_key = 'G:{}|T:{}|SD:{}|ED:{}'.format(group.lower(), teacher, sdate, edate)
-        cached_timetable = cache.Cache.get_from_cache(request_key)
+        cached_timetable = core.Cache.get_from_cache(request_key)
 
         if cached_timetable:
             return json.loads(cached_timetable[0][1])
@@ -75,7 +74,7 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
         cached_all_days_lessons = copy.deepcopy(all_days_lessons)
         cached_all_days_lessons[0]['day'] += '*'
         _json = json.dumps(cached_all_days_lessons, sort_keys=True, ensure_ascii=False, separators=(',', ':'), indent=2)
-        cache.Cache.put_in_cache(request_key, _json)
+        core.Cache.put_in_cache(request_key, _json)
 
     return all_days_lessons
 
@@ -116,7 +115,7 @@ def cache_info(message):
     if str(user.get_id()) not in settings.ADMINS_ID:
         return
 
-    cache_items_count = len(cache.Cache.get_keys() or '')
+    cache_items_count = len(core.Cache.get_keys() or '')
 
     bot.send_message(user.get_id(), 'In cache: {} units'.format(cache_items_count))
 
@@ -129,7 +128,7 @@ def clear_cache(message):
     if str(user.get_id()) not in settings.ADMINS_ID:
         return
 
-    cache.Cache.clear_cache()
+    core.Cache.clear_cache()
 
     bot.send_message(user.get_id(), 'The cache has been successfully cleaned.')
 
@@ -301,6 +300,109 @@ def channel_handler(message):
            ' та деяких інших проектів (про їх трохи згодом \U0001F62E).\nА посилання опублікуємо ось тут: @zdu_news'
 
     bot.send_message(message.chat.id, text, reply_markup=keyboard)
+
+
+def show_other_group(message):
+
+    group = message.text
+
+    if ' ' in group:
+        bot.send_message(message.chat.id, 'В назві групи не може бути пробілів.',
+                         reply_markup=keyboard)
+        return
+
+    in_week = datetime.date.today() + datetime.timedelta(days=7)
+    in_week_day = in_week.strftime('%d.%m.%Y')
+
+    today = datetime.date.today().strftime('%d.%m.%Y')
+
+    timetable_data = get_timetable(group=group, sdate=today, edate=in_week_day, user_id=message.chat.id)
+
+    timetable_for_week = '<b>Розклад на тиждень для групи {}:</b>\n\n'.format(message.text)
+
+    if timetable_data:
+        for timetable_day in timetable_data:
+            timetable_for_week += render_day_timetable(timetable_day)
+    elif isinstance(timetable_data, list) and not len(timetable_data):
+        timetable_for_week = 'На тиждень пар для групи {} не знайдено.'.format(group)
+    else:
+        return
+
+    bot.send_message(message.chat.id, timetable_for_week, parse_mode='HTML', reply_markup=keyboard)
+
+
+@app.route('/fl/metrics')
+def admin_metrics():
+
+    all_users_count = core.MetricsManager.get_all_users_count()
+    all_groups_count = core.MetricsManager.get_all_groups_count()
+    users_registered_week = core.MetricsManager.get_number_of_users_registered_during_the_week()
+    active_today_users_count = core.MetricsManager.get_active_today_users_count()
+    active_yesterday_users_count = core.MetricsManager.get_active_yesterday_users_count()
+    active_week_users_count = core.MetricsManager.get_active_week_users_count()
+
+    metrics_values = {
+        'all_users_count': all_users_count,
+        'all_groups_count': all_groups_count,
+        'users_registered_week': users_registered_week,
+        'active_today_users_count': active_today_users_count,
+        'active_yesterday_users_count': active_yesterday_users_count,
+        'active_week_users_count': active_week_users_count,
+    }
+
+    return render_template('metrics.html', data=metrics_values)
+
+
+@app.route('/fl/users')
+def admin_users():
+
+    users = core.MetricsManager.get_users()
+
+    return render_template('users.html', users=users)
+
+
+@app.route('/fl/statistics_by_types_during_the_week')
+def statistics_by_types_during_the_week():
+
+    stats = core.MetricsManager.get_statistics_by_types_during_the_week()
+
+    return jsonify(data=stats)
+
+
+@app.route('/fl/last_days_statistics')
+def last_days_statistics():
+
+    days_statistics = core.MetricsManager.get_last_days_statistics()
+
+    stats = {'labels': [], 'data': []}
+
+    # Sorting by dates
+    for day_stat in sorted(days_statistics):
+
+        stats['labels'].append(day_stat)
+        stats['data'].append(days_statistics[day_stat])
+
+    return jsonify(data=stats)
+
+
+@app.route('/fl/run')
+def index():
+    core.User.create_user_table_if_not_exists()
+    core.MetricsManager.create_metrics_table_if_not_exists()
+    bot.delete_webhook()
+    bot.set_webhook(settings.WEBHOOK_URL + settings.WEBHOOK_PATH, max_connections=1)
+    bot.send_message('204560928', 'Running...')
+    core.log(m='Webhook is setting: {} by run url'.format(bot.get_webhook_info().url))
+    return 'ok'
+
+
+@app.route(settings.WEBHOOK_PATH, methods=['POST', 'GET'])
+def webhook():
+    json_string = request.get_data().decode('utf-8')
+    update = telebot.types.Update.de_json(json_string)
+    bot.process_new_updates([update])
+
+    return "!", 200
 
 
 @bot.message_handler(content_types=["text"])
@@ -578,113 +680,10 @@ def main_menu(message):
         bot.send_message(user.get_id(), 'Не знайшов твою групу, щоб вказати - введи /start')
 
 
-def show_other_group(message):
-
-    group = message.text
-
-    if ' ' in group:
-        bot.send_message(message.chat.id, 'В назві групи не може бути пробілів.',
-                         reply_markup=keyboard)
-        return
-
-    in_week = datetime.date.today() + datetime.timedelta(days=7)
-    in_week_day = in_week.strftime('%d.%m.%Y')
-
-    today = datetime.date.today().strftime('%d.%m.%Y')
-
-    timetable_data = get_timetable(group=group, sdate=today, edate=in_week_day, user_id=message.chat.id)
-
-    timetable_for_week = '<b>Розклад на тиждень для групи {}:</b>\n\n'.format(message.text)
-
-    if timetable_data:
-        for timetable_day in timetable_data:
-            timetable_for_week += render_day_timetable(timetable_day)
-    elif isinstance(timetable_data, list) and not len(timetable_data):
-        timetable_for_week = 'На тиждень пар для групи {} не знайдено.'.format(group)
-    else:
-        return
-
-    bot.send_message(message.chat.id, timetable_for_week, parse_mode='HTML', reply_markup=keyboard)
-
-
-@app.route('/fl/metrics')
-def admin_metrics():
-
-    all_users_count = core.MetricsManager.get_all_users_count()
-    all_groups_count = core.MetricsManager.get_all_groups_count()
-    users_registered_week = core.MetricsManager.get_number_of_users_registered_during_the_week()
-    active_today_users_count = core.MetricsManager.get_active_today_users_count()
-    active_yesterday_users_count = core.MetricsManager.get_active_yesterday_users_count()
-    active_week_users_count = core.MetricsManager.get_active_week_users_count()
-
-    metrics_values = {
-        'all_users_count': all_users_count,
-        'all_groups_count': all_groups_count,
-        'users_registered_week': users_registered_week,
-        'active_today_users_count': active_today_users_count,
-        'active_yesterday_users_count': active_yesterday_users_count,
-        'active_week_users_count': active_week_users_count,
-    }
-
-    return render_template('metrics.html', data=metrics_values)
-
-
-@app.route('/fl/users')
-def admin_users():
-
-    users = core.MetricsManager.get_users()
-
-    return render_template('users.html', users=users)
-
-
-@app.route('/fl/statistics_by_types_during_the_week')
-def statistics_by_types_during_the_week():
-
-    stats = core.MetricsManager.get_statistics_by_types_during_the_week()
-
-    return jsonify(data=stats)
-
-
-@app.route('/fl/last_days_statistics')
-def last_days_statistics():
-
-    days_statistics = core.MetricsManager.get_last_days_statistics()
-
-    stats = {'labels': [], 'data': []}
-
-    # Sorting by dates
-    for day_stat in sorted(days_statistics):
-
-        stats['labels'].append(day_stat)
-        stats['data'].append(days_statistics[day_stat])
-
-    return jsonify(data=stats)
-
-
-@app.route('/fl/run')
-def index():
-    core.User.create_user_table_if_not_exists()
-    core.MetricsManager.create_metrics_table_if_not_exists()
-    bot.delete_webhook()
-    bot.set_webhook(settings.WEBHOOK_URL + settings.WEBHOOK_PATH, max_connections=1)
-    bot.send_message('204560928', 'Running...')
-    core.log(m='Webhook is setting: {} by run url'.format(bot.get_webhook_info().url))
-    return 'ok'
-
-
-@app.route(settings.WEBHOOK_PATH, methods=['POST', 'GET'])
-def webhook():
-    json_string = request.get_data().decode('utf-8')
-    update = telebot.types.Update.de_json(json_string)
-    bot.process_new_updates([update])
-
-    return "!", 200
-
-
 def main():
 
     core.User.create_user_table_if_not_exists()
-    cache.Cache.create_cache_table_if_not_exists()
+    core.Cache.create_cache_table_if_not_exists()
     core.MetricsManager.create_metrics_table_if_not_exists()
 
     bot.delete_webhook()
@@ -718,4 +717,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-    app.run(debug=True)
+    #app.run(debug=True)

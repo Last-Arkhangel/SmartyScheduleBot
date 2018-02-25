@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-import cache
+import core
 import settings
 import requests
 
-cache_items_count = len(cache.Cache.get_keys() or '')
-cache.Cache.clear_cache()
+cache_items_count = len(core.Cache.get_keys() or '')
+core.Cache.clear_cache()
 
 for admin in settings.ADMINS_ID:
 

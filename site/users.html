@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}SmartySBot користувачі{% endblock %}
+
+{% block content %}
+     
+      <div class="content">
+        <table class="table table-bordered  table-hover">
+  <thead>
+    <tr>
+      <th scope="col">Telegram ID</th>
+      <th scope="col">Username</th>
+      <th scope="col">First name</th>
+      <th scope="col">Last name</th>
+      <th scope="col">User group</th>
+      <th scope="col">Register date</th>
+      <th scope="col">Last use date</th>
+      <th scope="col">Requests count</th>
+    </tr>
+  </thead>
+  <tbody>
+   {% for user in users %}
+    <tr>
+      <th scope="row">{{ user.telegram_id }}</th>
+      <td>{{ user.username }}</td>
+      <td>{{ user.first_name }}</td>
+      <td>{{ user.last_name }}</td>
+      <td>{{ user.group }}</td>
+      <td>{{ user.register_date }}</td>
+      <td>{{ user.last_use_date }}</td>
+      <td>{{ user.requests_count }}</td>
+    </tr>
+    {% endfor %}
+    <tr>
+  </tbody>
+      </table>
+      </div>
+    
+{% endblock %}
