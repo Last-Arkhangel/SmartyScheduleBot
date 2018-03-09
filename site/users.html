@@ -4,36 +4,82 @@
 
 {% block content %}
      
-      <div class="content">
-        <table class="table table-bordered  table-hover">
-  <thead>
-    <tr>
-      <th scope="col">Telegram ID</th>
-      <th scope="col">Username</th>
-      <th scope="col">First name</th>
-      <th scope="col">Last name</th>
-      <th scope="col">User group</th>
-      <th scope="col">Register date</th>
-      <th scope="col">Last use date</th>
-      <th scope="col">Requests count</th>
-    </tr>
-  </thead>
-  <tbody>
-   {% for user in users %}
-    <tr>
-      <th scope="row">{{ user.telegram_id }}</th>
-      <td>{{ user.username }}</td>
-      <td>{{ user.first_name }}</td>
-      <td>{{ user.last_name }}</td>
-      <td>{{ user.group }}</td>
-      <td>{{ user.register_date }}</td>
-      <td>{{ user.last_use_date }}</td>
-      <td>{{ user.requests_count }}</td>
-    </tr>
-    {% endfor %}
-    <tr>
-  </tbody>
-      </table>
-      </div>
+  <div class="content">
+     
+    {% if data.message %}
+     <div class="alert alert-primary" role="alert">
+      {{ data.message|safe }}
+    </div>
+    {% endif %}
+     
+     <div class="row">
+       <div class="col-sm-12 col-md-6">
+       <h5>Delete user</h5>
+        <form action="/fl/del_user" method="post">
+          <div class="form-group">
+            <label for="InputID">Telegram ID</label>
+            <input type="text" class="form-control" id="InputID" placeholder="Enter ID" name="ID">
+          </div>
+          <div class="form-group">
+            <label for="InputPassword1">Password</label>
+            <input type="password" class="form-control" id="InputPassword" placeholder="Password" name="PWD">
+          </div>
+          <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+       </div>
+       
+      <div class="col-sm-12 col-md-6">
+       <h5>Send message</h5>
+        <form>
+          <div class="form-group">
+            <label for="InputID">Telegram ID</label>
+            <input type="text" class="form-control" id="InputID" placeholder="Enter ID">
+          </div>
+          <div class="form-group">
+            <label for="InputMessage">Message</label>
+            <input type="text" class="form-control" id="InputMessage" placeholder="Message">
+          </div>
+          <div class="form-group">
+            <label for="InputPassword1">Password</label>
+            <input type="password" class="form-control" id="InputPassword" placeholder="Password">
+          </div>
+          <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+       </div>
+     </div>
+     <br><hr><br>
+   
+   {% if data.users %}
+    <table class="table table-bordered  table-hover">
+      <thead>
+        <tr>
+          <th scope="col">Telegram ID</th>
+          <th scope="col">Username</th>
+          <th scope="col">First name</th>
+          <th scope="col">Last name</th>
+          <th scope="col">User group</th>
+          <th scope="col">Register date</th>
+          <th scope="col">Last use date</th>
+          <th scope="col">Requests count</th>
+        </tr>
+      </thead>
+      <tbody>
+       {% for user in data.users %}
+        <tr>
+          <th scope="row">{{ user.telegram_id }}</th>
+          <td>{{ user.username }}</td>
+          <td>{{ user.first_name }}</td>
+          <td>{{ user.last_name }}</td>
+          <td>{{ user.group }}</td>
+          <td>{{ user.register_date }}</td>
+          <td>{{ user.last_use_date }}</td>
+          <td>{{ user.requests_count }}</td>
+        </tr>
+        {% endfor %}
+        <tr>
+      </tbody>
+  </table>
+  {% endif %}
+</div>
     
 {% endblock %}

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 
-VERSION = '8.15'
+VERSION = '8.2'
 
 DATABASE = 'SmartyS_DB.sqlite'
 
@@ -17,9 +17,7 @@ USE_WEBHOOK = True
 
 WEBHOOK_URL = '/<url>'
 
-WEBHOOK_PATH = '/<url>'
-
-ADMIN_PATH = '/<url>'
+WEBHOOK_PATH = '/fl/'
 
 TIMETABLE_URL = 'https://dekanat.zu.edu.ua/cgi-bin/timetable.cgi'
 
@@ -38,7 +36,7 @@ KEYBOARD = {
     'FOR_A_TEACHER': '\U0001F464 По викладачу',
     'TIMETABLE': '\U0001F552 Час пар',
     'FOR_A_GROUP': '\U0001F465 По групі',
-    'WEATHER': '\U00002744 Погода',
+    'WEATHER': '\U0001F308 Погода',
     'HELP': '\U0001F4AC Довідка',
 
     'CHANGE_GROUP': '\U00002699 Зм. групу',

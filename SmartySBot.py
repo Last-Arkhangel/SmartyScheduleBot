@@ -18,7 +18,7 @@ bot = telebot.TeleBot(settings.BOT_TOKEN, threaded=True)
 
 keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
 keyboard.row(KEYBOARD['TODAY'], KEYBOARD['TOMORROW'], KEYBOARD['FOR_A_WEEK'])
-keyboard.row(KEYBOARD['FOR_A_TEACHER'], KEYBOARD['BOT_CHANEL'], KEYBOARD['FOR_A_GROUP'])
+keyboard.row(KEYBOARD['FOR_A_TEACHER'], KEYBOARD['FOR_A_GROUP'])
 keyboard.row(KEYBOARD['TIMETABLE'], KEYBOARD['WEATHER'], KEYBOARD['HELP'])
 
 emoji_numbers = ['0⃣', '1⃣', '2⃣', '3⃣', '4⃣', '5⃣', '6⃣', '7⃣', '8⃣', '9⃣']
@@ -81,8 +81,8 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
 
 def render_day_timetable(day_data):
 
-    # day_timetable = '.....::::: <b>\U0001F4CB {}</b> {} :::::.....\n\n'.format(day_data['day'], day_data['date'])
-    day_timetable = '❄☃️️❄️ <b>{}</b> {} ❄☃️️❄️\n\n'.format(day_data['day'], day_data['date'])
+    day_timetable = '.....::::: <b>\U0001F4CB {}</b> [{}] :::::.....\n\n'.format(day_data['day'], day_data['date'])
+
     lessons = day_data['lessons']
 
     start_index = 0
@@ -102,7 +102,7 @@ def render_day_timetable(day_data):
         if lessons[i]:
             day_timetable += '{} {}\n\n'.format(emoji_numbers[i + 1], lessons[i])
         else:
-            day_timetable += '{} Вікно \U0001F643\n\n'.format(emoji_numbers[i + 1])
+            day_timetable += '{} Вікно \U0001F649\U0001F64A\n\n'.format(emoji_numbers[i + 1])
 
     return day_timetable
 
@@ -146,7 +146,7 @@ def get_logs(message):
 
     logs = ''
 
-    for line in log_lines[-55:]:
+    for line in log_lines[-85:]:
         logs += line
 
     bot.send_message(user.get_id(), logs, reply_markup=keyboard)
@@ -353,12 +353,42 @@ def admin_metrics():
     return render_template('metrics.html', data=metrics_values)
 
 
+@app.route('/fl/del_user', methods=['POST'])
+def admin_del_user():
+
+    data = {}
+
+    if request.method == 'POST' and request.form.get('PWD') == request.form.get('ID') + ' x':
+
+        telegram_id = request.form.get('ID')
+
+        u = core.User.get_username(telegram_id)
+        core.User.delete_user(telegram_id)
+
+        if u:
+            data['message'] = 'Користувач <b>{} {}</b> був успішно видалений. <br> ' \
+                              '<b>група:</b> {}, <b>реєстрація:</b> {}, ' \
+                              '<b>остання активність:</b> {}'.format(u[2], u[3] or '', u[4], u[5], u[6])
+        else:
+            data['message'] = 'Такого користувача не знайдено.'
+    else:
+
+        data['message'] = 'Неправильний пароль'
+
+    users = core.MetricsManager.get_users()
+    data['users'] = users
+
+    return render_template('users.html', data=data)
+
+
 @app.route('/fl/users')
 def admin_users():
 
-    users = core.MetricsManager.get_users()
+    data = {
+        'users': core.MetricsManager.get_users()
+    }
 
-    return render_template('users.html', users=users)
+    return render_template('users.html', data=data)
 
 
 @app.route('/fl/statistics_by_types_during_the_week')
@@ -376,8 +406,11 @@ def last_days_statistics():
 
     stats = {'labels': [], 'data': []}
 
+    def sort_by_date(input_str):
+        return datetime.datetime.strptime(input_str + '.' + str(datetime.date.today().year), '%d.%m.%Y')
+
     # Sorting by dates
-    for day_stat in sorted(days_statistics):
+    for day_stat in sorted(days_statistics, key=sort_by_date):
 
         stats['labels'].append(day_stat)
         stats['data'].append(days_statistics[day_stat])
@@ -504,9 +537,17 @@ def main_menu(message):
 
         elif request == KEYBOARD['TIMETABLE']:
 
-            img = open(os.path.join(settings.BASE_DIR, 'timetable.png'), 'rb')
+            t = ''
+            t += '{} - 8:30 - 9:50\n'.format(emoji_numbers[1])
+            t += '{} - 10:00 - 11:20\n'.format(emoji_numbers[2])
+            t += '{} - 11:40 - 13:00\n'.format(emoji_numbers[3])
+            t += '{} - 13:10 - 14:30\n'.format(emoji_numbers[4])
+            t += '{} - 14:40 - 16:00\n'.format(emoji_numbers[5])
+            t += '{} - 16:20 - 17:40\n'.format(emoji_numbers[6])
+            t += '{} - 17:50 - 19:10\n'.format(emoji_numbers[7])
+            t += '{} - 19:20 - 20:40\n'.format(emoji_numbers[8])
 
-            bot.send_photo(user.get_id(), img, reply_markup=keyboard)
+            bot.send_message(user.get_id(), t, reply_markup=keyboard)
 
         elif request == KEYBOARD['CHANGE_GROUP']:
 

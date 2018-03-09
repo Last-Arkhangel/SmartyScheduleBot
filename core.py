@@ -67,6 +67,25 @@ class User:
 
         return DBManager.execute_query(query)
 
+    @classmethod
+    def get_username(cls, t_id):
+
+        query = "SELECT * FROM users WHERE t_id=?"
+
+        result = DBManager.execute_query(query, (t_id,))
+
+        if type(result) == bool:
+            return False
+
+        return result[0]
+
+    @classmethod
+    def delete_user(cls, t_id):
+
+        query = "DELETE FROM users WHERE t_id=?"
+
+        return DBManager.execute_query(query, (t_id,))
+
 
 class DBManager:
 
@@ -275,6 +294,9 @@ class MetricsManager:
         users_selection = DBManager.execute_query(query)
 
         users = []
+
+        if not users_selection:
+            return users
 
         for user in users_selection:
             users.append({
