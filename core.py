@@ -67,6 +67,25 @@ class User:
 
         return DBManager.execute_query(query)
 
+    @classmethod
+    def get_username(cls, t_id):
+
+        query = "SELECT * FROM users WHERE t_id=?"
+
+        result = DBManager.execute_query(query, (t_id,))
+
+        if type(result) == bool:
+            return False
+
+        return result[0]
+
+    @classmethod
+    def delete_user(cls, t_id):
+
+        query = "DELETE FROM users WHERE t_id=?"
+
+        return DBManager.execute_query(query, (t_id,))
+
 
 class DBManager:
 
@@ -102,6 +121,56 @@ def log(chat=None, m=''):
             log_file.write('[{}]: ({} {}) {}\n'.format(now_time, chat.first_name, chat.last_name, m))
         else:
             log_file.write('[{}]: (Server) {}\n'.format(now_time, m))
+
+
+class Cache:
+
+    @classmethod
+    def create_cache_table_if_not_exists(cls):
+
+        query = """CREATE TABLE IF NOT EXISTS cache(
+                          key TEXT PRIMARY KEY NOT NULL,
+                          data TEXT DEFAULT CURRENT_TIMESTAMP,
+                          create_time TEXT,
+                          requests INTEGER DEFAULT 0)
+                          WITHOUT ROWID"""
+
+        return DBManager.execute_query(query)
+
+    @classmethod
+    def get_from_cache(cls, key):
+
+        query = "SELECT * FROM cache WHERE key=?"
+
+        r = DBManager.execute_query(query, (key,))
+        if r:
+            cls.recount_requests_to_cache(key)
+
+        return r
+
+    @classmethod
+    def recount_requests_to_cache(cls, key):
+
+        query = "UPDATE cache SET requests=requests+1 WHERE key=?"
+        return DBManager.execute_query(query, (key,))
+
+    @classmethod
+    def put_in_cache(cls, key, data):
+
+        query = "INSERT or IGNORE INTO cache (key, data, create_time) VALUES (?, ?, CURRENT_TIMESTAMP)"
+        return DBManager.execute_query(query, (key, data))
+
+    @classmethod
+    def get_keys(cls):
+
+        query = "SELECT key FROM cache"
+        return DBManager.execute_query(query, )
+
+    @classmethod
+    def clear_cache(cls):
+
+        query = "DELETE FROM cache"
+        return DBManager.execute_query(query, )
 
 
 class MetricsManager:
@@ -225,6 +294,9 @@ class MetricsManager:
         users_selection = DBManager.execute_query(query)
 
         users = []
+
+        if not users_selection:
+            return users
 
         for user in users_selection:
             users.append({
