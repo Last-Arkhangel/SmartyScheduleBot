@@ -175,12 +175,6 @@ def week_schedule_handler(call_back):
     next_week_last_day = today + datetime.timedelta(days=diff_between_friday_and_today + 7)
 
     if request == 'Поточний':
-
-        if diff_between_friday_and_today < 0:  # TODO Del this condition
-            bot.edit_message_text(text='Цей навчальний тиждень закінчивсь, дивись наступний.',
-                                  chat_id=user.get_id(), message_id=call_back.message.message_id, parse_mode="HTML")
-            return
-
         timetable_data = get_timetable(group=user_group, sdate=today.strftime('%d.%m.%Y'),
                                        edate=last_week_day.strftime('%d.%m.%Y'), user_id=user.get_id())
     if request == 'Наступний':
@@ -231,17 +225,6 @@ def set_group(message):
                      format(group), reply_markup=keyboard)
 
 
-def get_teachers_name(surname):
-
-    rez = []
-
-    for teacher in settings.TEACHERS:
-        if teacher.split()[0].upper() == surname.upper():
-            rez.append(teacher)
-
-    return rez
-
-
 def show_teachers(chat_id, name):
 
     in_week = datetime.date.today() + datetime.timedelta(days=7)
@@ -272,7 +255,11 @@ def select_teacher_from_request(message):  # ф-я викликається ко
 
 def select_teachers(message):
 
-    tchrs = get_teachers_name(message.text)
+    tchrs = []
+
+    for teacher in settings.TEACHERS:
+        if teacher.split()[0].upper() == message.text.upper():
+            tchrs.append(teacher)
 
     if not tchrs:
         bot.send_message(message.chat.id, 'Не можу знайти викладача з таким прізвищем.',
@@ -292,16 +279,6 @@ def select_teachers(message):
         bot.register_next_step_handler(sent, select_teacher_from_request)
 
 
-@bot.message_handler(func=lambda mess: mess.text == KEYBOARD['BOT_CHANEL'], content_types=["text"])
-def channel_handler(message):
-
-    text = 'Хєй, ✋🏻\n' \
-           'Давайте спробуємо створити канал, де будуть публікуватися оголошення і новини щодо розробки цього бота,' \
-           ' та деяких інших проектів (про їх трохи згодом \U0001F62E).\nА посилання опублікуємо ось тут: @zdu_news'
-
-    bot.send_message(message.chat.id, text, reply_markup=keyboard)
-
-
 def show_other_group(message):
 
     group = message.text
@@ -313,11 +290,9 @@ def show_other_group(message):
 
     in_week = datetime.date.today() + datetime.timedelta(days=7)
     in_week_day = in_week.strftime('%d.%m.%Y')
-
     today = datetime.date.today().strftime('%d.%m.%Y')
 
     timetable_data = get_timetable(group=group, sdate=today, edate=in_week_day, user_id=message.chat.id)
-
     timetable_for_week = '<b>Розклад на тиждень для групи {}:</b>\n\n'.format(message.text)
 
     if timetable_data:

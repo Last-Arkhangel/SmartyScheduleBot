@@ -1,30 +1,43 @@
 # -*- coding: utf-8 -*-
 import os
 
+# Bot version
 VERSION = '8.2'
 
+# Database name
 DATABASE = 'SmartyS_DB.sqlite'
 
+# Telegram Bot token
 BOT_TOKEN = '<token>'
 
+# OpenWeatherMap.org token
 OPEN_WEATHER_MAP_TOKEN = '<token>'
 
+# Interval to polling telegram servers (Uses if USE_WEBHOOK sets False)
 POLLING_INTERVAL = 1
 
+# Use cache
 USE_CACHE = False
 
+# Use webhook instead polling
 USE_WEBHOOK = True
 
+# Address bot running. For example https://mydomain.com
 WEBHOOK_URL = '/<url>'
 
+# Path that telegram sends updates
 WEBHOOK_PATH = '/fl/'
 
+# Timetable URL
 TIMETABLE_URL = 'https://dekanat.zu.edu.ua/cgi-bin/timetable.cgi'
 
+# Http user agent sends to requests
 HTTP_USER_AGENT = 'Telegram-SmartySBot'
 
+# If it True, bot would send errors to admins in list below
 SEND_ERRORS_TO_ADMIN = True
 
+# Admins IDS
 ADMINS_ID = ['204560928', '203448442']
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
