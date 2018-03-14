@@ -2,6 +2,8 @@ import settings
 import sqlite3
 import os
 import datetime
+import json
+import requests
 
 
 class User:
@@ -311,3 +313,73 @@ class MetricsManager:
             })
 
         return users
+
+
+def update_all_groups():
+
+    params = {
+        'n': '701',
+        'lev': '142',
+        'faculty': '0',
+        'query': '',
+    }
+
+    response = requests.get(settings.TIMETABLE_URL, params).json()
+
+    if isinstance(response, dict):
+        tmp_groups = response.get('suggestions', [])
+    else:
+        tmp_groups = []
+
+    groups = []
+
+    [groups.append(g.lower()) for g in tmp_groups]
+
+    with open(os.path.join(settings.BASE_DIR, 'groups.txt'), 'w', encoding="utf-8") as file:
+        file.write(json.dumps(groups, sort_keys=True, ensure_ascii=False, separators=(',', ':'), indent=2))
+
+    return groups
+
+
+def is_group_valid(user_group=''):
+
+    user_group = user_group.lower().strip()
+
+    try:
+        with open(os.path.join(settings.BASE_DIR, 'groups.txt'), 'r', encoding="utf-8") as file:
+            all_groups = json.loads(file.read())
+
+        return user_group in all_groups
+
+    except Exception as ex:
+        log(m='Validation group error: {}'.format(str(ex)))
+        return True
+
+
+def get_possible_groups(user_group='', variants=4):
+
+    def get_tanimoto_koef(s1, s2):
+        a, b, c = len(s1), len(s2), 0.0
+
+        for sym in s1:
+            if sym in s2:
+                c += 1
+
+        return c / (a + b - c)
+
+    possible_groups = []
+
+    with open(os.path.join(settings.BASE_DIR, 'groups.txt'), 'r', encoding="utf-8") as file:
+        all_groups = json.loads(file.read())
+
+    for group in all_groups:
+        tanimoto_koef = get_tanimoto_koef(user_group, group)
+        if tanimoto_koef > 0.5:
+            possible_groups.append({
+                'k': tanimoto_koef,
+                'group': group
+            })
+
+    sorted_groups = sorted(possible_groups, key=lambda d: d['k'], reverse=True)
+
+    return sorted_groups[:variants]

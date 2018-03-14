@@ -18,7 +18,7 @@
 
           </div>
         </div>
-        <br><br>
+        <br><br><hr>
         <div class="row">
 <!--
           <div class="col-md-12 col-sm-12">
@@ -33,8 +33,21 @@
           <div class="col-md-6 col-sm-12">
             <canvas id="requests-on-days"></canvas>
           </div>
-
         </div>
+          
+          <br><hr>
+      <div class="row">
+         <div class="col-md-6 col-sm-12">
+            <h4>Оновлення груп</h4>
+            <div>Останнє оновлення: {{data.groups_update_time}}</div>
+             <a class="btn btn-info" href="/fl/update_groups" role="button" target="_blank">Оновити</a>
+          </div>
+          
+          <div class="col-md-6 col-sm-12">
+            <canvas id="requests-on-days"></canvas>
+          </div>
+        </div>
+          
       </div>
     
 {% endblock %}

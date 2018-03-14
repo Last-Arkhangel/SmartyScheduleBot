@@ -146,14 +146,14 @@ def get_logs(message):
 
     logs = ''
 
-    for line in log_lines[-85:]:
+    for line in log_lines[-65:]:
         logs += line
 
     bot.send_message(user.get_id(), logs, reply_markup=keyboard)
 
 
 @bot.message_handler(commands=['start'])
-def start(message):
+def start_handler(message):
     sent = bot.send_message(message.chat.id, 'Йоу, {} 😊. Я можу показати твій розклад прямо тут. Для початку '
                                              'скажи мені свою групу (Напр. 44_і_д)'.format(message.chat.first_name))
     bot.register_next_step_handler(sent, set_group)
@@ -194,6 +194,17 @@ def week_schedule_handler(call_back):
 
     elif isinstance(timetable_data, list) and not len(timetable_data):
         timetable_for_week = "На тиждень пар не знайдено."
+
+        if not core.is_group_valid(user_group):
+            possible_groups = core.get_possible_groups(user_group)
+            timetable_for_week += '\n\nТвоєї групи <b>{}</b> немає в базі розкладу, ' \
+                                  'тому перевір правильність вводу.'.format(user_group)
+
+            if possible_groups:
+                timetable_for_week += '\n<b>Можливі варіанти:</b>\n'
+                for possible_group in possible_groups:
+                    timetable_for_week += '{}\n'.format(possible_group.get('group'))
+
     else:
         return
 
@@ -211,18 +222,23 @@ def set_group(message):
         bot.send_message(message.chat.id, 'Добре, залишимо групу {}.'.format(current_user_group), reply_markup=keyboard)
         return
 
-    if ' ' in group:
-        bot.send_message(message.chat.id, 'Група вказується без пробілів. А точно так, як на сайті.',
-                         reply_markup=keyboard)
-        return
+    if not core.is_group_valid(group):
 
-    if user.get_group():
-        user.update_group(group)
+        possible_groups = core.get_possible_groups(group)
+        msg = 'Групу <b>{}</b> я зберіг, але її немає в базі розкладу. ' \
+              'Тому якщо розклад не буде відображатись - перевір правильність вводу.\n'.format(group)
+
+        if possible_groups:
+            msg += '<b>Можливі варіанти:</b>\n'
+            for possible_group in possible_groups:
+                msg += '{}\n'.format(possible_group.get('group'))
+
     else:
-        user.registration(group)
+        msg = 'Добро 👍, буду показувати розклад для групи {}.'.format(group)
 
-    bot.send_message(message.chat.id, 'Добро 👍, відтепер я буду показувати розклад для групи {}.'.
-                     format(group), reply_markup=keyboard)
+    user.update_group(group) if user.get_group() else user.registration(group)
+
+    bot.send_message(message.chat.id, msg, reply_markup=keyboard, parse_mode='HTML')
 
 
 def show_teachers(chat_id, name):
@@ -282,10 +298,34 @@ def select_teachers(message):
 def show_other_group(message):
 
     group = message.text
+    core.log(message.chat, '> (по групі) {}'.format(group))
+    bot.send_chat_action(message.chat.id, "typing")
 
-    if ' ' in group:
-        bot.send_message(message.chat.id, 'В назві групи не може бути пробілів.',
-                         reply_markup=keyboard)
+    if group == KEYBOARD['MAIN_MENU']:
+        bot.send_message(message.chat.id, 'Окей', reply_markup=keyboard, parse_mode='HTML')
+        return
+
+    if not core.is_group_valid(group):
+
+        possible_groups = core.get_possible_groups(group)
+        msg = 'Групи <b>{}</b> немає в базі розкладу.\n'.format(group)
+
+        if possible_groups:
+
+            msg += '<b>Можливі варіанти:</b>\n'
+            groups_kb = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+
+            groups_kb.row(KEYBOARD['MAIN_MENU'])
+
+            for group in possible_groups:
+                msg += '{}\n'.format(group.get('group'))
+                groups_kb.row(group.get('group'))
+
+            sent = bot.send_message(message.chat.id, msg, parse_mode='HTML', reply_markup=groups_kb)
+            bot.register_next_step_handler(sent, show_other_group)
+            return
+
+        bot.send_message(message.chat.id, msg, reply_markup=keyboard, parse_mode='HTML')
         return
 
     in_week = datetime.date.today() + datetime.timedelta(days=7)
@@ -316,6 +356,12 @@ def admin_metrics():
     active_yesterday_users_count = core.MetricsManager.get_active_yesterday_users_count()
     active_week_users_count = core.MetricsManager.get_active_week_users_count()
 
+    try:
+        forecast_update_date = os.path.getmtime(os.path.join(settings.BASE_DIR, 'groups.txt'))
+        groups_update_time = datetime.datetime.fromtimestamp(forecast_update_date).strftime('%d.%m.%Y %H:%M')
+    except Exception:
+        groups_update_time = '-'
+
     metrics_values = {
         'all_users_count': all_users_count,
         'all_groups_count': all_groups_count,
@@ -323,6 +369,8 @@ def admin_metrics():
         'active_today_users_count': active_today_users_count,
         'active_yesterday_users_count': active_yesterday_users_count,
         'active_week_users_count': active_week_users_count,
+
+        'groups_update_time': groups_update_time,
     }
 
     return render_template('metrics.html', data=metrics_values)
@@ -393,6 +441,18 @@ def last_days_statistics():
     return jsonify(data=stats)
 
 
+@app.route('/fl/update_groups')
+def admin_update_groups():
+
+    updated = core.update_all_groups()
+
+    if updated:
+        msg = 'Список груп оновлено. Завантажено {} груп.<br>'.format(len(updated))
+        msg += str(updated)
+        return msg
+    return 'Помилка при оновленні'
+
+
 @app.route('/fl/run')
 def index():
     core.User.create_user_table_if_not_exists()
@@ -448,7 +508,19 @@ def main_menu(message):
             if timetable_data:
                 timetable_for_today = render_day_timetable(timetable_data[0])
             elif isinstance(timetable_data, list) and not len(timetable_data):
+
                 timetable_for_today = "На сьогодні пар не знайдено."
+
+                if not core.is_group_valid(user_group):
+                    possible_groups = core.get_possible_groups(user_group)
+                    timetable_for_today += '\n\nТвоєї групи <b>{}</b> немає в базі розкладу, ' \
+                                           'тому перевір правильність вводу.'.format(user_group)
+
+                    if possible_groups:
+                        timetable_for_today += '\n<b>Можливі варіанти:</b>\n'
+                        for possible_group in possible_groups:
+                            timetable_for_today += '{}\n'.format(possible_group.get('group'))
+
             else:
                 return
 
@@ -465,6 +537,17 @@ def main_menu(message):
                 timetable_for_tomorrow = render_day_timetable(timetable_data[0])
             elif isinstance(timetable_data, list) and not len(timetable_data):
                 timetable_for_tomorrow = "На завтра пар не знайдено."
+
+                if not core.is_group_valid(user_group):
+                    possible_groups = core.get_possible_groups(user_group)
+                    timetable_for_tomorrow += '\n\nТвоєї групи <b>{}</b> немає в базі розкладу, ' \
+                                              'тому перевір правильність вводу.'.format(user_group)
+
+                    if possible_groups:
+                        timetable_for_tomorrow += '\n<b>Можливі варіанти:</b>\n'
+                        for possible_group in possible_groups:
+                            timetable_for_tomorrow += '{}\n'.format(possible_group.get('group'))
+
             else:
                 return
 
@@ -496,6 +579,16 @@ def main_menu(message):
                 elif isinstance(timetable_data, list) and not len(timetable_data):
                     timetable_for_week = "На тиждень, з {} по {} пар не знайдено.".format(
                         next_week_first_day.strftime('%d.%m'), next_week_last_day.strftime('%d.%m'))
+
+                    if not core.is_group_valid(user_group):
+                        possible_groups = core.get_possible_groups(user_group)
+                        timetable_for_week += '\n\nТвоєї групи <b>{}</b> немає в базі розкладу, ' \
+                                              'тому перевір правильність вводу.'.format(user_group)
+
+                        if possible_groups:
+                            timetable_for_week += '\n<b>Можливі варіанти:</b>\n'
+                            for possible_group in possible_groups:
+                                timetable_for_week += '{}\n'.format(possible_group.get('group'))
 
                 bot.send_message(text=timetable_for_week, chat_id=user.get_id(),
                                  reply_markup=keyboard, parse_mode="HTML")

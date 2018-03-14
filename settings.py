@@ -2,7 +2,7 @@
 import os
 
 # Bot version
-VERSION = '8.2'
+VERSION = '8.3'
 
 # Database name
 DATABASE = 'SmartyS_DB.sqlite'
