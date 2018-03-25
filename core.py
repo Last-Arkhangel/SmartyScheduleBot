@@ -383,3 +383,25 @@ def get_possible_groups(user_group='', variants=4):
     sorted_groups = sorted(possible_groups, key=lambda d: d['k'], reverse=True)
 
     return sorted_groups[:variants]
+
+
+def update_all_teachers():
+
+    params = {
+        'n': '701',
+        'lev': '141',
+        'faculty': '0',
+        'query': '',
+    }
+
+    response = requests.get(settings.TIMETABLE_URL, params).json()
+
+    if isinstance(response, dict):
+        teachers = response.get('suggestions', [])
+    else:
+        teachers = []
+
+    with open(os.path.join(settings.BASE_DIR, 'teachers.txt'), 'w', encoding="utf-8") as file:
+        file.write(json.dumps(teachers[1:], sort_keys=True, ensure_ascii=False, separators=(',', ':'), indent=2))
+
+    return teachers

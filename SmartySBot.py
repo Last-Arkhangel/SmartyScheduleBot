@@ -226,7 +226,8 @@ def set_group(message):
 
         possible_groups = core.get_possible_groups(group)
         msg = 'Групу <b>{}</b> я зберіг, але її немає в базі розкладу. ' \
-              'Тому якщо розклад не буде відображатись - перевір правильність вводу.\n'.format(group)
+              'Тому якщо розклад не буде відображатись - перевір правильність вводу.\n\n' \
+              '<i>Щоб змінити групу зайди в Довідку</i>\n'.format(group)
 
         if possible_groups:
             msg += '<b>Можливі варіанти:</b>\n'
@@ -271,18 +272,28 @@ def select_teacher_from_request(message):  # ф-я викликається ко
 
 def select_teachers(message):
 
+    core.log(message.chat, '> (по викладачу) {}'.format(message.text))
     tchrs = []
 
-    for teacher in settings.TEACHERS:
+    try:
+        with open(os.path.join(settings.BASE_DIR, 'teachers.txt'), 'r', encoding="utf-8") as file:
+            all_teachers = json.loads(file.read())
+    except Exception as ex:
+        bot.send_message(message.chat.id, 'Даний функціонал тимчасово не працює.', reply_markup=keyboard)
+        core.log(m='Error loading teachers file: {}'.format(str(ex)))
+        return
+
+    for teacher in all_teachers:
         if teacher.split()[0].upper() == message.text.upper():
             tchrs.append(teacher)
 
     if not tchrs:
-        bot.send_message(message.chat.id, 'Не можу знайти викладача з таким прізвищем.',
-                         reply_markup=keyboard)
+        bot.send_message(message.chat.id, 'Не можу знайти викладача з таким прізвищем.', reply_markup=keyboard)
+        return
 
     if len(tchrs) == 1:
         show_teachers(message.chat.id, tchrs[0])
+        return
 
     if len(tchrs) > 1:
 
@@ -293,6 +304,7 @@ def select_teachers(message):
         teachers_keyboard.row('Назад')
         sent = bot.send_message(message.chat.id, 'Вибери викладача:', reply_markup=teachers_keyboard)
         bot.register_next_step_handler(sent, select_teacher_from_request)
+        return
 
 
 def show_other_group(message):
@@ -362,6 +374,12 @@ def admin_metrics():
     except Exception:
         groups_update_time = '-'
 
+    try:
+        forecast_update_date = os.path.getmtime(os.path.join(settings.BASE_DIR, 'teachers.txt'))
+        teachers_update_time = datetime.datetime.fromtimestamp(forecast_update_date).strftime('%d.%m.%Y %H:%M')
+    except Exception:
+        teachers_update_time = '-'
+
     metrics_values = {
         'all_users_count': all_users_count,
         'all_groups_count': all_groups_count,
@@ -371,6 +389,7 @@ def admin_metrics():
         'active_week_users_count': active_week_users_count,
 
         'groups_update_time': groups_update_time,
+        'teachers_update_time': teachers_update_time,
     }
 
     return render_template('metrics.html', data=metrics_values)
@@ -381,7 +400,7 @@ def admin_del_user():
 
     data = {}
 
-    if request.method == 'POST' and request.form.get('PWD') == request.form.get('ID') + ' x':
+    if request.method == 'POST' and request.form.get('PWD') == request.form.get('ID') + ' 3':
 
         telegram_id = request.form.get('ID')
 
@@ -410,6 +429,33 @@ def admin_users():
     data = {
         'users': core.MetricsManager.get_users()
     }
+
+    return render_template('users.html', data=data)
+
+
+@app.route('/fl/send_message', methods=['POST'])
+def admin_send_message():
+
+    data = {}
+
+    if request.method == 'POST' and request.form.get('pass') == request.form.get('id') + ' 2':
+
+        telegram_id = request.form.get('id')
+
+        data = {
+            'chat_id': telegram_id,
+            'text': str(request.form.get('text')).strip()
+        }
+
+        r = requests.get('https://api.telegram.org/bot{}/sendMessage'.format(settings.BOT_TOKEN), params=data).json()
+
+        if r.get('ok'):
+            data['message'] = 'Відправлено'
+        else:
+            data['message'] = 'Помилка {}: {}'.format(r.get('error_code'), r.get('description'))
+
+    users = core.MetricsManager.get_users()
+    data['users'] = users
 
     return render_template('users.html', data=data)
 
@@ -448,6 +494,18 @@ def admin_update_groups():
 
     if updated:
         msg = 'Список груп оновлено. Завантажено {} груп.<br>'.format(len(updated))
+        msg += str(updated)
+        return msg
+    return 'Помилка при оновленні'
+
+
+@app.route('/fl/update_teachers')
+def admin_update_teachers():
+
+    updated = core.update_all_teachers()
+
+    if updated:
+        msg = 'Список викладачів оновлено. Завантажено {} імен.<br>'.format(len(updated))
         msg += str(updated)
         return msg
     return 'Помилка при оновленні'
@@ -601,7 +659,7 @@ def main_menu(message):
                   name in ["Поточний", "Наступний"]]
             )
 
-            bot.send_message(user.get_id(), 'На який?', reply_markup=week_type_keyboard)
+            bot.send_message(user.get_id(), 'На який тиждень?', reply_markup=week_type_keyboard)
 
         elif request == KEYBOARD['TIMETABLE']:
 
@@ -639,7 +697,7 @@ def main_menu(message):
                 mod_time = '-'
 
             msg = "Для пошуку по датам : <b>15.05</b> або <b>15.05-22.05</b> або <b>1.1.18-10.1.18</b>\n\n" \
-                  "<b>Група:</b> {}\n\n" \
+                  "<b>Група:</b> <code>{}</code>\n\n" \
                   "<b>Версія:</b> {}\n<b>Оновлення погоди:</b> {}\n" \
                   "<b>Наш канал:</b> @zdu_news\n" \
                   "<b>Розробник:</b> @Koocherov\n"
@@ -826,4 +884,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-    #app.run(debug=True)
+    app.run(debug=True)
