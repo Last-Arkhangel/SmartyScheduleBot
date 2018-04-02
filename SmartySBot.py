@@ -81,7 +81,8 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
 
 def render_day_timetable(day_data):
 
-    day_timetable = '.....::::: <b>\U0001F4CB {}</b> [{}] :::::.....\n\n'.format(day_data['day'], day_data['date'])
+    #day_timetable = '.....::::: <b>\U0001F4CB {}</b> {} :::::.....\n\n'.format(day_data['day'], day_data['date'])
+    day_timetable = '.....::::: <b>\U0001F4DD {}</b> {} :::::.....\n\n'.format(day_data['day'], day_data['date'])
 
     lessons = day_data['lessons']
 
@@ -183,6 +184,8 @@ def week_schedule_handler(call_back):
 
     timetable_for_week = ''
 
+    bot.delete_message(chat_id=user.get_id(), message_id=call_back.message.message_id)
+
     if timetable_data:
         for timetable_day in timetable_data:
             timetable_for_week += render_day_timetable(timetable_day)
@@ -194,22 +197,30 @@ def week_schedule_handler(call_back):
 
     elif isinstance(timetable_data, list) and not len(timetable_data):
         timetable_for_week = "На тиждень пар не знайдено."
-
-        if not core.is_group_valid(user_group):
-            possible_groups = core.get_possible_groups(user_group)
-            timetable_for_week += '\n\nТвоєї групи <b>{}</b> немає в базі розкладу, ' \
-                                  'тому перевір правильність вводу.'.format(user_group)
-
-            if possible_groups:
-                timetable_for_week += '\n<b>Можливі варіанти:</b>\n'
-                for possible_group in possible_groups:
-                    timetable_for_week += '{}\n'.format(possible_group.get('group'))
+        bot_send_message_and_post_check_group(user.get_id(), timetable_for_week, user_group)
+        return
 
     else:
         return
 
-    bot.edit_message_text(text=timetable_for_week, chat_id=user.get_id(),
-                          message_id=call_back.message.message_id, parse_mode="HTML")
+    bot.send_message(text=timetable_for_week, chat_id=user.get_id(), parse_mode="HTML")
+
+
+def bot_send_message_and_post_check_group(chat_id='', text='', user_group='', parse_mode='HTML'):
+
+    if not core.is_group_valid(user_group):
+        possible_groups = core.get_possible_groups(user_group)
+        text += '\n\nТвоєї групи <b>{}</b> немає в базі розкладу, ' \
+                'тому перевір правильність вводу.'.format(user_group)
+
+        if possible_groups:
+            text += '\n<b>Можливі варіанти:</b>\n'
+            for possible_group in possible_groups:
+                text += '{}\n'.format(possible_group.get('group'))
+
+        text += '\nЩоб змінити групу жми {} > {}'.format(KEYBOARD['HELP'], KEYBOARD['CHANGE_GROUP'])
+
+    bot.send_message(chat_id=chat_id, text=text, parse_mode=parse_mode, reply_markup=keyboard)
 
 
 def set_group(message):
@@ -227,7 +238,7 @@ def set_group(message):
         possible_groups = core.get_possible_groups(group)
         msg = 'Групу <b>{}</b> я зберіг, але її немає в базі розкладу. ' \
               'Тому якщо розклад не буде відображатись - перевір правильність вводу.\n\n' \
-              '<i>Щоб змінити групу зайди в Довідку</i>\n'.format(group)
+              '<i>Щоб змінити групу жми: </i>{} > {}\n'.format(group, KEYBOARD['HELP'], KEYBOARD['CHANGE_GROUP'])
 
         if possible_groups:
             msg += '<b>Можливі варіанти:</b>\n'
@@ -444,7 +455,8 @@ def admin_send_message():
 
         data = {
             'chat_id': telegram_id,
-            'text': str(request.form.get('text')).strip()
+            'parse_mode': 'HTML',
+            'text': '\U0001f916 <b>Бот</b>:\n\n' + str(request.form.get('text')).strip()
         }
 
         r = requests.get('https://api.telegram.org/bot{}/sendMessage'.format(settings.BOT_TOKEN), params=data).json()
@@ -568,16 +580,8 @@ def main_menu(message):
             elif isinstance(timetable_data, list) and not len(timetable_data):
 
                 timetable_for_today = "На сьогодні пар не знайдено."
-
-                if not core.is_group_valid(user_group):
-                    possible_groups = core.get_possible_groups(user_group)
-                    timetable_for_today += '\n\nТвоєї групи <b>{}</b> немає в базі розкладу, ' \
-                                           'тому перевір правильність вводу.'.format(user_group)
-
-                    if possible_groups:
-                        timetable_for_today += '\n<b>Можливі варіанти:</b>\n'
-                        for possible_group in possible_groups:
-                            timetable_for_today += '{}\n'.format(possible_group.get('group'))
+                bot_send_message_and_post_check_group(user.get_id(), timetable_for_today, user_group)
+                return
 
             else:
                 return
@@ -595,16 +599,8 @@ def main_menu(message):
                 timetable_for_tomorrow = render_day_timetable(timetable_data[0])
             elif isinstance(timetable_data, list) and not len(timetable_data):
                 timetable_for_tomorrow = "На завтра пар не знайдено."
-
-                if not core.is_group_valid(user_group):
-                    possible_groups = core.get_possible_groups(user_group)
-                    timetable_for_tomorrow += '\n\nТвоєї групи <b>{}</b> немає в базі розкладу, ' \
-                                              'тому перевір правильність вводу.'.format(user_group)
-
-                    if possible_groups:
-                        timetable_for_tomorrow += '\n<b>Можливі варіанти:</b>\n'
-                        for possible_group in possible_groups:
-                            timetable_for_tomorrow += '{}\n'.format(possible_group.get('group'))
+                bot_send_message_and_post_check_group(user.get_id(), timetable_for_tomorrow, user_group)
+                return
 
             else:
                 return
@@ -638,15 +634,8 @@ def main_menu(message):
                     timetable_for_week = "На тиждень, з {} по {} пар не знайдено.".format(
                         next_week_first_day.strftime('%d.%m'), next_week_last_day.strftime('%d.%m'))
 
-                    if not core.is_group_valid(user_group):
-                        possible_groups = core.get_possible_groups(user_group)
-                        timetable_for_week += '\n\nТвоєї групи <b>{}</b> немає в базі розкладу, ' \
-                                              'тому перевір правильність вводу.'.format(user_group)
-
-                        if possible_groups:
-                            timetable_for_week += '\n<b>Можливі варіанти:</b>\n'
-                            for possible_group in possible_groups:
-                                timetable_for_week += '{}\n'.format(possible_group.get('group'))
+                    bot_send_message_and_post_check_group(user.get_id(), timetable_for_week, user_group)
+                    return
 
                 bot.send_message(text=timetable_for_week, chat_id=user.get_id(),
                                  reply_markup=keyboard, parse_mode="HTML")
@@ -696,10 +685,10 @@ def main_menu(message):
             except Exception:
                 mod_time = '-'
 
-            msg = "Для пошуку по датам : <b>15.05</b> або <b>15.05-22.05</b> або <b>1.1.18-10.1.18</b>\n\n" \
+            msg = "Для пошуку по датам : <b>15.05</b>, <b>15.05-22.05</b>, <b>1.1.18-10.1.18</b>\n\n" \
                   "<b>Група:</b> <code>{}</code>\n\n" \
-                  "<b>Версія:</b> {}\n<b>Оновлення погоди:</b> {}\n" \
-                  "<b>Наш канал:</b> @zdu_news\n" \
+                  "<b>Версія:</b> {}\n" \
+                  "<b>Канал:</b> @zdu_news\n" \
                   "<b>Розробник:</b> @Koocherov\n"
 
             kb = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)

@@ -89,7 +89,7 @@ class WeatherManager:
         tomorrow_date = datetime.datetime.now() + datetime.timedelta(days=1)
         tomorrow_day = tomorrow_date.day
 
-        hidden_hours = [2, 5]
+        hidden_hours = [0, 3, 2, 5, 6]
 
         result = ''
 
@@ -140,4 +140,4 @@ class WeatherManager:
 
         if self.check_if_forecast_need_update():
             self.update_forecast()
-            core.log(m='Оновлення погоди')
+            #core.log(m='Оновлення погоди')
