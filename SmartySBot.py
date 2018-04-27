@@ -9,6 +9,7 @@ import core
 import re
 import json
 import copy
+import random
 from WeatherManager import WeatherManager
 from settings import KEYBOARD
 from flask import Flask, request, render_template, jsonify
@@ -81,8 +82,7 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
 
 def render_day_timetable(day_data):
 
-    #day_timetable = '.....::::: <b>\U0001F4CB {}</b> {} :::::.....\n\n'.format(day_data['day'], day_data['date'])
-    day_timetable = '.....::::: <b>\U0001F4DD {}</b> {} :::::.....\n\n'.format(day_data['day'], day_data['date'])
+    day_timetable = '.....::::: <b>\U0001F4CB {}</b> - <i>{}</i> :::::.....\n\n'.format(day_data['day'], day_data['date'])
 
     lessons = day_data['lessons']
 
@@ -99,11 +99,14 @@ def render_day_timetable(day_data):
             end_index = i
             break
 
+    timetable = ['8:30 - 9:50', '10:00 - 11:20', '11:40 - 13:00', '13:10 - 14:30',
+                 '14:40 - 16:00', '16:20 - 17:40', '17:50 - 19:10', '19:20 - 20:40']
+
     for i in range(start_index, end_index + 1):
         if lessons[i]:
-            day_timetable += '{} {}\n\n'.format(emoji_numbers[i + 1], lessons[i])
+            day_timetable += '{} <i>{}</i> \n{}\n\n'.format(emoji_numbers[i+1], timetable[i], lessons[i])
         else:
-            day_timetable += '{} Вікно \U0001F649\U0001F64A\n\n'.format(emoji_numbers[i + 1])
+            day_timetable += '{} <i>{}</i>\nВікно \U0001F483\U0001F57A\n\n'.format(emoji_numbers[i+1], timetable[i])
 
     return day_timetable
 
@@ -184,16 +187,9 @@ def week_schedule_handler(call_back):
 
     timetable_for_week = ''
 
-    bot.delete_message(chat_id=user.get_id(), message_id=call_back.message.message_id)
-
     if timetable_data:
         for timetable_day in timetable_data:
             timetable_for_week += render_day_timetable(timetable_day)
-
-        if len(timetable_for_week) > 5000:
-            msg = "Перевищена кількість допустимих символів ({} із 5000).".format(len(timetable_for_week))
-            bot.send_message(user.get_id(), msg, parse_mode='HTML', reply_markup=keyboard)
-            return
 
     elif isinstance(timetable_data, list) and not len(timetable_data):
         timetable_for_week = "На тиждень пар не знайдено."
@@ -203,7 +199,9 @@ def week_schedule_handler(call_back):
     else:
         return
 
-    bot.send_message(text=timetable_for_week, chat_id=user.get_id(), parse_mode="HTML")
+    bot.delete_message(chat_id=user.get_id(), message_id=call_back.message.message_id)
+    bot.send_message(text=timetable_for_week[:4090], chat_id=user.get_id(),
+                     parse_mode="HTML", reply_markup=keyboard)
 
 
 def bot_send_message_and_post_check_group(chat_id='', text='', user_group='', parse_mode='HTML'):
@@ -366,7 +364,7 @@ def show_other_group(message):
     else:
         return
 
-    bot.send_message(message.chat.id, timetable_for_week, parse_mode='HTML', reply_markup=keyboard)
+    bot.send_message(message.chat.id, timetable_for_week[:4090], parse_mode='HTML', reply_markup=keyboard)
 
 
 @app.route('/fl/metrics')
@@ -523,6 +521,17 @@ def admin_update_teachers():
     return 'Помилка при оновленні'
 
 
+@app.route('/fl/user/<user_id>')
+def admin_user_statistics(user_id):
+
+    data = {
+        'user': core.User.get_userinfo_by_id(user_id),
+        'actions': core.MetricsManager.get_stats_by_user_id(user_id),
+    }
+
+    return render_template('user_stat.html', data=data)
+
+
 @app.route('/fl/run')
 def index():
     core.User.create_user_table_if_not_exists()
@@ -571,7 +580,7 @@ def main_menu(message):
 
         core.log(message.chat, '> {}'.format(message.text))
 
-        if request == KEYBOARD['TODAY']:  # Today
+        if request == KEYBOARD['TODAY'] or request == '\U0001F4D7 Сьогодні':  # Today
 
             timetable_data = get_timetable(group=user_group, user_id=user.get_id())
 
@@ -588,7 +597,7 @@ def main_menu(message):
 
             bot.send_message(user.get_id(), timetable_for_today, parse_mode='HTML', reply_markup=keyboard)
 
-        elif request == KEYBOARD['TOMORROW']:  # Tomorrow
+        elif request == KEYBOARD['TOMORROW'] or request == '\U0001F4D8 Завтра':  # Tomorrow
 
             tomorrow = datetime.date.today() + datetime.timedelta(days=1)
             tom_day = tomorrow.strftime('%d.%m.%Y')
@@ -607,9 +616,9 @@ def main_menu(message):
 
             bot.send_message(user.get_id(), timetable_for_tomorrow, parse_mode='HTML', reply_markup=keyboard)
 
-        elif request == KEYBOARD['FOR_A_WEEK']:  # For a week
+        elif request == KEYBOARD['FOR_A_WEEK'] or request == '\U0001F4DA На тиждень':  # For a week
 
-            if datetime.date.today().isoweekday() in (6, 7):  # If current day is Saturday or Sunday
+            if datetime.date.today().isoweekday() in (4, 5, 6, 7):  # Чт, пт, сб, нд
 
                 timetable_for_week = ''
                 today = datetime.date.today()
@@ -625,11 +634,6 @@ def main_menu(message):
                     for timetable_day in timetable_data:
                         timetable_for_week += render_day_timetable(timetable_day)
 
-                    if len(timetable_for_week) > 5000:
-                        msg = "Перевищена кількість допустимих символів ({} із 5000).".format(len(timetable_for_week))
-                        bot.send_message(user.get_id(), msg, parse_mode='HTML', reply_markup=keyboard)
-                        return
-
                 elif isinstance(timetable_data, list) and not len(timetable_data):
                     timetable_for_week = "На тиждень, з {} по {} пар не знайдено.".format(
                         next_week_first_day.strftime('%d.%m'), next_week_last_day.strftime('%d.%m'))
@@ -637,7 +641,7 @@ def main_menu(message):
                     bot_send_message_and_post_check_group(user.get_id(), timetable_for_week, user_group)
                     return
 
-                bot.send_message(text=timetable_for_week, chat_id=user.get_id(),
+                bot.send_message(text=timetable_for_week[:4090], chat_id=user.get_id(),
                                  reply_markup=keyboard, parse_mode="HTML")
 
                 return
@@ -829,11 +833,15 @@ def main_menu(message):
 
             bot.send_message(user.get_id(), timetable_for_days, parse_mode='HTML', reply_markup=keyboard)
 
+        elif request == KEYBOARD['MAIN_MENU']:
+            bot.send_message(user.get_id(), 'Ок', reply_markup=keyboard)
+
         else:
-            bot.send_message(user.get_id(), '\U0001F914', reply_markup=keyboard)
+            answers = ['м?', 'хм.. \U0001F914', 'не розумію(', 'вибери потрібне в меню', 'моя твоя не понімать']
+            bot.send_message(user.get_id(), random.choice(answers), reply_markup=keyboard)
 
     else:
-        bot.send_message(user.get_id(), 'Не знайшов твою групу, щоб вказати - введи /start')
+        bot.send_message(user.get_id(), 'Не знайшов твою групу. Введи /start, і вкажи її.')
 
 
 def main():
@@ -872,5 +880,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    #main()
     app.run(debug=True)

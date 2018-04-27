@@ -2,7 +2,7 @@
 import os
 
 # Bot version
-VERSION = '8.3'
+VERSION = '8.5'
 
 # Database name
 DATABASE = 'SmartyS_DB.sqlite'
@@ -14,7 +14,7 @@ BOT_TOKEN = '<token>'
 OPEN_WEATHER_MAP_TOKEN = '<token>'
 
 # Interval to polling telegram servers (Uses if USE_WEBHOOK sets False)
-POLLING_INTERVAL = 1
+POLLING_INTERVAL = 2
 
 # Use cache
 USE_CACHE = False
@@ -45,16 +45,15 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Keyboard buttons
 KEYBOARD = {
-    'TODAY': '\U0001F4D7 Сьогодні',
-    'TOMORROW': '\U0001F4D8 Завтра',
-    'FOR_A_WEEK': '\U0001F4DA На тиждень',
+    'TODAY': '\U0001F4D8 Сьогодні',
+    'TOMORROW': '\U0001F4D9 Завтра',
+    'FOR_A_WEEK': '\U0001F4DA Тиждень',
     'FOR_A_TEACHER': '\U0001F464 По викладачу',
     'TIMETABLE': '\U0001F552 Час пар',
     'FOR_A_GROUP': '\U0001F465 По групі',
-    'WEATHER': '\U0001F308 Погода',
+    'WEATHER': '\U0001F30D Погода',
     'HELP': '\U0001F4AC Довідка',
 
     'CHANGE_GROUP': '\U00002699 Зм. групу',
     'MAIN_MENU': '\U0001F519 Меню',
-    'BOT_CHANEL': '\U0001F4A1',
 }

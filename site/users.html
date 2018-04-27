@@ -66,7 +66,7 @@
       <tbody>
        {% for user in data.users %}
         <tr>
-          <th scope="row">{{ user.telegram_id }}</th>
+          <th scope="row"><a href="/fl/user/{{ user.telegram_id }}" target="_blank">{{ user.telegram_id }}</a></th>
           <td>{{ user.username }}</td>
           <td>{{ user.first_name }}</td>
           <td>{{ user.last_name }}</td>

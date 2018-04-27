@@ -70,7 +70,7 @@ class User:
         return DBManager.execute_query(query)
 
     @classmethod
-    def get_username(cls, t_id):
+    def get_userinfo_by_id(cls, t_id):
 
         query = "SELECT * FROM users WHERE t_id=?"
 
@@ -314,6 +314,32 @@ class MetricsManager:
 
         return users
 
+    @classmethod
+    def get_stats_by_user_id(cls, user_id):
+
+        query = """SELECT * From metrics WHERE telegram_id = ?"""
+
+        user_actions_raw = DBManager.execute_query(query, (user_id, ))
+        user_actions = []
+
+        if not user_actions_raw:
+            return user_actions.append({
+                'action_id': '-',
+                'action_type': '-',
+                'action_group': '-',
+                'action_date': '-',
+            })
+
+        for action in user_actions_raw:
+            user_actions.append({
+                'action_id': action[0],
+                'action_type': settings.KEYBOARD.get(action[2], '-'),
+                'action_group': action[3],
+                'action_date': action[4],
+            })
+
+        return user_actions
+
 
 def update_all_groups():
 
@@ -402,6 +428,6 @@ def update_all_teachers():
         teachers = []
 
     with open(os.path.join(settings.BASE_DIR, 'teachers.txt'), 'w', encoding="utf-8") as file:
-        file.write(json.dumps(teachers[1:], sort_keys=True, ensure_ascii=False, separators=(',', ':'), indent=2))
+        file.write(json.dumps(teachers, sort_keys=True, ensure_ascii=False, separators=(',', ':'), indent=2))
 
     return teachers

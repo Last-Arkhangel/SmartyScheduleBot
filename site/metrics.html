@@ -56,3 +56,9 @@
       </div>
     
 {% endblock %}
+
+{% block js %}
+    <script src="{{ url_for('static', filename = 'js/requests-types-chart.js') }}"></script>
+    <script src="{{ url_for('static', filename = 'js/requests_on_hours.js') }}"></script>
+    <script src="{{ url_for('static', filename = 'js/requests-on-days.js') }}"></script>
+{% endblock %}
