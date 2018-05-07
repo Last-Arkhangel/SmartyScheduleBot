@@ -128,12 +128,19 @@ def log(chat=None, m=''):
 class Cache:
 
     @classmethod
+    def drop_cache_table(cls):
+
+        query = 'DROP TABLE cache'
+
+        return DBManager.execute_query(query)
+
+    @classmethod
     def create_cache_table_if_not_exists(cls):
 
         query = """CREATE TABLE IF NOT EXISTS cache(
                           key TEXT PRIMARY KEY NOT NULL,
                           data TEXT DEFAULT CURRENT_TIMESTAMP,
-                          create_time TEXT,
+                          creation_time DEFAULT (datetime('now', 'localtime')),
                           requests INTEGER DEFAULT 0)
                           WITHOUT ROWID"""
 
@@ -159,7 +166,7 @@ class Cache:
     @classmethod
     def put_in_cache(cls, key, data):
 
-        query = "INSERT or IGNORE INTO cache (key, data, create_time) VALUES (?, ?, CURRENT_TIMESTAMP)"
+        query = "INSERT or IGNORE INTO cache (key, data) VALUES (?, ?)"
         return DBManager.execute_query(query, (key, data))
 
     @classmethod
