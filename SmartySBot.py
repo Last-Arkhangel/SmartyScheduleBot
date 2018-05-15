@@ -8,7 +8,7 @@ import settings
 import core
 import re
 import json
-import copy
+import schedule_updater
 import random
 from WeatherManager import WeatherManager
 from settings import KEYBOARD
@@ -48,7 +48,7 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
         return False
 
     try:
-        page = requests.post(settings.TIMETABLE_URL, post_data, headers=http_headers, timeout=5)
+        page = requests.post(settings.TIMETABLE_URL, post_data, headers=http_headers, timeout=9)
     except Exception as ex:  # Connection error to Dekanat site
 
         if settings.USE_CACHE:
@@ -61,10 +61,10 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
                     'станом на {} ' \
                     '(теоретично, його вже могли змінити)'.format(cached_timetable[0][2][11:])
                 bot.send_message(user_id, m, reply_markup=keyboard)
-                core.log(m='Prev from cache')
+                core.log(m='Попереднє видано із кешу')
                 return json.loads(cached_timetable[0][1])
 
-        core.log(m='Error with Dekanat site connection.')
+        core.log(m='Помилка з\'єднання із сайтом Деканату.')
         bot.send_message(user_id, 'Помилка з\'єднання із сайтом Деканату. Спробуй пізніше.', reply_markup=keyboard)
         return False
 
@@ -79,15 +79,6 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
             'lessons': [' '.join(lesson.text.split()) for lesson in one_day_table.find_all('td')[2::3]]
         })
 
-    # TODO Delete it
-    """
-    if all_days_lessons and settings.USE_CACHE or 2 == 3:  # if timetable exists, put it to cache
-        cached_all_days_lessons = copy.deepcopy(all_days_lessons)
-        cached_all_days_lessons[0]['day'] += '*'
-        _json = json.dumps(cached_all_days_lessons, sort_keys=True, ensure_ascii=False, separators=(',', ':'), indent=2)
-        request_key = '{}{} : {} > {}'.format(group.lower(), teacher, sdate, edate)
-        core.Cache.put_in_cache(request_key, _json)
-    """
     return all_days_lessons
 
 
@@ -122,17 +113,39 @@ def render_day_timetable(day_data):
     return day_timetable
 
 
+@bot.message_handler(commands=['cu'])
+def update_cache(message):
+
+    user = core.User(message.chat)
+
+    if len(message.text.split()) == 2:
+        count = message.text.split()[1]
+    else:
+        count = 40
+
+    if str(user.get_id()) not in settings.ADMINS_ID:
+        bot.send_message(user.get_id(), 'Немає доступу :(')
+        return
+
+    bot.send_message(user.get_id(), 'Починаю оновлення розкладу.', reply_markup=keyboard, parse_mode='HTML')
+
+    s = schedule_updater.update_cache(count)
+
+    bot.send_message(user.get_id(), s, reply_markup=keyboard, parse_mode='HTML')
+
+
 @bot.message_handler(commands=['ci'])
 def cache_info(message):
 
     user = core.User(message.chat)
 
-    if str(user.get_id()) not in settings.ADMINS_ID:
-        return
+    cache_items_count = len(core.Cache.get_keys() or [])
+    cache_requests = core.Cache.get_requests_to_cache()
 
-    cache_items_count = len(core.Cache.get_keys() or '')
+    ans = 'В кеші <b>{}</b> записи(ів).\n' \
+          'Кількість звернень: <b>{}</b>.\n'.format(cache_items_count, cache_requests[0][0])
 
-    bot.send_message(user.get_id(), 'In cache: {} units'.format(cache_items_count))
+    bot.send_message(user.get_id(), ans, reply_markup=keyboard, parse_mode='HTML')
 
 
 @bot.message_handler(commands=['cc'])
@@ -141,6 +154,7 @@ def clear_cache(message):
     user = core.User(message.chat)
 
     if str(user.get_id()) not in settings.ADMINS_ID:
+        bot.send_message(user.get_id(), 'Немає доступу :(')
         return
 
     core.Cache.clear_cache()
@@ -154,14 +168,20 @@ def get_logs(message):
     user = core.User(message.chat)
 
     if str(user.get_id()) not in settings.ADMINS_ID:
+        bot.send_message(user.get_id(), 'Немає доступу :(')
         return
+
+    if len(message.text.split()) == 2:
+        count = int(message.text.split()[1])
+    else:
+        count = 65
 
     with open(os.path.join(settings.BASE_DIR, 'bot_log.txt'), 'r', encoding="utf-8") as log_file:
         log_lines = log_file.readlines()
 
     logs = ''
 
-    for line in log_lines[-65:]:
+    for line in log_lines[-count:]:
         logs += line
 
     bot.send_message(user.get_id(), logs, reply_markup=keyboard)

@@ -181,6 +181,12 @@ class Cache:
         query = "DELETE FROM cache"
         return DBManager.execute_query(query, )
 
+    @classmethod
+    def get_requests_to_cache(cls):
+
+        query = "SELECT SUM(requests) FROM cache"
+        return DBManager.execute_query(query, )
+
 
 class MetricsManager:
 

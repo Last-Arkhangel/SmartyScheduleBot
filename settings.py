@@ -2,7 +2,7 @@
 import os
 
 # Bot version
-VERSION = '8.5'
+VERSION = '9.0'
 
 # Database name
 DATABASE = 'SmartyS_DB.sqlite'
@@ -17,7 +17,7 @@ OPEN_WEATHER_MAP_TOKEN = '<token>'
 POLLING_INTERVAL = 2
 
 # Use cache
-USE_CACHE = False
+USE_CACHE = True
 
 # Use webhook instead polling
 USE_WEBHOOK = True
