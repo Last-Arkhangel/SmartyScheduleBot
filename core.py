@@ -88,6 +88,12 @@ class User:
 
         return DBManager.execute_query(query, (t_id,))
 
+    def get_user_requests_count(self):
+
+        query = "SELECT requests_count FROM users WHERE t_id=?"
+
+        return DBManager.execute_query(query, (self.get_id(),))[0][0]
+
 
 class DBManager:
 
