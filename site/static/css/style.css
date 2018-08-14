@@ -2,10 +2,12 @@
   margin-top: 30px;
 }
 .header {
-  background-color: #fdd835;
-  color: #ff8f00;
-  border-radius: 15px;
+  background-color: #dfd;
+  border-radius: 10px;
 }
 .brand-title{
   font-weight: bold;
+}
+#del-btn{
+  margin-bottom: 20px;
 }

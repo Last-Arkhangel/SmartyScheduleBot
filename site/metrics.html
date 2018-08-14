@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}SmartySBot метрика{% endblock %}
+{% block title %}SBot метрика{% endblock %}
 
 {% block content %}
      
@@ -40,20 +40,17 @@
           <div class="col-md-6 col-sm-12">
             <h4>Оновлення викладачів</h4>
             <div>Останнє оновлення: {{data.teachers_update_time}}</div>
-             <a class="btn btn-info" href="/fl/update_teachers" role="button" target="_blank">Оновити</a>
+             <a class="btn btn-warning" href="/fl/update_teachers" role="button" target="_blank">Оновити</a>
           </div><br>
          <div class="col-md-6 col-sm-12">
             <h4>Оновлення груп</h4>
             <div>Останнє оновлення: {{data.groups_update_time}}</div>
-             <a class="btn btn-info" href="/fl/update_groups" role="button" target="_blank">Оновити</a>
-          </div>
-          
-          <div class="col-md-6 col-sm-12">
-            <canvas id="requests-on-days"></canvas>
+             <a class="btn btn-success" href="/fl/update_groups" role="button" target="_blank">Оновити</a>
           </div>
         </div>
           
       </div>
+      <br>
     
 {% endblock %}
 

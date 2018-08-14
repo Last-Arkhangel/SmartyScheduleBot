@@ -10,11 +10,14 @@ import re
 import json
 import schedule_updater
 import random
+import hashlib
 from WeatherManager import WeatherManager
 from settings import KEYBOARD
-from flask import Flask, request, render_template, jsonify
+from flask import Flask, request, render_template, jsonify, session
 
 app = Flask(__name__, template_folder='site', static_folder='site/static', static_url_path='/fl/static')
+app.secret_key = hashlib.md5(settings.ADMIN_PASSWORD.encode('utf-8')).hexdigest()
+
 bot = telebot.TeleBot(settings.BOT_TOKEN, threaded=True)
 
 keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
@@ -43,12 +46,12 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
         }
     except Exception as ex:
         core.log(m='Error encoding request parameters: {}'.format(str(ex)))
-        bot.send_message(user_id, 'Помилка надсилання запиту, вкажіть коректні параметри (як мінімум перевір чи '
+        bot.send_message(user_id, 'Помилка надсилання запиту, вкажи коректні параметри (як мінімум перевір чи '
                                   'правильно вказана група, зробити це можна в Довідці)', reply_markup=keyboard)
         return False
 
     try:
-        page = requests.post(settings.TIMETABLE_URL, post_data, headers=http_headers, timeout=9)
+        page = requests.post(settings.TIMETABLE_URL, post_data, headers=http_headers, timeout=8)
     except Exception as ex:  # Connection error to Dekanat site
 
         if settings.USE_CACHE:
@@ -61,7 +64,7 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
                     'станом на {} ' \
                     '(теоретично, його вже могли змінити)'.format(cached_timetable[0][2][11:])
                 bot.send_message(user_id, m, reply_markup=keyboard)
-                core.log(m='Попереднє видано із кешу')
+                core.log(m='Розклад видано з кешу')
                 return json.loads(cached_timetable[0][1])
 
         core.log(m='Помилка з\'єднання із сайтом Деканату.')
@@ -159,7 +162,7 @@ def clear_cache(message):
 
     core.Cache.clear_cache()
 
-    bot.send_message(user.get_id(), 'The cache has been successfully cleaned.')
+    bot.send_message(user.get_id(), 'Кеш був очищений.')
 
 
 @bot.message_handler(commands=['log'])
@@ -189,8 +192,13 @@ def get_logs(message):
 
 @bot.message_handler(commands=['start'])
 def start_handler(message):
-    sent = bot.send_message(message.chat.id, 'Йоу, {} 😊. Я можу показати твій розклад прямо тут. Для початку '
-                                             'скажи мені свою групу (Напр. 44_і_д)'.format(message.chat.first_name))
+
+    msg = 'Хай, {} 😊. Я Бот розкладу для студентів ЖДУ ім.Івана Франка. Я можу показати твій розклад на сьогодні, ' \
+          'на завтра, по викладачу, по групі і так далі. ' \
+          'Для початку скажи мені свою групу (Напр. 44_і_д), ' \
+          'змінити ти її зможеш в пункті меню {}'.format(message.chat.first_name, KEYBOARD['HELP'])
+
+    sent = bot.send_message(chat_id=message.chat.id, text=msg)
     bot.register_next_step_handler(sent, set_group)
 
 
@@ -320,7 +328,7 @@ def select_teachers(message):
             all_teachers = json.loads(file.read())
     except Exception as ex:
         bot.send_message(message.chat.id, 'Даний функціонал тимчасово не працює.', reply_markup=keyboard)
-        core.log(m='Error loading teachers file: {}'.format(str(ex)))
+        core.log(m='Помилка із файлом викладачів: {}'.format(str(ex)))
         return
 
     for teacher in all_teachers:
@@ -398,8 +406,53 @@ def show_other_group(message):
     bot.send_message(message.chat.id, timetable_for_week[:4090], parse_mode='HTML', reply_markup=keyboard)
 
 
+@app.route('/fl/login', methods=['POST', 'GET'])
+def admin_login():
+
+    if session.get('login'):
+        return admin_metrics()
+
+    if request.method == 'GET':
+        return render_template('login.html')
+
+    req_ip = request.remote_addr
+    req_agent = request.user_agent
+
+    data = {
+        'parse_mode': 'HTML',
+        'chat_id': '204560928',
+    }
+
+    if request.method == 'POST' and request.form.get('password') == settings.ADMIN_PASSWORD:
+        session['login'] = True
+
+        data['text'] = 'Авторизація в панелі адміністратора.\n<b>IP: </b>{}\n<b>UA: </b>{}'.format(req_ip, req_agent)
+        requests.get('https://api.telegram.org/bot{}/sendMessage'.format(settings.BOT_TOKEN), params=data)
+
+        return admin_metrics()
+
+    else:
+
+        data['text'] = 'Неправильний пароль під час авторизації в панелі адміністратора.\n' \
+                       '<b>IP: </b>{}\n<b>UA: </b>{}'.format(req_ip, req_agent)
+        requests.get('https://api.telegram.org/bot{}/sendMessage'.format(settings.BOT_TOKEN), params=data)
+
+        return 'Bad password'
+
+
+@app.route('/fl/logout')
+def admin_logout():
+
+    if session.get('login'):
+        session['login'] = False
+    return admin_login()
+
+
 @app.route('/fl/metrics')
 def admin_metrics():
+
+    if not session.get('login'):
+        return admin_login()
 
     all_users_count = core.MetricsManager.get_all_users_count()
     all_groups_count = core.MetricsManager.get_all_groups_count()
@@ -435,27 +488,23 @@ def admin_metrics():
     return render_template('metrics.html', data=metrics_values)
 
 
-@app.route('/fl/del_user', methods=['POST'])
-def admin_del_user():
+@app.route('/fl/del_user/<user_id>')
+def admin_del_user(user_id):
+
+    if not session.get('login'):
+        return admin_login()
 
     data = {}
 
-    if request.method == 'POST' and request.form.get('PWD') == request.form.get('ID') + ' 3':
+    u = core.User.get_userinfo_by_id(user_id)
+    core.User.delete_user(user_id)
 
-        telegram_id = request.form.get('ID')
-
-        u = core.User.get_username(telegram_id)
-        core.User.delete_user(telegram_id)
-
-        if u:
-            data['message'] = 'Користувач <b>{} {}</b> був успішно видалений. <br> ' \
-                              '<b>група:</b> {}, <b>реєстрація:</b> {}, ' \
-                              '<b>остання активність:</b> {}'.format(u[2], u[3] or '', u[4], u[5], u[6])
-        else:
-            data['message'] = 'Такого користувача не знайдено.'
+    if u:
+        data['message'] = 'Користувач <b>{} {}</b> був успішно видалений. <br> ' \
+                          '<b>група:</b> {}, <b>реєстрація:</b> {}, ' \
+                          '<b>остання активність:</b> {}'.format(u[2], u[3] or '', u[4], u[5], u[6])
     else:
-
-        data['message'] = 'Неправильний пароль'
+        data['message'] = 'Такого користувача не знайдено.'
 
     users = core.MetricsManager.get_users()
     data['users'] = users
@@ -466,6 +515,9 @@ def admin_del_user():
 @app.route('/fl/users')
 def admin_users():
 
+    if not session.get('login'):
+        return admin_login()
+
     data = {
         'users': core.MetricsManager.get_users()
     }
@@ -473,32 +525,29 @@ def admin_users():
     return render_template('users.html', data=data)
 
 
-@app.route('/fl/send_message', methods=['POST'])
+@app.route('/fl/send_message', methods=['POST', 'GET'])
 def admin_send_message():
 
-    data = {}
+    if not session.get('login'):
+        return admin_login()
 
-    if request.method == 'POST' and request.form.get('pass') == request.form.get('id') + ' 2':
+    telegram_id = request.form.get('usr-id')
+    text = str(request.form.get('text')).strip()
 
-        telegram_id = request.form.get('id')
+    data = {
+        'chat_id': telegram_id,
+        'parse_mode': 'HTML',
+        'text': '\U0001f916 <b>Бот</b>:\n\n' + text
+    }
 
-        data = {
-            'chat_id': telegram_id,
-            'parse_mode': 'HTML',
-            'text': '\U0001f916 <b>Бот</b>:\n\n' + str(request.form.get('text')).strip()
-        }
+    r = requests.get('https://api.telegram.org/bot{}/sendMessage'.format(settings.BOT_TOKEN), params=data).json()
 
-        r = requests.get('https://api.telegram.org/bot{}/sendMessage'.format(settings.BOT_TOKEN), params=data).json()
+    if r.get('ok'):
+        data['message'] = 'Відправлено: <b>{}</b>'.format(text)
+    else:
+        data['message'] = 'Помилка {}: {}'.format(r.get('error_code'), r.get('description'))
 
-        if r.get('ok'):
-            data['message'] = 'Відправлено'
-        else:
-            data['message'] = 'Помилка {}: {}'.format(r.get('error_code'), r.get('description'))
-
-    users = core.MetricsManager.get_users()
-    data['users'] = users
-
-    return render_template('users.html', data=data)
+    return admin_user_statistics(telegram_id, data['message'])
 
 
 @app.route('/fl/statistics_by_types_during_the_week')
@@ -531,6 +580,9 @@ def last_days_statistics():
 @app.route('/fl/update_groups')
 def admin_update_groups():
 
+    if not session.get('login'):
+        return admin_login()
+
     updated = core.update_all_groups()
 
     if updated:
@@ -543,6 +595,9 @@ def admin_update_groups():
 @app.route('/fl/update_teachers')
 def admin_update_teachers():
 
+    if not session.get('login'):
+        return admin_login()
+
     updated = core.update_all_teachers()
 
     if updated:
@@ -553,37 +608,33 @@ def admin_update_teachers():
 
 
 @app.route('/fl/user/<user_id>')
-def admin_user_statistics(user_id):
+def admin_user_statistics(user_id, msg=''):
+
+    if not session.get('login'):
+        return admin_login()
 
     data = {
         'user': core.User.get_userinfo_by_id(user_id),
         'actions': core.MetricsManager.get_stats_by_user_id(user_id),
+        'message': msg
     }
 
     return render_template('user_stat.html', data=data)
 
 
-@app.route('/fl/drop_cache_table')
-def drop_cache_table():
-    core.Cache.drop_cache_table()
-    return 'Droped'
-
-
-@app.route('/fl/create_cache_table')
-def recreate_cache_table():
-    core.Cache.create_cache_table_if_not_exists()
-    return 'Created'
-
-
 @app.route('/fl/run')
 def index():
+
+    if not session.get('login'):
+        return admin_login()
+
     core.User.create_user_table_if_not_exists()
     core.MetricsManager.create_metrics_table_if_not_exists()
     core.Cache.create_cache_table_if_not_exists()
     bot.delete_webhook()
     bot.set_webhook(settings.WEBHOOK_URL + settings.WEBHOOK_PATH, max_connections=1)
     bot.send_message('204560928', 'Running...')
-    core.log(m='Webhook is setting: {} by run url'.format(bot.get_webhook_info().url))
+    core.log(m='Запуск через url. Веб-хук встановлено: {}.'.format(bot.get_webhook_info().url))
     return 'ok'
 
 
@@ -885,25 +936,25 @@ def main():
     if settings.USE_WEBHOOK:
         try:
             bot.set_webhook(settings.WEBHOOK_URL + settings.WEBHOOK_PATH, max_connections=1)
-            core.log(m='Webhook is setting: {}'.format(bot.get_webhook_info().url))
+            core.log(m='Веб-хук встановлено: {}'.format(bot.get_webhook_info().url))
 
         except Exception as ex:
-            core.log(m='Error while setting webhook: {}'.format(str(ex)))
+            core.log(m='Помилка під час встановлення веб-хуку: {}'.format(str(ex)))
 
     try:
-        core.log(m='Running..')
+        core.log(m='Запуск...')
         bot.polling(none_stop=True, interval=settings.POLLING_INTERVAL)
 
     except Exception as ex:
 
-        core.log(m='Working error: {}\n'.format(str(ex)))
+        core.log(m='Помилка під час роботи: {}\n'.format(str(ex)))
         bot.stop_polling()
 
         if settings.SEND_ERRORS_TO_ADMIN:
             for admin in settings.ADMINS_ID:
                 data = {
                     'chat_id': admin,
-                    'text': 'Something go wrong.\nError: {}'.format(str(ex))
+                    'text': 'Щось пішло не так.\n {}'.format(str(ex))
                 }
 
                 requests.get('https://api.telegram.org/bot{}/sendMessage'.format(settings.BOT_TOKEN), params=data)

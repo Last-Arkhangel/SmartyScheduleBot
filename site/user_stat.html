@@ -3,13 +3,28 @@
 {% block title %}Статистика {{ data.user[2] }}{% endblock %}
 
 {% block content %}
-     
+
   <div class="content">
-    
-    <div class="alert alert-warning" role="alert">
+
+    {% if data.message %}
+     <div class="alert alert-success" role="alert">
+      {{ data.message|safe }}
+    </div>
+    {% endif %}
+
+    <div class="alert alert-secondary" role="alert">
       [{{ data.user[0] }}] <b>{{ data.user[1] }}</b> {{ data.user[2] }} {{ data.user[3] }} <i>({{ data.user[4] }})</i> <br><b>Реєстрація:</b> {{ data.user[5] }} <b>Остання активність: </b>{{ data.user[6] }}
     </div>
-    
+
+    <form class="" action="/fl/send_message" method="post">
+      <label for="text-msg">Повідомлення: </label>
+      <input type="text" name="text" value="" id="text-msg">
+      <input type="hidden" name="usr-id" value="{{ data.user[0] }}" id="text-msg">
+      <input class="btn btn-outline-primary" type="submit" value="Відправити">
+    </form>
+
+    <a id="del-btn" class="btn btn-outline-danger" href="/fl/del_user/{{ data.user[0] }}" role="button" onclick ="return confirm('Видалити {{ data.user[2] }}?');">Видалити</a>
+
    {% if data.actions %}
     <table class="table table-bordered  table-hover">
       <thead>
@@ -34,5 +49,5 @@
   </table>
   {% endif %}
 </div>
-    
+
 {% endblock %}

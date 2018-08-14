@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Авторизація{% endblock %}
+
+{% block content %}
+     
+  <div class="content">
+      <h2>Авторизація</h2>
+      <form action="/fl/login" method="post">
+          <input type="password" name="password" placeholder="Пароль...">
+          <input type="submit" value="Вхід">
+      </form>
+  </div>
+
+    
+{% endblock %}

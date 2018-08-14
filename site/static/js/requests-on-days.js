@@ -18,7 +18,7 @@ function update_request_days_chart(){
           datasets: [{ 
               data: response.data.data,
               label: "Кількість запитів",
-              borderColor: "#3cba9f",
+              borderColor: "#5AC739",
               fill: true
             },
           ]

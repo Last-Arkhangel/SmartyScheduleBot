@@ -26,9 +26,12 @@
           <li class="nav-item">
             <a class="nav-link" href="/fl/users">Користувачі</a>
           </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/fl/logout">Вихід</a>
+          </li>
         </ul>
       </div>
-      
+
       <div class="content">
         {% block content %}
         {% endblock %}
@@ -47,9 +50,9 @@
       //Chart.defaults.global.scaleBeginAtZero = true;
       //Chart.defaults.global.barBeginAtOrigin = false,
     </script>
-    
+
     {% block js %}
     {% endblock %}
-    
+
   </body>
 </html>

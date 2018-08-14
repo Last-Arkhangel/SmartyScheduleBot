@@ -2,7 +2,7 @@
 import os
 
 # Bot version
-VERSION = '9.0'
+VERSION = '9.2'
 
 # Database name
 DATABASE = 'SmartyS_DB.sqlite'
@@ -12,6 +12,9 @@ BOT_TOKEN = '<token>'
 
 # OpenWeatherMap.org token
 OPEN_WEATHER_MAP_TOKEN = '<token>'
+
+# Admin password
+ADMIN_PASSWORD = '<pass>'
 
 # Interval to polling telegram servers (Uses if USE_WEBHOOK sets False)
 POLLING_INTERVAL = 2
@@ -32,7 +35,7 @@ WEBHOOK_PATH = '/fl/'
 TIMETABLE_URL = 'https://dekanat.zu.edu.ua/cgi-bin/timetable.cgi'
 
 # Http user agent sends to requests
-HTTP_USER_AGENT = 'Telegram-SmartySBot'
+HTTP_USER_AGENT = 'Telegram-SmartySBot v.{}'.format(VERSION)
 
 # If it True, bot would send errors to admins in list below
 SEND_ERRORS_TO_ADMIN = True

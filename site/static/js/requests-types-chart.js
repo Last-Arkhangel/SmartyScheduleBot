@@ -25,7 +25,7 @@ function update_request_types_chart(){
       var ctx = document.getElementById("requests-types-chart");
       
       var myChart = new Chart(ctx, {
-          type: 'doughnut',
+          type: 'pie',
           data: {
             labels: [
                 'Сьогодні',

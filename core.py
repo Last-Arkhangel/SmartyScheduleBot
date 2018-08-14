@@ -33,14 +33,14 @@ class User:
 
     def update_group(self, group):
 
-        log(self.chat, 'Has changed group to {}'.format(group))
+        log(self.chat, 'Оновлення групи {}'.format(group))
 
         query = "UPDATE users SET u_group=? WHERE t_id=?"
         return DBManager.execute_query(query, (group, self.id))
 
     def registration(self, group):
 
-        log(self.chat, 'Has been registered ({})'.format(group))
+        log(self.chat, 'Новий користувач: ({})'.format(group))
 
         query = "INSERT INTO users (t_id, username, first_name, last_name, u_group, register_date) " \
                 "VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'))"
