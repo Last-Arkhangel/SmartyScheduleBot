@@ -232,10 +232,8 @@ def week_schedule_handler(call_back):
 
     elif isinstance(timetable_data, list) and not len(timetable_data):
         timetable_for_week = "На тиждень пар не знайдено."
+        bot.delete_message(chat_id=user.get_id(), message_id=call_back.message.message_id)
         bot_send_message_and_post_check_group(user.get_id(), timetable_for_week, user_group)
-        return
-
-    else:
         return
 
     bot.delete_message(chat_id=user.get_id(), message_id=call_back.message.message_id)
