@@ -207,20 +207,20 @@ def week_schedule_handler(call_back):
 
     user = core.User(call_back.message.chat)
     user_group = user.get_group()
-    request = call_back.data
+    req = call_back.data
 
     today = datetime.date.today()
     current_week_day_number = today.isoweekday()
-    diff_between_friday_and_today = 5 - current_week_day_number
-    last_week_day = today + datetime.timedelta(days=diff_between_friday_and_today)
+    diff_between_saturday_and_today = 6 - current_week_day_number
+    last_week_day = today + datetime.timedelta(days=diff_between_saturday_and_today)
 
-    next_week_first_day = today + datetime.timedelta(days=diff_between_friday_and_today + 3)
-    next_week_last_day = today + datetime.timedelta(days=diff_between_friday_and_today + 7)
+    next_week_first_day = today + datetime.timedelta(days=diff_between_saturday_and_today + 2)
+    next_week_last_day = today + datetime.timedelta(days=diff_between_saturday_and_today + 7)
 
-    if request == 'Поточний':
+    if req == 'Поточний':
         timetable_data = get_timetable(group=user_group, sdate=today.strftime('%d.%m.%Y'),
                                        edate=last_week_day.strftime('%d.%m.%Y'), user_id=user.get_id())
-    if request == 'Наступний':
+    if req == 'Наступний':
         timetable_data = get_timetable(group=user_group, sdate=next_week_first_day.strftime('%d.%m.%Y'),
                                        edate=next_week_last_day.strftime('%d.%m.%Y'), user_id=user.get_id())
 
@@ -708,14 +708,14 @@ def main_menu(message):
 
         elif request == KEYBOARD['FOR_A_WEEK']:  # For a week
 
-            if datetime.date.today().isoweekday() in (4, 5, 6, 7):  # Чт, пт, сб, нд
+            if datetime.date.today().isoweekday() in (5, 6, 7):  # пт, сб, нд
 
                 timetable_for_week = ''
                 today = datetime.date.today()
                 current_week_day_number = today.isoweekday()
-                diff_between_friday_and_today = 5 - current_week_day_number
-                next_week_first_day = today + datetime.timedelta(days=diff_between_friday_and_today + 3)
-                next_week_last_day = today + datetime.timedelta(days=diff_between_friday_and_today + 7)
+                diff_between_saturday_and_today = 6 - current_week_day_number
+                next_week_first_day = today + datetime.timedelta(days=diff_between_saturday_and_today + 2)
+                next_week_last_day = today + datetime.timedelta(days=diff_between_saturday_and_today + 7)
 
                 timetable_data = get_timetable(group=user_group, sdate=next_week_first_day.strftime('%d.%m.%Y'),
                                                edate=next_week_last_day.strftime('%d.%m.%Y'), user_id=user.get_id())
