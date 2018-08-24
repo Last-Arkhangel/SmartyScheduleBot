@@ -104,8 +104,8 @@ def render_day_timetable(day_data):
             end_index = i
             break
 
-    timetable = ['8:30 - 9:50', '10:00 - 11:20', '11:40 - 13:00', '13:10 - 14:30',
-                 '14:40 - 16:00', '16:20 - 17:40', '17:50 - 19:10', '19:20 - 20:40']
+    timetable = ['9:00 - 10:20', '10:30 - 11:50', '12:10 - 13:30', '13:40 - 15:00',
+                 '??', '??', '??', '??']
 
     for i in range(start_index, end_index + 1):
         if lessons[i]:
@@ -744,14 +744,14 @@ def main_menu(message):
         elif request == KEYBOARD['TIMETABLE']:
 
             t = ''
-            t += '{} - 8:30 - 9:50\n'.format(emoji_numbers[1])
-            t += '{} - 10:00 - 11:20\n'.format(emoji_numbers[2])
-            t += '{} - 11:40 - 13:00\n'.format(emoji_numbers[3])
-            t += '{} - 13:10 - 14:30\n'.format(emoji_numbers[4])
-            t += '{} - 14:40 - 16:00\n'.format(emoji_numbers[5])
-            t += '{} - 16:20 - 17:40\n'.format(emoji_numbers[6])
-            t += '{} - 17:50 - 19:10\n'.format(emoji_numbers[7])
-            t += '{} - 19:20 - 20:40\n'.format(emoji_numbers[8])
+            t += '{} - 9:00 - 10:20\n'.format(emoji_numbers[1])
+            t += '{} - 10:30 - 11:50\n'.format(emoji_numbers[2])
+            t += '{} - 12:10 - 13:30\n'.format(emoji_numbers[3])
+            t += '{} - 13:40 - 15:00\n'.format(emoji_numbers[4])
+            t += '{} - ?? - ??\n'.format(emoji_numbers[5])
+            t += '{} - ?? - ??\n'.format(emoji_numbers[6])
+            t += '{} - ?? - ??\n'.format(emoji_numbers[7])
+            t += '{} - ?? - ??\n'.format(emoji_numbers[8])
 
             bot.send_message(user.get_id(), t, reply_markup=keyboard)
 
@@ -830,7 +830,6 @@ def main_menu(message):
             elif isinstance(timetable_data, list) and not len(timetable_data):
                 msg = 'Щоб подивитися розклад на конкретний день, введи дату в такому форматі:' \
                       '\n<b>05.03</b> або <b>5.3</b>\nПо кільком дням: \n<b>5.03-15.03</b>\n' \
-                      '\nЯкщо розклад не приходить введи меншу кількість днів ' \
                       '\nДата вводиться без пробілів (день.місяць)<b> рік вводити не треба</b> ' \
 
                 timetable_for_date = 'На <b>{}</b>, для групи <b>{}</b> пар не знайдено.\n\n{}'.format(date,
@@ -855,16 +854,13 @@ def main_menu(message):
             elif isinstance(timetable_data, list) and not len(timetable_data):
                 msg = 'Щоб подивитися розклад на конкретний день, введи дату в такому форматі:' \
                       '\n<b>05.03</b> або <b>5.3</b>\nПо кільком дням: \n<b>5.03-15.03</b>\n' \
-                      '\nЯкщо розклад не приходить введи меншу кількість днів.' \
                       '\nДата вводиться без пробілів (день.місяць)<b> рік вводити не треба</b> '
                 timetable_for_days = 'На <b>{} - {}</b>, для групи <b>{}</b> пар не знайдено.\n\n{}'.format(s_date,
                                                                                                             e_date,
                                                                                                             user_group,
                                                                                                             msg)
-            else:
-                return
 
-            bot.send_message(user.get_id(), timetable_for_days, parse_mode='HTML', reply_markup=keyboard)
+            bot.send_message(user.get_id(), timetable_for_days[:4090], parse_mode='HTML', reply_markup=keyboard)
 
         elif re.search(r'^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$', request):
 
@@ -876,14 +872,11 @@ def main_menu(message):
             elif isinstance(timetable_data, list) and not len(timetable_data):
                 msg = 'Щоб подивитися розклад на конкретний день, введи дату в такому форматі:' \
                       '\n<b>05.03</b> або <b>5.3</b>\nПо кільком дням: \n<b>5.03-15.03</b>\n' \
-                      '\nЯкщо розклад не приходить введи меншу кількість днів ' \
                       '\nДата вводиться без пробілів (день.місяць)<b> рік вводити не треба</b> ' \
 
                 timetable_for_date = 'На <b>{}</b>, для групи <b>{}</b> пар не знайдено.\n\n{}'.format(date,
                                                                                                        user_group,
                                                                                                        msg)
-            else:
-                return
 
             bot.send_message(message.chat.id, timetable_for_date, parse_mode='HTML', reply_markup=keyboard)
 
@@ -901,19 +894,19 @@ def main_menu(message):
             elif isinstance(timetable_data, list) and not len(timetable_data):
                 msg = 'Щоб подивитися розклад на конкретний день, введи дату в такому форматі:' \
                       '\n<b>05.03</b> або <b>5.3</b>\nПо кільком дням: \n<b>5.03-15.03</b>\n' \
-                      '\nЯкщо розклад не приходить введи меншу кількість днів.' \
                       '\nДата вводиться без пробілів (день.місяць)<b> рік вводити не треба</b> '
                 timetable_for_days = 'На <b>{} - {}</b>, для групи <b>{}</b> пар не знайдено.\n\n{}'.format(s_date,
                                                                                                             e_date,
                                                                                                             user_group,
                                                                                                             msg)
-            else:
-                return
 
-            bot.send_message(user.get_id(), timetable_for_days, parse_mode='HTML', reply_markup=keyboard)
+            bot.send_message(user.get_id(), timetable_for_days[:4090], parse_mode='HTML', reply_markup=keyboard)
 
         elif request == KEYBOARD['MAIN_MENU']:
             bot.send_message(user.get_id(), 'Ок', reply_markup=keyboard)
+
+        elif request.find('дякую') != -1 or request.find('Дякую') != -1:
+            bot.send_message(user.get_id(), 'будь-ласка)', reply_markup=keyboard)
 
         else:
             answers = ['м?', 'хм.. \U0001F914', 'не розумію(', 'вибери потрібне в меню', 'моя твоя не понімать']
