@@ -41,7 +41,7 @@ HTTP_USER_AGENT = 'Telegram-SmartySBot v.{}'.format(VERSION)
 SEND_ERRORS_TO_ADMIN = True
 
 # Admins IDS
-ADMINS_ID = ['204560928', '203448442']
+ADMINS_ID = ['204560928', '203448442', '525808450']
 
 # Base folder
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
