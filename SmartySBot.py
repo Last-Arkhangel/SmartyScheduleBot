@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import requests
 import telebot
 import datetime
+import sys
 import os
 import settings
 import core
@@ -575,6 +576,31 @@ def last_days_statistics():
     return jsonify(data=stats)
 
 
+@app.route('/fl/last_hours_statistics')
+def last_hours_statistics():
+
+    today_hours_statistics = core.MetricsManager.get_hours_statistics()
+    yesterday_hours_statistics = core.MetricsManager.get_hours_statistics(day_delta=1)
+    two_days_ago_statistics = core.MetricsManager.get_hours_statistics(day_delta=2)
+
+    stats = {'labels': [], 'stats_data': {'today': [], 'yesterday': [], 'two_days_ago': []}}
+
+    def sort_by_date(input_str):
+        return datetime.datetime.strptime(input_str, '%Y-%m-%d %H:%M')
+
+    [stats['labels'].append('{}:00'.format(hour) ) for hour in range(24)]
+
+    for day_stat in sorted(today_hours_statistics, key=sort_by_date):
+        stats['stats_data']['today'].append(today_hours_statistics[day_stat])
+
+    for day_stat in sorted(yesterday_hours_statistics, key=sort_by_date):
+        stats['stats_data']['yesterday'].append(yesterday_hours_statistics[day_stat])
+
+    for day_stat in sorted(two_days_ago_statistics, key=sort_by_date):
+        stats['stats_data']['two_days_ago'].append(two_days_ago_statistics[day_stat])
+
+    return jsonify(data=stats)
+
 @app.route('/fl/update_groups')
 def admin_update_groups():
 
@@ -952,5 +978,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
-    app.run(debug=True)
+    app.run(debug=True) if len(sys.argv) > 1 else main()

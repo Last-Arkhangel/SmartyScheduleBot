@@ -3,7 +3,7 @@
 {% block title %}SBot метрика{% endblock %}
 
 {% block content %}
-     
+
       <div class="content">
         <div class="row">
           <div class="col-md-6">
@@ -29,12 +29,17 @@
          <div class="col-md-6 col-sm-12">
             <canvas id="requests-types-chart"></canvas>
           </div>
-          
+
           <div class="col-md-6 col-sm-12">
             <canvas id="requests-on-days"></canvas>
           </div>
         </div>
-          
+        <br><br>
+
+         <div class="col-md-12 col-sm-12">
+            <canvas id="requests-on-hours"></canvas>
+         </div>
+
           <br><hr>
       <div class="row">
           <div class="col-md-6 col-sm-12">
@@ -48,10 +53,10 @@
              <a class="btn btn-success" href="/fl/update_groups" role="button" target="_blank">Оновити</a>
           </div>
         </div>
-          
+
       </div>
       <br>
-    
+
 {% endblock %}
 
 {% block js %}
