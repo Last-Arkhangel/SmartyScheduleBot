@@ -106,7 +106,7 @@ def render_day_timetable(day_data):
             break
 
     timetable = ['9:00 - 10:20', '10:30 - 11:50', '12:10 - 13:30', '13:40 - 15:00',
-                 '??', '??', '??', '??']
+                 '15:20 - 16:40 ', '16:50 - 18:10', '18:20 - 19:40', '-']
 
     for i in range(start_index, end_index + 1):
         if lessons[i]:
@@ -774,10 +774,9 @@ def main_menu(message):
             t += '{} - 10:30 - 11:50\n'.format(emoji_numbers[2])
             t += '{} - 12:10 - 13:30\n'.format(emoji_numbers[3])
             t += '{} - 13:40 - 15:00\n'.format(emoji_numbers[4])
-            t += '{} - ?? - ??\n'.format(emoji_numbers[5])
-            t += '{} - ?? - ??\n'.format(emoji_numbers[6])
-            t += '{} - ?? - ??\n'.format(emoji_numbers[7])
-            t += '{} - ?? - ??\n'.format(emoji_numbers[8])
+            t += '{} - 15:20 - 16:40 \n'.format(emoji_numbers[5])
+            t += '{} - 16:50 - 18:10 \n'.format(emoji_numbers[6])
+            t += '{} - 18:20 - 19:40 \n'.format(emoji_numbers[7])
 
             bot.send_message(user.get_id(), t, reply_markup=keyboard)
 
