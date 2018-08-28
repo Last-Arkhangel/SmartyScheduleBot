@@ -197,9 +197,9 @@ def start_handler(message):
     msg = 'Хай, {} 😊. Я Бот розкладу для студентів ЖДУ ім.Івана Франка. Я можу показати твій розклад на сьогодні, ' \
           'на завтра, по викладачу, по групі і так далі. ' \
           'Для початку скажи мені свою групу (Напр. 44_і_д), ' \
-          'змінити ти її зможеш в пункті меню {}'.format(message.chat.first_name, KEYBOARD['HELP'])
+          '<b>змінити ти її зможеш в пункті меню {}</b>'.format(message.chat.first_name, KEYBOARD['HELP'])
 
-    sent = bot.send_message(chat_id=message.chat.id, text=msg)
+    sent = bot.send_message(chat_id=message.chat.id, text=msg, parse_mode='HTML')
     bot.register_next_step_handler(sent, set_group)
 
 
@@ -263,6 +263,12 @@ def set_group(message):
 
     user = core.User(message.chat)
     group = message.text
+
+    if group in list(KEYBOARD.values()):
+        msg = 'Введи назву групи'
+        sent = bot.send_message(message.chat.id, msg, parse_mode='HTML')
+        bot.register_next_step_handler(sent, set_group)
+        return
 
     if group == 'Відміна':
         current_user_group = user.get_group()
@@ -335,7 +341,10 @@ def select_teachers(message):
             tchrs.append(teacher)
 
     if not tchrs:
-        bot.send_message(message.chat.id, 'Не можу знайти викладача з таким прізвищем.', reply_markup=keyboard)
+        msg = 'Не можу знайти викладача з прізвищем <b>{}</b>. Якщо при вводі була допущена помилка ' \
+              '- знову натисни в меню кнопку "{}" і введи заново.'.format(message.text, KEYBOARD['FOR_A_TEACHER'])
+
+        bot.send_message(message.chat.id, msg, reply_markup=keyboard, parse_mode='HTML')
         return
 
     if len(tchrs) == 1:
