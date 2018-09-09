@@ -62,7 +62,6 @@ def update_cache(groups_limit=3000):
             'GROUP BY u_group ORDER BY count(*) DESC LIMIT {}'.format(groups_limit)
 
     groups = core.DBManager.execute_query(query)
-    no_valid_groups = []
 
     start_time = time.time()
     today = datetime.date.today().strftime('%d.%m.%Y')
@@ -70,26 +69,18 @@ def update_cache(groups_limit=3000):
     ans = 'Завантажено розклад для {} груп:\n\n'.format(len(groups))
 
     for group in groups:
-        if core.is_group_valid(group[0]):
-            #timetable = get_timetable_to_cache(group=group[0], sdate=today, edate=today)
-            timetable = ''
-            if timetable or isinstance(timetable, list):
-                if not len(timetable):
-                    ans += '\U00002705 \U0001F534 {} - {}\n'.format(group[0], group[1])  # No lessons
-                else:
-                    ans += '\U00002705 \U0001F535 {} - {}\n'.format(group[0], group[1])
+        timetable = get_timetable_to_cache(group=group[0], sdate=today, edate=today)
+        if timetable or isinstance(timetable, list):
+            if not len(timetable):
+                ans += '\U00002705 \U0001F534 {} - {}\n'.format(group[0], group[1])  # No lessons
             else:
-                ans += '\U0000274E {} - {}\n'.format(group[0], group[1])
+                ans += '\U00002705 \U0001F535 {} - {}\n'.format(group[0], group[1])
         else:
-            no_valid_groups.append(group[0])
+            ans += '\U0000274E {} - {}\n'.format(group[0], group[1])
+
 
     ans += '\n\U0001F552 <b>Час:</b> {} с.'.format(round(time.time() - start_time, 2))
     core.log(m='Завантаження кешу. Кількість груп: {}, час: {}'.format(len(groups), round(time.time() - start_time, 2)))
 
-    with open('bad_groups', 'a') as f:
-        for g in no_valid_groups:
-            f.write(g + '\n')
-
     return ans
 
-# update_cache()

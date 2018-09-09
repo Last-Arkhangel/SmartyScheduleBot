@@ -655,6 +655,22 @@ def admin_user_statistics(user_id, msg=''):
     return render_template('user_stat.html', data=data)
 
 
+@app.route('/fl/upd_cache_cron')
+def admin_update_cache():
+
+    bot.send_message('204560928', 'Починаю оновлення розкладу через крон.', reply_markup=keyboard, parse_mode='HTML')
+    core.log(m='Оновлення розкладу через крон')
+
+    msg = schedule_updater.update_cache(60)
+
+    bot.send_message('204560928', msg, reply_markup=keyboard, parse_mode='HTML')
+
+    core.log(m='Розклад по крону оновлено. ')
+    msg = '<!doctype html>\n<head><meta charset="utf-8"><head>\n<body>' + msg + '</body></html>'
+
+    return msg
+
+
 @app.route('/fl/run')
 def index():
 
