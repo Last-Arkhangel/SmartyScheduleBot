@@ -52,7 +52,7 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
         return False
 
     try:
-        page = requests.post(settings.TIMETABLE_URL, post_data, headers=http_headers, timeout=8)
+        page = requests.post(settings.TIMETABLE_URL, post_data, headers=http_headers, timeout=15)
     except Exception as ex:  # Connection error to Dekanat site
 
         if settings.USE_CACHE:
@@ -164,6 +164,19 @@ def clear_cache(message):
     core.Cache.clear_cache()
 
     bot.send_message(user.get_id(), 'Кеш був очищений.')
+
+
+@bot.message_handler(commands=['lf'])
+def get_log_file(message):
+
+    user = core.User(message.chat)
+
+    if str(user.get_id()) not in settings.ADMINS_ID:
+        bot.send_message(user.get_id(), 'Немає доступу :(')
+        return
+
+    with open(os.path.join(settings.BASE_DIR, 'bot_log.txt'), 'r', encoding="utf-8") as log_file:
+        bot.send_document(user.get_id(), log_file)
 
 
 @bot.message_handler(commands=['log'])
@@ -610,6 +623,7 @@ def last_hours_statistics():
 
     return jsonify(data=stats)
 
+
 @app.route('/fl/update_groups')
 def admin_update_groups():
 
@@ -958,8 +972,12 @@ def main_menu(message):
         elif request.find('дякую') != -1 or request.find('Дякую') != -1:
             bot.send_message(user.get_id(), 'будь-ласка)', reply_markup=keyboard)
 
+        elif core.is_group_valid(request):
+            msg = 'Якщо ти хочеш змінити групу, тоді зайди в пункт меню {}'.format(KEYBOARD['HELP'])
+            bot.send_message(chat_id=user.get_id(), text=msg, reply_markup=keyboard)
+
         else:
-            answers = ['м?', 'хм.. \U0001F914', 'не розумію(', 'вибери потрібне в меню', 'моя твоя не понімать']
+            answers = ['м?', 'хм.. \U0001F914', 'не розумію(', 'вибери потрібне в меню', 'моя твоя не понімать', 'wot?']
             bot.send_message(user.get_id(), random.choice(answers), reply_markup=keyboard)
 
     else:
