@@ -78,8 +78,8 @@ def update_cache(groups_limit=3000):
         else:
             ans += '\U0000274E {} - {}\n'.format(group[0], group[1])
 
-
     ans += '\n\U0001F552 <b>Час:</b> {} с.'.format(round(time.time() - start_time, 2))
+
     core.log(m='Завантаження кешу. Кількість груп: {}, час: {}'.format(len(groups), round(time.time() - start_time, 2)))
 
     return ans

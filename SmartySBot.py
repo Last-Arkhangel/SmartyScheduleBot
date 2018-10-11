@@ -676,6 +676,14 @@ def admin_update_cache():
     core.log(m='Оновлення розкладу через крон')
 
     msg = schedule_updater.update_cache(60)
+    updated_groups = core.update_all_groups()
+    updated_teachers = core.update_all_teachers()
+
+    if updated_groups:
+        msg += '\n\nСписок груп оновлено - {}.'.format(len(updated_groups))
+
+    if updated_teachers:
+        msg += '\nСписок викладачів - {}.'.format(len(updated_teachers))
 
     bot.send_message('204560928', msg, reply_markup=keyboard, parse_mode='HTML')
 
