@@ -8,8 +8,8 @@ import requests
 
 class User:
 
-    def __init__(self, chat):
-        self.id = chat.id
+    def __init__(self, chat=None, u_id=0):
+        self.id = u_id or chat.id
         self.chat = chat
 
     def get_id(self):
@@ -63,6 +63,7 @@ class User:
                       first_name TEXT,
                       last_name TEXT,
                       u_group TEXT,
+                      last_teacher TEXT,
                       register_date TEXT DEFAULT (datetime('now', 'localtime')),
                       last_use_date DEFAULT (datetime('now', 'localtime')),
                       requests_count INTEGER DEFAULT 0) WITHOUT ROWID"""
@@ -91,6 +92,25 @@ class User:
     def get_user_requests_count(self):
 
         query = "SELECT requests_count FROM users WHERE t_id=?"
+
+        return DBManager.execute_query(query, (self.get_id(),))[0][0]
+
+    @classmethod
+    def add_column_to_user_table(cls):
+
+        query = 'ALTER TABLE users ADD COLUMN last_teacher TEXT;'
+
+        return str(DBManager.execute_query(query))
+
+    def set_last_teacher(self, teacher_name=''):
+
+        query = "UPDATE users SET last_teacher=? WHERE t_id=?"
+
+        return DBManager.execute_query(query, (teacher_name, self.get_id(),))
+
+    def get_last_teacher(self):
+
+        query = "SELECT last_teacher FROM users WHERE t_id=?"
 
         return DBManager.execute_query(query, (self.get_id(),))[0][0]
 

@@ -216,6 +216,39 @@ def start_handler(message):
     bot.register_next_step_handler(sent, set_group)
 
 
+def get_teachers_list():
+
+    teachers_list = ['Ввести прізвище']
+
+    try:
+        with open(os.path.join(settings.BASE_DIR, 'teachers.txt'), 'r', encoding="utf-8") as file:
+            all_teachers = json.loads(file.read())
+    except Exception as ex:
+        core.log(m='Помилка із файлом викладачів: {}'.format(str(ex)))
+        return
+
+    [teachers_list.append(teacher) for teacher in all_teachers]
+
+    return teachers_list
+
+
+@bot.callback_query_handler(func=lambda call_back: call_back.data in get_teachers_list())
+def show_teacher_schedule_handler(call_back):
+
+    user = core.User(call_back.message.chat)
+    req = call_back.data
+
+    if req == 'Ввести прізвище':
+
+        bot.delete_message(chat_id=user.get_id(), message_id=call_back.message.message_id)
+        sent = bot.send_message(text=req, chat_id=user.get_id(), parse_mode="HTML", reply_markup=keyboard)
+        bot.register_next_step_handler(sent, select_teacher_by_second_name)
+
+    else:
+
+        bot.send_message(text=req, chat_id=user.get_id(), parse_mode="HTML", reply_markup=keyboard)
+
+
 @bot.callback_query_handler(func=lambda call_back: call_back.data in ('Поточний', 'Наступний'))
 def week_schedule_handler(call_back):
 
@@ -308,21 +341,23 @@ def set_group(message):
     bot.send_message(message.chat.id, msg, reply_markup=keyboard, parse_mode='HTML')
 
 
-def show_teachers(chat_id, name):
+def show_teachers_schedule_by_fullname(chat_id, teacher_name):
 
     in_week = datetime.date.today() + datetime.timedelta(days=7)
 
     in_week_day = in_week.strftime('%d.%m.%Y')
     today = datetime.date.today().strftime('%d.%m.%Y')
 
-    rozklad_data = get_timetable(teacher=name, sdate=today, edate=in_week_day, user_id=chat_id)
+    rozklad_data = get_timetable(teacher=teacher_name, sdate=today, edate=in_week_day, user_id=chat_id)
 
     if rozklad_data:
-        rozklad_for_week = 'Розклад на тиждень у <b>{}</b>:\n\n'.format(name)
+        rozklad_for_week = 'Розклад на тиждень у <b>{}</b>:\n\n'.format(teacher_name)
         for rozklad_day in rozklad_data:
             rozklad_for_week += render_day_timetable(rozklad_day)
     else:
-        rozklad_for_week = 'На тиждень пар у викладача <b>{}</b> не знайдено.'.format(name)
+        rozklad_for_week = 'На тиждень пар у викладача <b>{}</b> не знайдено.'.format(teacher_name)
+
+    core.User(u_id=chat_id).set_last_teacher(teacher_name)
 
     bot.send_message(chat_id, rozklad_for_week, reply_markup=keyboard, parse_mode='HTML')
 
@@ -333,10 +368,10 @@ def select_teacher_from_request(message):  # ф-я викликається ко
         bot.send_message(message.chat.id, 'Окей)', reply_markup=keyboard)
         return
 
-    show_teachers(message.chat.id, message.text)
+    show_teachers_schedule_by_fullname(message.chat.id, message.text)
 
 
-def select_teachers(message):
+def select_teacher_by_second_name(message):
 
     core.log(message.chat, '> (по викладачу) {}'.format(message.text))
     tchrs = []
@@ -361,7 +396,7 @@ def select_teachers(message):
         return
 
     if len(tchrs) == 1:
-        show_teachers(message.chat.id, tchrs[0])
+        show_teachers_schedule_by_fullname(message.chat.id, tchrs[0])
         return
 
     if len(tchrs) > 1:
@@ -425,6 +460,18 @@ def show_other_group(message):
         return
 
     bot.send_message(message.chat.id, timetable_for_week[:4090], parse_mode='HTML', reply_markup=keyboard)
+
+
+def show_previous_teachers_schedule_or_select_another(message):
+
+    if message.text == 'Вибрати викладача':
+
+        m = 'Для того щоб подивитись розклад викладача на поточний тиждень - введи його прізвище.'
+        sent = bot.send_message(message.chat.id, m)
+        bot.register_next_step_handler(sent, select_teacher_by_second_name)
+
+    else:
+        show_teachers_schedule_by_fullname(message.chat.id, message.text)
 
 
 @app.route('/fl/login', methods=['POST', 'GET'])
@@ -709,6 +756,12 @@ def index():
     return 'ok'
 
 
+@app.route('/fl/add_col')
+def admin_add_column_to_user_table():
+
+    return core.User.add_column_to_user_table()
+
+
 @app.route(settings.WEBHOOK_PATH, methods=['POST', 'GET'])
 def webhook():
     json_string = request.get_data().decode('utf-8')
@@ -886,10 +939,21 @@ def main_menu(message):
 
         elif request == KEYBOARD['FOR_A_TEACHER']:
 
-            sent = bot.send_message(message.chat.id,
-                                    'Для того щоб подивитись розклад викладача на поточний тиждень - '
-                                    'введи його прізвище.')
-            bot.register_next_step_handler(sent, select_teachers)
+            last_teacher_name = user.get_last_teacher()
+
+            if not last_teacher_name:
+                m = 'Для того щоб подивитись розклад викладача на поточний тиждень - введи його прізвище.'
+                sent = bot.send_message(message.chat.id, m)
+                bot.register_next_step_handler(sent, select_teacher_by_second_name)
+
+            else:
+                kb = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+                kb.row('Вибрати викладача')
+                kb.row(last_teacher_name)
+
+                sent = bot.send_message(user.get_id(), 'кому?', reply_markup=kb)
+
+                bot.register_next_step_handler(sent, show_previous_teachers_schedule_or_select_another)
 
         elif re.search(r'^(\d{1,2})\.(\d{1,2})$', request):
 
