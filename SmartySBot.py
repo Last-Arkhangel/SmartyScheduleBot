@@ -756,12 +756,6 @@ def index():
     return 'ok'
 
 
-@app.route('/fl/add_col')
-def admin_add_column_to_user_table():
-
-    return core.User.add_column_to_user_table()
-
-
 @app.route(settings.WEBHOOK_PATH, methods=['POST', 'GET'])
 def webhook():
     json_string = request.get_data().decode('utf-8')

@@ -95,13 +95,6 @@ class User:
 
         return DBManager.execute_query(query, (self.get_id(),))[0][0]
 
-    @classmethod
-    def add_column_to_user_table(cls):
-
-        query = 'ALTER TABLE users ADD COLUMN last_teacher TEXT;'
-
-        return str(DBManager.execute_query(query))
-
     def set_last_teacher(self, teacher_name=''):
 
         query = "UPDATE users SET last_teacher=? WHERE t_id=?"
