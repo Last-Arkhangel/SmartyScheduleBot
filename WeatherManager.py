@@ -50,7 +50,7 @@ class WeatherManager:
         else:
             return default_emoji
 
-    def render_forecast(self, date, temp, weather_emoji, desc):
+    def render_forecast(self, time, temp, weather_emoji, desc):
 
         clocks_emoji = {
             9: '\U0001F558',
@@ -61,12 +61,13 @@ class WeatherManager:
         }
 
         r = ''
-        r += '{} {} - \U0001F321{}\U000000B0 {} <i>{}</i>\n'. \
-            format(clocks_emoji.get(date.hour, '-'), date.strftime('%H:%M'), int(temp), weather_emoji, desc)
+
+        r += '{} - \U0001F321{}\U000000B0 {} <i>{}</i>\n'.format(time, int(temp), weather_emoji, desc)
+
 
         return r
 
-    def update_forecast(self):
+    def get_forecast(self):
 
         request_params = {
             'APPID': settings.OPEN_WEATHER_MAP_TOKEN,
@@ -89,55 +90,56 @@ class WeatherManager:
         tomorrow_date = datetime.datetime.now() + datetime.timedelta(days=1)
         tomorrow_day = tomorrow_date.day
 
-        hidden_hours = [0, 3, 2, 5, 6]
-
         result = ''
 
         if zdu_temperature:
-            result += 'Біля університету: %s°\n\n' % zdu_temperature
+            result += 'Зараз: %s°\n\n' % zdu_temperature
 
-        result += ':::::: \U0001F30E <b>Сьогодні:</b> ::::::\n'
+        result += '...::: ☀ <b>Сьогодні:</b> :::...\n'
         for hour_forecast in five_days_weather_forecast['list']:
 
             forecast_time = datetime.datetime.fromtimestamp(hour_forecast['dt'])
             if forecast_time.day == today_day:
-                if forecast_time.hour not in hidden_hours:
-                    result += self.render_forecast(forecast_time,
+                if forecast_time.hour == 8:
+                    result += self.render_forecast('Зранку ',
                                                    hour_forecast['main']['temp'],
                                                    self.getEmoji(hour_forecast['weather'][0]['id']),
                                                    hour_forecast['weather'][0]['description'])
 
-        result += '\n:::::: \U0001F30E <b>Завтра:</b> ::::::\n'
+                if forecast_time.hour == 14:
+                    result += self.render_forecast('Вдень   ',
+                                                   hour_forecast['main']['temp'],
+                                                   self.getEmoji(hour_forecast['weather'][0]['id']),
+                                                   hour_forecast['weather'][0]['description'])
+
+                if forecast_time.hour == 20:
+                    result += self.render_forecast('Ввечері',
+                                                   hour_forecast['main']['temp'],
+                                                   self.getEmoji(hour_forecast['weather'][0]['id']),
+                                                   hour_forecast['weather'][0]['description'])
+
+        result += '\n...::: ☀ <b>Завтра:</b> :::...\n'
         for hour_forecast in five_days_weather_forecast['list']:
 
             forecast_time = datetime.datetime.fromtimestamp(hour_forecast['dt'])
             if forecast_time.day == tomorrow_day:
-                if forecast_time.hour not in hidden_hours:
-                    result += self.render_forecast(forecast_time,
+                if forecast_time.hour == 8:
+                    result += self.render_forecast('Зранку ',
+                                                   hour_forecast['main']['temp'],
+                                                   self.getEmoji(hour_forecast['weather'][0]['id']),
+                                                   hour_forecast['weather'][0]['description'])
+
+                if forecast_time.hour == 14:
+                    result += self.render_forecast('Вдень   ',
+                                                   hour_forecast['main']['temp'],
+                                                   self.getEmoji(hour_forecast['weather'][0]['id']),
+                                                   hour_forecast['weather'][0]['description'])
+
+                if forecast_time.hour == 20:
+                    result += self.render_forecast('Ввечері',
                                                    hour_forecast['main']['temp'],
                                                    self.getEmoji(hour_forecast['weather'][0]['id']),
                                                    hour_forecast['weather'][0]['description'])
 
         with open(os.path.join(settings.BASE_DIR, 'forecast.txt'), 'w', encoding="utf-8") as f_file:
             f_file.write(result)
-
-    def check_if_forecast_need_update(self):
-
-        # TODO Fix it
-
-        return True
-
-        file_name = os.path.join(settings.BASE_DIR, 'forecast.txt')
-        if not os.path.isfile(file_name):
-            return True
-
-        forecast_update_date = os.path.getmtime(file_name)
-        mod_time = datetime.date.fromtimestamp(forecast_update_date)
-
-        return datetime.date.today() != mod_time
-
-    def process_weather(self):
-
-        if self.check_if_forecast_need_update():
-            self.update_forecast()
-            #core.log(m='Оновлення погоди')

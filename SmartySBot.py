@@ -95,10 +95,11 @@ def render_day_timetable(day_data):
     start_index = 0
     end_index = len(lessons) - 1
 
-    for i in range(8):
-        if lessons[i]:
-            start_index = i
-            break
+    # Конструкція показує пари із першої існуючої
+    # for i in range(8):
+    #     if lessons[i]:
+    #         start_index = i
+    #         break
 
     for i in range(end_index, -1, -1):
         if lessons[i]:
@@ -110,9 +111,9 @@ def render_day_timetable(day_data):
 
     for i in range(start_index, end_index + 1):
         if lessons[i]:
-            day_timetable += '{} <i>{}</i> \n{}\n\n'.format(emoji_numbers[i+1], timetable[i], lessons[i])
+            day_timetable += '{} <b>{}</b> \n{}\n\n'.format(emoji_numbers[i+1], timetable[i], lessons[i])
         else:
-            day_timetable += '{} <i>{}</i>\nВікно \U0001F483\U0001F57A\n\n'.format(emoji_numbers[i+1], timetable[i])
+            day_timetable += '{} <b>{}</b>\nВікно \U0001f631\U0001f631\U0001f631\n\n'.format(emoji_numbers[i+1], timetable[i])
 
     return day_timetable
 
@@ -921,7 +922,7 @@ def main_menu(message):
             try:
 
                 weather_manager = WeatherManager()
-                weather_manager.process_weather()
+                weather_manager.get_forecast()
 
                 with open(os.path.join(settings.BASE_DIR, 'forecast.txt'), 'r', encoding="utf-8") as forecast_file:
                     forecast = forecast_file.read()
