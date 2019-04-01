@@ -100,19 +100,19 @@ class WeatherManager:
 
             forecast_time = datetime.datetime.fromtimestamp(hour_forecast['dt'])
             if forecast_time.day == today_day:
-                if forecast_time.hour == 8:
+                if forecast_time.hour == 9:
                     result += self.render_forecast('Зранку ',
                                                    hour_forecast['main']['temp'],
                                                    self.getEmoji(hour_forecast['weather'][0]['id']),
                                                    hour_forecast['weather'][0]['description'])
 
-                if forecast_time.hour == 14:
+                if forecast_time.hour == 15:
                     result += self.render_forecast('Вдень   ',
                                                    hour_forecast['main']['temp'],
                                                    self.getEmoji(hour_forecast['weather'][0]['id']),
                                                    hour_forecast['weather'][0]['description'])
 
-                if forecast_time.hour == 20:
+                if forecast_time.hour == 21:
                     result += self.render_forecast('Ввечері',
                                                    hour_forecast['main']['temp'],
                                                    self.getEmoji(hour_forecast['weather'][0]['id']),
@@ -123,19 +123,19 @@ class WeatherManager:
 
             forecast_time = datetime.datetime.fromtimestamp(hour_forecast['dt'])
             if forecast_time.day == tomorrow_day:
-                if forecast_time.hour == 8:
+                if forecast_time.hour == 9:
                     result += self.render_forecast('Зранку ',
                                                    hour_forecast['main']['temp'],
                                                    self.getEmoji(hour_forecast['weather'][0]['id']),
                                                    hour_forecast['weather'][0]['description'])
 
-                if forecast_time.hour == 14:
+                if forecast_time.hour == 15:
                     result += self.render_forecast('Вдень   ',
                                                    hour_forecast['main']['temp'],
                                                    self.getEmoji(hour_forecast['weather'][0]['id']),
                                                    hour_forecast['weather'][0]['description'])
 
-                if forecast_time.hour == 20:
+                if forecast_time.hour == 21:
                     result += self.render_forecast('Ввечері',
                                                    hour_forecast['main']['temp'],
                                                    self.getEmoji(hour_forecast['weather'][0]['id']),
