@@ -52,7 +52,7 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
         return False
 
     try:
-        page = requests.post(settings.TIMETABLE_URL, post_data, headers=http_headers, timeout=15)
+        page = requests.post(settings.TIMETABLE_URL, post_data, headers=http_headers, timeout=35)
     except Exception as ex:  # Connection error to Dekanat site
 
         if settings.USE_CACHE:
@@ -902,6 +902,7 @@ def main_menu(message):
                   "<b>Група:</b> <code>{}</code>\n" \
                   "<b>Запитів:</b> <code>{}</code>\n\n" \
                   "<b>Версія:</b> <code>{}</code>\n" \
+                  "<b>Група ЖДУ:</b> @zdu_live\n" \
                   "<b>Канал:</b> @zdu_news\n" \
                   "<b>Розробник:</b> @Koocherov\n"
 
