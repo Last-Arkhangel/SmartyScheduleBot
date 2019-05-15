@@ -52,7 +52,7 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
         return False
 
     try:
-        page = requests.post(settings.TIMETABLE_URL, post_data, headers=http_headers, timeout=35)
+        page = requests.post(settings.TIMETABLE_URL, post_data, headers=http_headers, timeout=40)
     except Exception as ex:  # Connection error to Dekanat site
 
         if settings.USE_CACHE:
