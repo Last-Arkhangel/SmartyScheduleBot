@@ -111,9 +111,9 @@ def render_day_timetable(day_data):
 
     for i in range(start_index, end_index + 1):
         if lessons[i]:
-            day_timetable += '{} <b>{}</b> \n{}\n\n'.format(emoji_numbers[i+1], timetable[i], lessons[i])
+            day_timetable += '{} > <b>{}</b> \n{}\n\n'.format(emoji_numbers[i+1], timetable[i], lessons[i])
         else:
-            day_timetable += '{} <b>{}</b>\nВікно \U0001f631\U0001f631\U0001f631\n\n'.format(emoji_numbers[i+1], timetable[i])
+            day_timetable += '{} > <b>{}</b>\nХалява \U0001f680\n\n'.format(emoji_numbers[i+1], timetable[i])
 
     return day_timetable
 
