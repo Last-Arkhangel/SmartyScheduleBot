@@ -465,14 +465,20 @@ def show_other_group(message):
 
 def show_previous_teachers_schedule_or_select_another(message):
 
-    if message.text == 'Вибрати викладача':
+    user = core.User(message.chat)
+
+    if message.text == KEYBOARD['MAIN_MENU']:
+
+        bot.send_message(user.get_id(), 'Ок', reply_markup=keyboard)
+
+    elif message.text == 'Вибрати викладача':
 
         m = 'Для того щоб подивитись розклад викладача на поточний тиждень - введи його прізвище.'
-        sent = bot.send_message(message.chat.id, m)
+        sent = bot.send_message(user.get_id(), m)
         bot.register_next_step_handler(sent, select_teacher_by_second_name)
 
     else:
-        show_teachers_schedule_by_fullname(message.chat.id, message.text)
+        show_teachers_schedule_by_fullname(user.get_id(), message.text)
 
 
 @app.route('/fl/login', methods=['POST', 'GET'])
@@ -946,6 +952,7 @@ def main_menu(message):
                 kb = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
                 kb.row('Вибрати викладача')
                 kb.row(last_teacher_name)
+                kb.row(KEYBOARD['MAIN_MENU'])
 
                 sent = bot.send_message(user.get_id(), 'кому?', reply_markup=kb)
 
