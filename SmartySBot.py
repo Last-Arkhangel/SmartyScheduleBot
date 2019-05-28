@@ -311,6 +311,11 @@ def set_group(message):
     user = core.User(message.chat)
     group = message.text
 
+    if group == '/start':
+        sent = bot.send_message(message.chat.id, 'Вкажи свою групу')
+        bot.register_next_step_handler(sent, set_group)
+        return
+
     if group in list(KEYBOARD.values()):
         msg = 'Введи назву групи'
         sent = bot.send_message(message.chat.id, msg, parse_mode='HTML')
