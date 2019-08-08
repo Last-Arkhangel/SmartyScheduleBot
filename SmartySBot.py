@@ -471,19 +471,24 @@ def show_other_group(message):
 def show_previous_teachers_schedule_or_select_another(message):
 
     user = core.User(message.chat)
+    teacher = message.text
 
-    if message.text == KEYBOARD['MAIN_MENU']:
+    # TODO Delete it
+    # if teacher == KEYBOARD['MAIN_MENU']:
+    #
+    #     bot.send_message(user.get_id(), 'Ок', reply_markup=keyboard)
 
-        bot.send_message(user.get_id(), 'Ок', reply_markup=keyboard)
+    if teacher == 'Вибрати викладача':
 
-    elif message.text == 'Вибрати викладача':
-
-        m = 'Для того щоб подивитись розклад викладача на поточний тиждень - введи його прізвище.'
-        sent = bot.send_message(user.get_id(), m)
+        msg = 'Для того щоб подивитись розклад викладача на поточний тиждень - введи його прізвище.'
+        sent = bot.send_message(user.get_id(), msg)
         bot.register_next_step_handler(sent, select_teacher_by_second_name)
 
+    elif core.is_teacher_valid(teacher):
+        show_teachers_schedule_by_fullname(user.get_id(), teacher)
+
     else:
-        show_teachers_schedule_by_fullname(user.get_id(), message.text)
+        bot.send_message(user.get_id(), 'Лови меню', reply_markup=keyboard)
 
 
 @app.route('/fl/login', methods=['POST', 'GET'])
