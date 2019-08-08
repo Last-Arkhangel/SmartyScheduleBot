@@ -19,7 +19,7 @@
     <form class="" action="/fl/send_message" method="post">
       <label for="text-msg">Повідомлення: </label>
       <input type="text" name="text" value="" id="text-msg">
-      <input type="hidden" name="usr-id" value="{{ data.user[0] }}" id="text-msg">
+      <input type="hidden" name="usr-id" value="{{ data.user[0] }}">
       <input class="btn btn-outline-primary" type="submit" value="Відправити">
     </form>
 
@@ -29,10 +29,10 @@
     <table class="table table-bordered  table-hover">
       <thead>
         <tr>
-          <th scope="col">Action ID</th>
-          <th scope="col">Type</th>
-          <th scope="col">Group</th>
-          <th scope="col">Date</th>
+          <th scope="col">№ запиту</th>
+          <th scope="col">Тип</th>
+          <th scope="col">Група</th>
+          <th scope="col">Час</th>
         </tr>
       </thead>
       <tbody>
