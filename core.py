@@ -107,6 +107,33 @@ class User:
 
         return DBManager.execute_query(query, (self.get_id(),))[0][0]
 
+    @classmethod
+    def get_users(cls):
+
+        query = """SELECT * From users"""
+
+        users_selection = DBManager.execute_query(query)
+
+        users = []
+
+        if not users_selection:
+            return users
+
+        for user in users_selection:
+            users.append({
+                'telegram_id': user[0],
+                'username': user[1] or '-',
+                'first_name': user[2],
+                'last_name': user[3] or '-',
+                'group': user[4],
+                'last_teacher': user[5] or '-',
+                'register_date': user[6],
+                'last_use_date': user[7],
+                'requests_count': user[8],
+            })
+
+        return users
+
 
 class DBManager:
 
@@ -340,31 +367,6 @@ class MetricsManager:
 
         return statistic
 
-    @classmethod
-    def get_users(cls):
-
-        query = """SELECT * From users"""
-
-        users_selection = DBManager.execute_query(query)
-
-        users = []
-
-        if not users_selection:
-            return users
-
-        for user in users_selection:
-            users.append({
-                'telegram_id': user[0],
-                'username': user[1] or '-',
-                'first_name': user[2],
-                'last_name': user[3] or '-',
-                'group': user[4],
-                'register_date': user[5],
-                'last_use_date': user[6],
-                'requests_count': user[7],
-            })
-
-        return users
 
     @classmethod
     def get_stats_by_user_id(cls, user_id):

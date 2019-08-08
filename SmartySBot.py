@@ -586,7 +586,7 @@ def admin_del_user(user_id):
     else:
         data['message'] = 'Такого користувача не знайдено.'
 
-    users = core.MetricsManager.get_users()
+    users = core.User.get_users()
     data['users'] = users
 
     return render_template('users.html', data=data)
@@ -599,7 +599,7 @@ def admin_users():
         return admin_login()
 
     data = {
-        'users': core.MetricsManager.get_users()
+        'users': core.User.get_users()
     }
 
     return render_template('users.html', data=data)
