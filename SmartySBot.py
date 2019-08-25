@@ -917,8 +917,8 @@ def main_menu(message):
             msg = "Для пошуку по датам : <b>15.05</b>, <b>15.05-22.05</b>, <b>1.1.18-10.1.18</b>\n\n" \
                   "<b>Група:</b> <code>{}</code>\n" \
                   "<b>Запитів:</b> <code>{}</code>\n\n" \
-                  "<b>Версія:</b> <code>{}</code>\n" \
                   "<b>Група ЖДУ:</b> @zdu_live\n" \
+                  "<b>Група для гри у мафію:</b> @zdu_mafia\n" \
                   "<b>Канал:</b> @zdu_news\n" \
                   "<b>Розробник:</b> @Koocherov\n"
 
@@ -926,7 +926,7 @@ def main_menu(message):
             kb.row(KEYBOARD['MAIN_MENU'])
             kb.row(KEYBOARD['CHANGE_GROUP'])
 
-            bot.send_message(message.chat.id, msg.format(user.get_group(), requests_count, settings.VERSION, mod_time),
+            bot.send_message(message.chat.id, msg.format(user.get_group(), requests_count, mod_time),
                              reply_markup=kb, parse_mode='HTML')
 
         elif request == KEYBOARD['FOR_A_GROUP']:
