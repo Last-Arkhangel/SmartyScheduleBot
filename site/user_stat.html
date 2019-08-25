@@ -13,7 +13,10 @@
     {% endif %}
 
     <div class="alert alert-secondary" role="alert">
-      [{{ data.user[0] }}] <b>{{ data.user[1] }}</b> {{ data.user[2] }} {{ data.user[3] }} <i>({{ data.user[4] }})</i> <br><b>Реєстрація:</b> {{ data.user[5] }} <b>Остання активність: </b>{{ data.user[6] }}
+        [{{ data.user[0] }}] <b>{{ data.user[1] }}</b> {{ data.user[2] }} {{ data.user[3] }} <i>({{ data.user[4] }})</i> <br>
+        <b>Останній викладач:</b> {{ data.user[5] }}<br>
+        <b>Реєстрація:</b> {{ data.user[6] }} <br>
+        <b>Остання активність: </b>{{ data.user[7] }}
     </div>
 
     <form class="" action="/fl/send_message" method="post">
