@@ -88,7 +88,8 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
 
 def render_day_timetable(day_data):
 
-    day_timetable = '.....::::: <b>\U0001F4CB {}</b> - <i>{}</i> :::::.....\n\n'.format(day_data['day'], day_data['date'])
+    day_timetable = '....:::: <b>\U0001F4CB {}</b> <i>{}</i> ::::....\n\n'.\
+        format(day_data['day'], day_data['date'])
 
     lessons = day_data['lessons']
 
@@ -113,7 +114,7 @@ def render_day_timetable(day_data):
         if lessons[i]:
             day_timetable += '{} > <b>{}</b> \n{}\n\n'.format(emoji_numbers[i+1], timetable[i], lessons[i])
         else:
-            day_timetable += '{} > <b>{}</b>\nХалява \U0001f680\n\n'.format(emoji_numbers[i+1], timetable[i])
+            day_timetable += '{} > <b>{}</b>\nВікно 🏃🏻‍♂️\n\n'.format(emoji_numbers[i+1], timetable[i])
 
     return day_timetable
 
