@@ -15,10 +15,18 @@
             <b>Активних за сьогодні:</b> {{ data.active_today_users_count }} {% if data.active_today_users_count %}({{ (data.active_today_users_count / data.all_users_count * 100)|round(1, 'floor') }}%){% endif %}<br>
             <b>Активних за вчора:</b> {{ data.active_yesterday_users_count }} {% if data.active_today_users_count %}({{ (data.active_yesterday_users_count / data.all_users_count * 100)|round(1, 'floor') }}%){% endif %}<br>
             <b>Активних за тиждень:</b> {{ data.active_week_users_count }} {% if data.active_today_users_count %}({{ (data.active_week_users_count / data.all_users_count * 100)|round(1, 'floor') }}%){% endif %}<br>
-
           </div>
         </div>
-        <br><br><hr>
+        <br>
+        <div class="row">
+          <div class="col-md-6">
+            <b>Загрузка процесора:</b> {{ data.cpu_uses }} %<br>
+          </div>
+          <div class="col-md-6">
+            <b>Загрузка ОЗУ:</b> {{ data.ram_uses }} %<br>
+          </div>
+        </div>
+        <hr>
         <div class="row">
             <div class="col-md-6 col-sm-12">
                 <canvas id="requests-types-chart"></canvas>

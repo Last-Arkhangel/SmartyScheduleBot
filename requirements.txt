@@ -9,3 +9,4 @@ six
 requests
 flask
 html5lib
+psutil
