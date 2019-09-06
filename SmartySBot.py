@@ -12,7 +12,6 @@ import json
 import schedule_updater
 import random
 import hashlib
-import psutil
 from WeatherManager import WeatherManager
 from settings import KEYBOARD
 from flask import Flask, request, render_template, jsonify, session
@@ -548,9 +547,6 @@ def admin_metrics():
     active_yesterday_users_count = core.MetricsManager.get_active_yesterday_users_count()
     active_week_users_count = core.MetricsManager.get_active_week_users_count()
 
-    cpu_uses = psutil.cpu_percent(interval=1)
-    ram_uses = psutil.virtual_memory().percent
-
     try:
         forecast_update_date = os.path.getmtime(os.path.join(settings.BASE_DIR, 'groups.txt'))
         groups_update_time = datetime.datetime.fromtimestamp(forecast_update_date).strftime('%d.%m.%Y %H:%M')
@@ -573,9 +569,6 @@ def admin_metrics():
 
         'groups_update_time': groups_update_time,
         'teachers_update_time': teachers_update_time,
-
-        'cpu_uses': cpu_uses,
-        'ram_uses': ram_uses,
     }
 
     return render_template('metrics.html', data=metrics_values)
