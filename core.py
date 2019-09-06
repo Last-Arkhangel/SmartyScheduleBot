@@ -432,7 +432,7 @@ def is_group_valid(user_group=''):
         return user_group in all_groups
 
     except Exception as ex:
-        log(m='Validation group error: {}'.format(str(ex)))
+        log(m='Помилка перевірки валідності групи: {}'.format(str(ex)))
 
     return True
 
@@ -487,6 +487,7 @@ def update_all_teachers():
 
     return teachers
 
+
 def is_teacher_valid(fullname):
 
     fullname = fullname.title().strip()
@@ -498,6 +499,6 @@ def is_teacher_valid(fullname):
         return fullname in all_teachers
 
     except Exception as ex:
-        log(m='Validation teacher name error: {}'.format(str(ex)))
+        log(m='Помилка валідації призвіща викладача: {}'.format(str(ex)))
 
     return True

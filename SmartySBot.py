@@ -46,7 +46,7 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
             'n': 700,
         }
     except Exception as ex:
-        core.log(m='Error encoding request parameters: {}'.format(str(ex)))
+        core.log(m='Помилка при кодуванні параметрів запиту: {}'.format(str(ex)))
         bot.send_message(user_id, 'Помилка надсилання запиту, вкажи коректні параметри (як мінімум перевір чи '
                                   'правильно вказана група, зробити це можна в Довідці)', reply_markup=keyboard)
         return False
@@ -88,8 +88,7 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
 
 def render_day_timetable(day_data):
 
-    day_timetable = '....:::: <b>\U0001F4CB {}</b> <i>{}</i> ::::....\n\n'.\
-        format(day_data['day'], day_data['date'])
+    day_timetable = '....:::: <b>\U0001F4CB {}</b> <i>{}</i> ::::....\n\n'.format(day_data['day'], day_data['date'])
 
     lessons = day_data['lessons']
 
@@ -211,7 +210,7 @@ def start_handler(message):
 
     msg = 'Хай, {} 😊. Я Бот розкладу для студентів ЖДУ ім.Івана Франка. Я можу показати твій розклад на сьогодні, ' \
           'на завтра, по викладачу, по групі і так далі. ' \
-          'Для початку скажи мені свою групу (Напр. 44_і_д), ' \
+          'Для початку скажи мені свою групу (Напр. 33Бд-СОінф), ' \
           '<b>змінити ти її зможеш в пункті меню {}</b>'.format(message.chat.first_name, KEYBOARD['HELP'])
 
     sent = bot.send_message(chat_id=message.chat.id, text=msg, parse_mode='HTML')
@@ -247,7 +246,6 @@ def show_teacher_schedule_handler(call_back):
         bot.register_next_step_handler(sent, select_teacher_by_second_name)
 
     else:
-
         bot.send_message(text=req, chat_id=user.get_id(), parse_mode="HTML", reply_markup=keyboard)
 
 
@@ -474,11 +472,6 @@ def show_previous_teachers_schedule_or_select_another(message):
     user = core.User(message.chat)
     teacher = message.text
 
-    # TODO Delete it
-    # if teacher == KEYBOARD['MAIN_MENU']:
-    #
-    #     bot.send_message(user.get_id(), 'Ок', reply_markup=keyboard)
-
     if teacher == 'Вибрати викладача':
 
         msg = 'Для того щоб подивитись розклад викладача на поточний тиждень - введи його прізвище.'
@@ -523,7 +516,7 @@ def admin_login():
                        '<b>IP: </b>{}\n<b>UA: </b>{}'.format(req_ip, req_agent)
         requests.get('https://api.telegram.org/bot{}/sendMessage'.format(settings.BOT_TOKEN), params=data)
 
-        return 'Bad password'
+        return 'Неправильний пароль'
 
 
 @app.route('/fl/logout')
