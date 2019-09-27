@@ -908,12 +908,14 @@ def main_menu(message):
             except Exception:
                 mod_time = '-'
 
+            users_count_from_group = user.get_users_count_from_group()
+
             msg = "Для пошуку по датам : <b>15.05</b>, <b>15.05-22.05</b>, <b>1.1.18-10.1.18</b>\n\n" \
-                  "<b>Група:</b> <code>{}</code>\n\n" \
+                  "<b>Твоя група:</b> <code>{}</code> (зар. {} людей)\n\n" \
                   "<b>Група ЖДУ:</b> @zdu_live\n" \
-                  "<b>Група для гри у мафію:</b> @zdu_mafia\n" \
+                  "<b>Новини університету:</b> @zueduua\n" \
                   "<b>Канал:</b> @zdu_news\n" \
-                  "<b>Розробник:</b> @Koocherov\n".format(user.get_group(), mod_time)
+                  "<b>Розробник:</b> @Koocherov\n".format(user.get_group(),users_count_from_group, mod_time)
 
             kb = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             kb.row(KEYBOARD['MAIN_MENU'])

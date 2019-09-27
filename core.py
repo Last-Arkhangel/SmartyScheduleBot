@@ -31,6 +31,16 @@ class User:
 
         return result[0][0]
 
+    def get_users_count_from_group(self):
+
+        user_group = self.get_group()
+
+        query = "SELECT count(*) FROM users WHERE u_group = ?"
+
+        result = DBManager.execute_query(query, (user_group,))
+
+        return result[0][0]
+
     def update_group(self, group):
 
         log(self.chat, 'Оновлення групи {}'.format(group))
