@@ -23,8 +23,7 @@ bot = telebot.TeleBot(settings.BOT_TOKEN, threaded=True)
 
 keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
 keyboard.row(KEYBOARD['TODAY'], KEYBOARD['TOMORROW'], KEYBOARD['FOR_A_WEEK'])
-keyboard.row(KEYBOARD['FOR_A_TEACHER'], KEYBOARD['FOR_A_GROUP'])
-keyboard.row(KEYBOARD['TIMETABLE'], KEYBOARD['WEATHER'], KEYBOARD['HELP'])
+keyboard.row(KEYBOARD['FOR_A_TEACHER'], KEYBOARD['FOR_A_GROUP'], KEYBOARD['HELP'])
 
 emoji_numbers = ['0⃣', '1⃣', '2⃣', '3⃣', '4⃣', '5⃣', '6⃣', '7⃣', '8⃣', '9⃣']
 
@@ -910,7 +909,18 @@ def main_menu(message):
 
             users_count_from_group = user.get_users_count_from_group()
 
-            msg = "Для пошуку по датам : <b>15.05</b>, <b>15.05-22.05</b>, <b>1.1.18-10.1.18</b>\n\n" \
+            t = '\U0001F552 <b>Час пар:</b>\n'
+            t += '{} - 9:00 - 10:20\n'.format(emoji_numbers[1])
+            t += '{} - 10:30 - 11:50\n'.format(emoji_numbers[2])
+            t += '{} - 12:10 - 13:30\n'.format(emoji_numbers[3])
+            t += '{} - 13:40 - 15:00\n'.format(emoji_numbers[4])
+            t += '{} - 15:20 - 16:40 \n'.format(emoji_numbers[5])
+            t += '{} - 16:50 - 18:10 \n'.format(emoji_numbers[6])
+            t += '{} - 18:20 - 19:40 \n\n'.format(emoji_numbers[7])
+
+            msg = t
+
+            msg +="<b>Для пошуку по датам:</b>\n<i>15.05</i>\n<i>15.05-22.05</i>\n<i>1.1.18-10.1.18</i>\n\n" \
                   "<b>Твоя група:</b> <code>{}</code> (\U0001F465 {})\n\n" \
                   "<b>Група ЖДУ:</b> @zdu_live\n" \
                   "<b>Новини університету:</b> @zueduua\n" \
