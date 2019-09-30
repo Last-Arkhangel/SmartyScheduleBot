@@ -911,7 +911,7 @@ def main_menu(message):
             users_count_from_group = user.get_users_count_from_group()
 
             msg = "Для пошуку по датам : <b>15.05</b>, <b>15.05-22.05</b>, <b>1.1.18-10.1.18</b>\n\n" \
-                  "<b>Твоя група:</b> <code>{}</code> (зар. {} людей)\n\n" \
+                  "<b>Твоя група:</b> <code>{}</code> (\U0001F465 {})\n\n" \
                   "<b>Група ЖДУ:</b> @zdu_live\n" \
                   "<b>Новини університету:</b> @zueduua\n" \
                   "<b>Канал:</b> @zdu_news\n" \
