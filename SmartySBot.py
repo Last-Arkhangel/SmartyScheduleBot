@@ -750,6 +750,26 @@ def admin_update_cache():
     return msg
 
 
+@app.route('/fl/user_group_to_lower')
+def admin_update_groups_to_lower():
+    # TODO Remove it!
+    users = core.User.get_users()
+
+    for u in users:
+
+        t_id = u['telegram_id']
+
+        query = "SELECT u_group FROM users WHERE t_id=?"
+
+        group = core.DBManager.execute_query(query, (t_id,))[0][0]
+
+        query = "UPDATE users SET u_group=? WHERE t_id=?"
+
+        core.DBManager.execute_query(query, (group.lower(), t_id))
+
+    return 'ok'
+
+
 @app.route('/fl/run')
 def index():
 

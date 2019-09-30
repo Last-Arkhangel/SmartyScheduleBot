@@ -52,8 +52,11 @@ class User:
 
         log(self.chat, 'Новий користувач: ({})'.format(group))
 
+        group = group.lower()
+
         query = "INSERT INTO users (t_id, username, first_name, last_name, u_group, register_date) " \
                 "VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'))"
+
         return DBManager.execute_query(query,
                                        (self.id, self.chat.username, self.chat.first_name,
                                         self.chat.last_name, group))
@@ -62,6 +65,7 @@ class User:
 
         query = "UPDATE users SET requests_count=requests_count+1, last_use_date=datetime('now', 'localtime')," \
                 "first_name=?, last_name=?, username=? WHERE t_id=?"
+
         return DBManager.execute_query(query, (self.chat.first_name, self.chat.last_name, self.chat.username, self.id,))
 
     @classmethod
