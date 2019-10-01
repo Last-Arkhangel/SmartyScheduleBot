@@ -45,6 +45,8 @@ class User:
 
         log(self.chat, 'Оновлення групи {}'.format(group))
 
+        group = group.lower()
+
         query = "UPDATE users SET u_group=? WHERE t_id=?"
         return DBManager.execute_query(query, (group, self.id))
 
