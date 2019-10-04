@@ -20,6 +20,8 @@ function update_request_types_chart(){
       weather = response['data']['WEATHER'];
       help = response['data']['HELP'];
       for_a_date = response['data']['FOR_A_DATE'];
+      ads = response['data']['ADS'];
+        console.log(ads);
       other = response['data']['OTHER'];
 
       var ctx = document.getElementById("requests-types-chart");
@@ -38,6 +40,7 @@ function update_request_types_chart(){
                 'Погода',
                 'Довідка',
                 'По даті',
+                'Оголошення',
                 'Інше'
             ],
             datasets: [{
@@ -51,6 +54,7 @@ function update_request_types_chart(){
                        weather,
                        help,
                        for_a_date,
+                       ads,
                        other
                       ],
                 backgroundColor: [
@@ -64,6 +68,7 @@ function update_request_types_chart(){
                   '#01DF01',
                   '#FFFF00',
                   '#81DAF5',
+                  '#FF69B4',
                   '#BDBDBD',
                    ],
             }],

@@ -40,8 +40,8 @@ HTTP_USER_AGENT = 'Telegram-SmartySBot v.{}'.format(VERSION)
 # If it True, bot would send errors to admins in list below
 SEND_ERRORS_TO_ADMIN = True
 
-# Admins IDS
-ADMINS_ID = ['204560928', '203448442', '525808450']
+# Admins IDS. My, Vlad, Mum, Yaroslav
+ADMINS_ID = ['204560928', '203448442', '525808450', '947097358']
 
 # Base folder
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -56,7 +56,10 @@ KEYBOARD = {
     'FOR_A_GROUP': '\U0001F465 По групі',
     'WEATHER': '\U0001F30D Погода',
     'HELP': '\U0001F4AC Довідка',
-
+    'ADS': '\U0001F4E2 Оголошення',
+    'AD_LIST': '\U0001F4F0 Список',
+    'AD_ADD': '\U00002795 Додати',
+    'AD_DEL': '\U0000274C Видалити',
     'CHANGE_GROUP': '\U00002699 Зм. групу',
     'MAIN_MENU': '\U0001F519 Меню',
 }

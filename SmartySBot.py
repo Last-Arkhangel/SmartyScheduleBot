@@ -23,7 +23,8 @@ bot = telebot.TeleBot(settings.BOT_TOKEN, threaded=True)
 
 keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
 keyboard.row(KEYBOARD['TODAY'], KEYBOARD['TOMORROW'], KEYBOARD['FOR_A_WEEK'])
-keyboard.row(KEYBOARD['FOR_A_TEACHER'], KEYBOARD['FOR_A_GROUP'], KEYBOARD['HELP'])
+keyboard.row(KEYBOARD['FOR_A_TEACHER'], KEYBOARD['FOR_A_GROUP'])
+keyboard.row(KEYBOARD['ADS'], KEYBOARD['WEATHER'], KEYBOARD['HELP'])
 
 emoji_numbers = ['0⃣', '1⃣', '2⃣', '3⃣', '4⃣', '5⃣', '6⃣', '7⃣', '8⃣', '9⃣']
 
@@ -204,6 +205,61 @@ def get_logs(message):
     bot.send_message(user.get_id(), logs, reply_markup=keyboard)
 
 
+@bot.message_handler(commands=['vip'])
+def set_vip_by_id(message):
+
+    user = core.User(message.chat)
+
+    if str(user.get_id()) not in settings.ADMINS_ID:
+        bot.send_message(user.get_id(), 'Немає доступу :(')
+        return
+
+    if len(message.text.split()) == 3:
+        user_id = message.text.split()[1]
+
+        if message.text.split()[2] == '+':
+            core.AdService.set_vip_by_id(user_id, 1)
+            bot.send_message(user.get_id(), 'VIP статус установлено.', reply_markup=keyboard)
+        elif message.text.split()[2] == '-':
+            core.AdService.set_vip_by_id(user_id, 0)
+            bot.send_message(user.get_id(), 'VIP статус видалено.', reply_markup=keyboard)
+    else:
+
+        bot.send_message(user.get_id(), 'Неправильний формат. Треба /vip <id> <+, ->', reply_markup=keyboard)
+
+
+@bot.message_handler(commands=['ahelp'])
+def del_ad_by_id(message):
+
+    cmds = '/ci - інформація про кеш\n' \
+           '/cu [N] - оновити кеш для N груп (по зам. 40)\n' \
+           '/cc - очистити кеш\n' \
+           '/log [N] - показати N рядків логів (по зам. 65)\n' \
+           '/lf - завантажити файл із логами\n' \
+           '/vip <user_id> <+/-> дати/забрати ВІП статус оголошень\n' \
+           '/da <user_id> - видалити оголошення'
+
+    bot.send_message(message.chat.id, cmds, reply_markup=keyboard)
+
+
+@bot.message_handler(commands=['da'])
+def del_ad_by_id(message):
+
+    user = core.User(message.chat)
+
+    if str(user.get_id()) not in settings.ADMINS_ID:
+        bot.send_message(user.get_id(), 'Немає доступу :(')
+        return
+
+    if len(message.text.split()) == 2:
+        user_id = message.text.split()[1]
+        core.AdService.delete_user_ad(user_id)
+        bot.send_message(user.get_id(), 'Оголошення видалено.', reply_markup=keyboard)
+    else:
+
+        bot.send_message(user.get_id(), 'Неправильний формат. Треба /da <user_id>', reply_markup=keyboard)
+
+
 @bot.message_handler(commands=['start'])
 def start_handler(message):
 
@@ -307,7 +363,7 @@ def bot_send_message_and_post_check_group(chat_id='', text='', user_group='', pa
 def set_group(message):
 
     user = core.User(message.chat)
-    group = message.text
+    group = core.delete_html_tags(message.text)
 
     if group == '/start':
         sent = bot.send_message(message.chat.id, 'Вкажи свою групу')
@@ -482,6 +538,63 @@ def show_previous_teachers_schedule_or_select_another(message):
 
     else:
         bot.send_message(user.get_id(), 'Лови меню', reply_markup=keyboard)
+
+
+def add_ad(message):
+
+    user_id = message.chat.id
+    text = message.text
+    username = message.chat.username
+
+    if text  == KEYBOARD['MAIN_MENU']:
+        msg = 'Окей'
+        sent = bot.send_message(message.chat.id, msg, parse_mode='HTML', reply_markup=keyboard)
+        return
+
+    if text in [KEYBOARD['AD_ADD'], KEYBOARD['AD_LIST']]:
+        msg = 'Помилка. Введи ще раз.'
+        sent = bot.send_message(message.chat.id, msg, parse_mode='HTML')
+        bot.register_next_step_handler(sent, add_ad)
+        return
+
+    if not core.AdService.add_advertisement(user_id, username, text):
+        bot.send_message(user_id, 'Помилка.', reply_markup=keyboard, parse_mode='HTML')
+        return
+    msg = core.AdService.render_ads()
+    bot.send_message(user_id, '\U00002705 Оголошення додано!')
+    bot.send_message(user_id, msg, reply_markup=keyboard, parse_mode='HTML')
+
+
+def process_menu(message):
+
+    if message.text == KEYBOARD['AD_ADD']:
+
+        if not message.chat.username:
+            bot.send_message(message.chat.id, 'Щоб додавати оголошення постав логін. '
+                                              'Зробити це можна в налаштуваннях Телеграму.', reply_markup=keyboard)
+            return
+
+        if core.AdService.check_if_user_have_ad(message.chat.id):
+            bot.send_message(message.chat.id, 'Одночасно можна додавати тільки одне оголошення. '
+                                              'Видаліть попереднє.', reply_markup=keyboard)
+            return
+
+        sent = bot.send_message(message.chat.id, 'Введи текст оголошення (до 120 символів)', parse_mode='HTML')
+        bot.register_next_step_handler(sent, add_ad)
+
+    elif message.text == KEYBOARD['AD_LIST']:
+        result = core.AdService.render_ads()
+        bot.send_message(message.chat.id, result, parse_mode='HTML', reply_markup=keyboard)
+
+    elif message.text == KEYBOARD['MAIN_MENU']:
+        bot.send_message(message.chat.id, 'По рукам.', parse_mode='HTML', reply_markup=keyboard)
+
+    elif message.text == KEYBOARD['AD_DEL']:
+        core.AdService.delete_user_ad(message.chat.id)
+        bot.send_message(message.chat.id, '\U00002705 Твоє оголошення видалено!', parse_mode='HTML', reply_markup=keyboard)
+
+    else:
+        bot.send_message(message.chat.id, 'Не розумію :(', parse_mode='HTML', reply_markup=keyboard)
 
 
 @app.route('/fl/login', methods=['POST', 'GET'])
@@ -779,6 +892,7 @@ def index():
     core.User.create_user_table_if_not_exists()
     core.MetricsManager.create_metrics_table_if_not_exists()
     core.Cache.create_cache_table_if_not_exists()
+    core.AdService.create_ad_service_table_if_not_exists()
     bot.delete_webhook()
     bot.set_webhook(settings.WEBHOOK_URL + settings.WEBHOOK_PATH, max_connections=1)
     bot.send_message('204560928', 'Running...')
@@ -893,8 +1007,7 @@ def main_menu(message):
 
         elif request == KEYBOARD['TIMETABLE']:
 
-            t = ''
-            t += '{} - 9:00 - 10:20\n'.format(emoji_numbers[1])
+            t = '{} - 9:00 - 10:20\n'.format(emoji_numbers[1])
             t += '{} - 10:30 - 11:50\n'.format(emoji_numbers[2])
             t += '{} - 12:10 - 13:30\n'.format(emoji_numbers[3])
             t += '{} - 13:40 - 15:00\n'.format(emoji_numbers[4])
@@ -929,7 +1042,7 @@ def main_menu(message):
 
             users_count_from_group = user.get_users_count_from_group()
 
-            t = '\U0001F552 <b>Час пар:</b>\n'
+            t = '\U0001F552 <b>Час пар:</b>\n\n'
             t += '{} - 9:00 - 10:20\n'.format(emoji_numbers[1])
             t += '{} - 10:30 - 11:50\n'.format(emoji_numbers[2])
             t += '{} - 12:10 - 13:30\n'.format(emoji_numbers[3])
@@ -958,6 +1071,20 @@ def main_menu(message):
             sent = bot.send_message(message.chat.id,
                                     'Для того щоб подивитись розклад будь якої групи на тиждень введи її назву')
             bot.register_next_step_handler(sent, show_other_group)
+
+        elif request == KEYBOARD['ADS']:
+
+            ads_kb = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+            ads_kb.row(KEYBOARD['AD_LIST'])
+            if core.AdService.check_if_user_have_ad(user.get_id()):
+                ads_kb.row(KEYBOARD['AD_DEL'])
+            else:
+                ads_kb.row(KEYBOARD['AD_ADD'])
+            ads_kb.row(KEYBOARD['MAIN_MENU'])
+
+            sent = bot.send_message(user.get_id(), 'Що хочемо зробити?', parse_mode='HTML', reply_markup=ads_kb)
+
+            bot.register_next_step_handler(sent, process_menu)
 
         elif request == KEYBOARD['WEATHER']:
 

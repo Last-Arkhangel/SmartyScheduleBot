@@ -46,6 +46,7 @@ class User:
         log(self.chat, 'Оновлення групи {}'.format(group))
 
         group = group.lower()
+        group = delete_html_tags(group)
 
         query = "UPDATE users SET u_group=? WHERE t_id=?"
         return DBManager.execute_query(query, (group, self.id))
@@ -55,6 +56,7 @@ class User:
         log(self.chat, 'Новий користувач: ({})'.format(group))
 
         group = group.lower()
+        group = delete_html_tags(group)
 
         query = "INSERT INTO users (t_id, username, first_name, last_name, u_group, register_date) " \
                 "VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'))"
@@ -185,6 +187,12 @@ def log(chat=None, m=''):
             log_file.write('[{}]: ({} {}) {}\n'.format(now_time, chat.first_name, chat.last_name, m))
         else:
             log_file.write('[{}]: (Server) {}\n'.format(now_time, m))
+
+
+def delete_html_tags(s):
+
+    if s:
+        return s.replace('>', '').replace('<', '')
 
 
 class Cache:
@@ -383,7 +391,6 @@ class MetricsManager:
 
         return statistic
 
-
     @classmethod
     def get_stats_by_user_id(cls, user_id):
 
@@ -518,3 +525,106 @@ def is_teacher_valid(fullname):
         log(m='Помилка валідації призвіща викладача: {}'.format(str(ex)))
 
     return True
+
+
+class AdService:
+
+    @classmethod
+    def add_advertisement(cls, user_id, username, text):
+
+        if not text:
+            return False
+
+        text = delete_html_tags(text)
+
+        query = """INSERT INTO ads (
+        user_id, 
+        username,
+        ad_text) VALUES (?, ?, ?)"""
+
+        if str(user_id) not in settings.ADMINS_ID:
+            text = text[:120]
+
+        DBManager.execute_query(query, (user_id, username, text))
+
+        if str(user_id) in settings.ADMINS_ID:
+            cls.set_vip_by_id(user_id, 1)
+
+        return True
+
+    @classmethod
+    def render_ads(cls):
+
+        ads = cls.get_ads() or []
+        vip_ads = cls.get_ads(is_vip=True) or []
+
+        ads_rendered = ''
+
+        if not ads and not vip_ads:
+            return 'Тут поки пусто.'
+
+        for vip_ad in vip_ads:
+
+            username = vip_ad[0]
+            text = vip_ad[1]
+
+            ads_rendered += '\U0001F525 <b>@{}</b>\n{}\n\n'.format(username, text)
+
+        for ad in ads:
+
+            username = ad[0]
+            text = ad[1]
+
+            ads_rendered += '\U00002139 <b>@{}</b>\n{}\n\n'.format(username, text)
+
+        return ads_rendered
+
+    @staticmethod
+    def get_ads(is_vip=False):
+
+        query = 'SELECT username, ad_text, creation_datetime FROM ads'
+
+        if is_vip:
+            query += ' WHERE is_vip = 1 '
+        else:
+            query += ' WHERE is_vip != 1 '
+
+        query += ' ORDER BY creation_datetime'
+
+        ads = DBManager.execute_query(query,)
+
+        return ads
+
+    @staticmethod
+    def create_ad_service_table_if_not_exists():
+
+        query = """CREATE TABLE IF NOT EXISTS ads(
+                      ad_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                      user_id TEXT,
+                      username TEXT,
+                      ad_text TEXT,
+                      is_vip TEXT DEFAULT 0,
+                      creation_datetime DEFAULT (datetime('now', 'localtime')))"""
+
+        return DBManager.execute_query(query)
+
+    @staticmethod
+    def check_if_user_have_ad(user_id):
+
+        query = """SELECT * FROM ads WHERE user_id = ?"""
+
+        return DBManager.execute_query(query, (user_id,))
+
+    @staticmethod
+    def delete_user_ad(user_id):
+
+        query = "DELETE FROM ads WHERE user_id=?"
+
+        return DBManager.execute_query(query, (user_id,))
+
+    @staticmethod
+    def set_vip_by_id(user_id, vip_status):
+
+        query = "UPDATE ads SET is_vip = ? WHERE user_id = ?"
+
+        return DBManager.execute_query(query, (vip_status, user_id,))
