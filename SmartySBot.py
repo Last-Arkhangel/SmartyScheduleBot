@@ -1082,7 +1082,11 @@ def main_menu(message):
                 ads_kb.row(KEYBOARD['AD_ADD'])
             ads_kb.row(KEYBOARD['MAIN_MENU'])
 
-            sent = bot.send_message(user.get_id(), 'Що хочемо зробити?', parse_mode='HTML', reply_markup=ads_kb)
+            ads_stat = core.MetricsManager.get_statistics_by_types_during_the_week().get('ADS', 'хз')
+
+            msg = 'Що будемо робити?\n\nПереглядів оголошень за тиждень: {} \U0001F440'.format(ads_stat)
+
+            sent = bot.send_message(user.get_id(), msg, parse_mode='HTML', reply_markup=ads_kb)
 
             bot.register_next_step_handler(sent, process_menu)
 
