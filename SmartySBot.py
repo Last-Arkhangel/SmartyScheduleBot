@@ -582,9 +582,9 @@ def process_menu(message):
         sent = bot.send_message(message.chat.id, 'Введи текст оголошення (до 120 символів)', parse_mode='HTML')
         bot.register_next_step_handler(sent, add_ad)
 
-    elif message.text == KEYBOARD['AD_LIST']:
-        result = core.AdService.render_ads()
-        bot.send_message(message.chat.id, result, parse_mode='HTML', reply_markup=keyboard)
+    # elif message.text == KEYBOARD['AD_LIST']:
+    #
+    #     bot.send_message(message.chat.id, result, parse_mode='HTML', reply_markup=keyboard)
 
     elif message.text == KEYBOARD['MAIN_MENU']:
         bot.send_message(message.chat.id, 'По рукам.', parse_mode='HTML', reply_markup=keyboard)
@@ -1075,7 +1075,7 @@ def main_menu(message):
         elif request == KEYBOARD['ADS']:
 
             ads_kb = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-            ads_kb.row(KEYBOARD['AD_LIST'])
+
             if core.AdService.check_if_user_have_ad(user.get_id()):
                 ads_kb.row(KEYBOARD['AD_DEL'])
             else:
@@ -1084,7 +1084,9 @@ def main_menu(message):
 
             ads_stat = core.MetricsManager.get_statistics_by_types_during_the_week().get('ADS', 'хз')
 
-            msg = 'Що будемо робити?\n\nПереглядів оголошень за тиждень: {} \U0001F440'.format(ads_stat)
+            rendered_ads = core.AdService.render_ads()
+
+            msg = 'Переглядів оголошень за тиждень: {} \U0001F440\n\n{}'.format(ads_stat, rendered_ads)
 
             sent = bot.send_message(user.get_id(), msg, parse_mode='HTML', reply_markup=ads_kb)
 
