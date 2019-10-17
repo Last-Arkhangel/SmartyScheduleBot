@@ -1033,16 +1033,12 @@ def main_menu(message):
 
         elif request == KEYBOARD['HELP']:
 
-            requests_count = user.get_user_requests_count()
-
             try:
                 forecast_update_date = os.path.getmtime(os.path.join(settings.BASE_DIR, 'forecast.txt'))
                 mod_time = datetime.datetime.fromtimestamp(forecast_update_date).strftime('%H:%M')
 
             except Exception:
                 mod_time = '-'
-
-            users_count_from_group = user.get_users_count_from_group()
 
             t = '\U0001F552 <b>Час пар:</b>\n\n'
             t += '{} - 9:00 - 10:20\n'.format(emoji_numbers[1])
@@ -1056,18 +1052,17 @@ def main_menu(message):
             msg = t
 
             msg +="<b>Для пошуку по датам:</b>\n<i>15.05</i>\n<i>15.05-22.05</i>\n<i>1.1.18-10.1.18</i>\n\n" \
-                  "<b>Твоя група:</b> <code>{}</code> (\U0001F465 {})\n\n" \
+                  "<b>Твоя група:</b> <code>{}</code>\n\n" \
                   "<b>Група ЖДУ:</b> @zdu_live\n" \
                   "<b>Новини університету:</b> @zueduua\n" \
                   "<b>Канал:</b> @zdu_news\n" \
-                  "<b>Розробник:</b> @Koocherov\n".format(user.get_group(),users_count_from_group, mod_time)
+                  "<b>Розробник:</b> @Koocherov\n".format(user.get_group(), mod_time)
 
             kb = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             kb.row(KEYBOARD['MAIN_MENU'])
             kb.row(KEYBOARD['CHANGE_GROUP'])
 
-            bot.send_message(message.chat.id, msg,
-                             reply_markup=kb, parse_mode='HTML')
+            bot.send_message(message.chat.id, msg, reply_markup=kb, parse_mode='HTML')
 
         elif request == KEYBOARD['FOR_A_GROUP']:
             sent = bot.send_message(message.chat.id,
@@ -1219,7 +1214,11 @@ def main_menu(message):
 
         elif core.is_group_valid(request):
             msg = 'Якщо ти хочеш змінити групу, тоді зайди в пункт меню {}'.format(KEYBOARD['HELP'])
-            bot.send_message(chat_id=user.get_id(), text=msg, reply_markup=keyboard)
+            bot.send_message(user.get_id(), text=msg, reply_markup=keyboard)
+
+        elif request[-1] == '?':
+            answers = ['да', 'хз', 'ноу', 'думаю ні']
+            bot.send_message(user.get_id(), random.choice(answers), reply_markup=keyboard)
 
         else:
             answers = ['м?', 'хм.. \U0001F914', 'не розумію(', 'вибери потрібне в меню', 'моя твоя не понімать', 'wot?']
