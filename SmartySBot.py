@@ -546,7 +546,7 @@ def add_ad(message):
     text = message.text
     username = message.chat.username
 
-    if text  == KEYBOARD['MAIN_MENU']:
+    if text == KEYBOARD['MAIN_MENU']:
         msg = 'Окей'
         sent = bot.send_message(message.chat.id, msg, parse_mode='HTML', reply_markup=keyboard)
         return
@@ -560,7 +560,9 @@ def add_ad(message):
     if not core.AdService.add_advertisement(user_id, username, text):
         bot.send_message(user_id, 'Помилка.', reply_markup=keyboard, parse_mode='HTML')
         return
+
     msg = core.AdService.render_ads()
+    bot.send_message('204560928', '\U00002139 <b>@{}</b> >  {}'.format(username, text), reply_markup=keyboard, parse_mode='HTML')
     bot.send_message(user_id, '\U00002705 Оголошення додано!')
     bot.send_message(user_id, msg, reply_markup=keyboard, parse_mode='HTML')
 
@@ -1086,7 +1088,7 @@ def main_menu(message):
 
             rendered_ads = core.AdService.render_ads()
 
-            msg = 'Переглядів оголошень за тиждень: {} \U0001F440\n\n{}'.format(ads_stat, rendered_ads)
+            msg = 'Переглядів за тиждень: {} \U0001F440\n\n{}'.format(ads_stat, rendered_ads)
 
             sent = bot.send_message(user.get_id(), msg, parse_mode='HTML', reply_markup=ads_kb)
 
