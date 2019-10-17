@@ -1209,7 +1209,7 @@ def main_menu(message):
         elif request == KEYBOARD['MAIN_MENU']:
             bot.send_message(user.get_id(), 'Ок', reply_markup=keyboard)
 
-        elif request.find('дякую') != -1 or request.find('Дякую') != -1:
+        elif request.find('якую') != -1 or request.find('пасибо') != -1:
             bot.send_message(user.get_id(), 'будь-ласка)', reply_markup=keyboard)
 
         elif core.is_group_valid(request):
