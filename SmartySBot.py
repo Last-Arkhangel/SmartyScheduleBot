@@ -95,11 +95,12 @@ def render_day_timetable(day_data):
     start_index = 0
     end_index = len(lessons) - 1
 
-    # Конструкція показує пари із першої існуючої
-    # for i in range(8):
-    #     if lessons[i]:
-    #         start_index = i
-    #         break
+    if not settings.SHOW_LESSONS_FROM_THE_FIRST:
+        # Конструкція показує пари із першої існуючої
+        for i in range(8):
+            if lessons[i]:
+                start_index = i
+                break
 
     for i in range(end_index, -1, -1):
         if lessons[i]:
@@ -270,6 +271,21 @@ def start_handler(message):
 
     sent = bot.send_message(chat_id=message.chat.id, text=msg, parse_mode='HTML')
     bot.register_next_step_handler(sent, set_group)
+
+
+@bot.message_handler(commands=['stats'])
+def stats_handler(message):
+
+    user = core.User(message.chat)
+    users_count_from_group = user.get_users_count_from_group()
+    requests_count = user.get_user_requests_count()
+
+    msg = '<b>\U0001F47D Твоя статистика:</b>\n\n' \
+          '<i>Кількість твоїх запитів:</i> {}\n' \
+          '<i>Людей із твоєї групи:</i> {}\n\n' \
+          '<b>\U0001f916 Статистика бота:</b>\n\n'.format(requests_count, users_count_from_group)
+
+    bot.send_message(chat_id=message.chat.id, text=msg, parse_mode='HTML', reply_markup=keyboard)
 
 
 def get_teachers_list():
@@ -865,26 +881,6 @@ def admin_update_cache():
     return msg
 
 
-@app.route('/fl/user_group_to_lower')
-def admin_update_groups_to_lower():
-    # TODO Remove it!
-    users = core.User.get_users()
-
-    for u in users:
-
-        t_id = u['telegram_id']
-
-        query = "SELECT u_group FROM users WHERE t_id=?"
-
-        group = core.DBManager.execute_query(query, (t_id,))[0][0]
-
-        query = "UPDATE users SET u_group=? WHERE t_id=?"
-
-        core.DBManager.execute_query(query, (group.lower(), t_id))
-
-    return 'ok'
-
-
 @app.route('/fl/run')
 def index():
 
@@ -1050,6 +1046,7 @@ def main_menu(message):
             t += '{} - 18:20 - 19:40 \n\n'.format(emoji_numbers[7])
 
             msg = t
+            # msg += '\U0001F4CA Статистика - /stats\n\n'
 
             msg +="<b>Для пошуку по датам:</b>\n<i>15.05</i>\n<i>15.05-22.05</i>\n<i>1.1.18-10.1.18</i>\n\n" \
                   "<b>Твоя група:</b> <code>{}</code>\n\n" \

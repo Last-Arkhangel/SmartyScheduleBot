@@ -2,7 +2,7 @@
 import os
 
 # Bot version
-VERSION = '9.3'
+VERSION = '10.0'
 
 # Database name
 DATABASE = 'SmartyS_DB.sqlite'
@@ -39,6 +39,9 @@ HTTP_USER_AGENT = 'Telegram-SmartySBot v.{}'.format(VERSION)
 
 # If it True, bot would send errors to admins in list below
 SEND_ERRORS_TO_ADMIN = True
+
+# Show lessons from the first even it isn`t
+SHOW_LESSONS_FROM_THE_FIRST = False
 
 # Admins IDS. My, Vlad, Mum, Yaroslav
 ADMINS_ID = ['204560928', '203448442', '525808450', '947097358']
