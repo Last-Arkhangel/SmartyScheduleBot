@@ -46,7 +46,7 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
             'n': 700,
         }
     except Exception as ex:
-        core.log(m='Помилка при кодуванні параметрів запиту: {}'.format(str(ex)))
+        core.log(msg='Помилка при кодуванні параметрів запиту: {}'.format(str(ex)), is_error=True)
         bot.send_message(user_id, 'Помилка надсилання запиту, вкажи коректні параметри (як мінімум перевір чи '
                                   'правильно вказана група, зробити це можна в Довідці)', reply_markup=keyboard)
         return False
@@ -65,10 +65,10 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
                     'станом на {} ' \
                     '(теоретично, його вже могли змінити)'.format(cached_timetable[0][2][11:])
                 bot.send_message(user_id, m, reply_markup=keyboard)
-                core.log(m='Розклад видано з кешу')
+                core.log(msg='Розклад видано з кешу')
                 return json.loads(cached_timetable[0][1])
 
-        core.log(m='Помилка з\'єднання із сайтом Деканату.')
+        core.log(msg='Помилка з\'єднання із сайтом Деканату.', is_error=True)
         bot.send_message(user_id, 'Помилка з\'єднання із сайтом Деканату. Спробуй пізніше.', reply_markup=keyboard)
         return False
 
@@ -296,7 +296,7 @@ def get_teachers_list():
         with open(os.path.join(settings.BASE_DIR, 'teachers.txt'), 'r', encoding="utf-8") as file:
             all_teachers = json.loads(file.read())
     except Exception as ex:
-        core.log(m='Помилка із файлом викладачів: {}'.format(str(ex)))
+        core.log(msg='Помилка із файлом викладачів: {}'.format(str(ex)), is_error=True)
         return
 
     [teachers_list.append(teacher) for teacher in all_teachers]
@@ -457,7 +457,7 @@ def select_teacher_by_second_name(message):
             all_teachers = json.loads(file.read())
     except Exception as ex:
         bot.send_message(message.chat.id, 'Даний функціонал тимчасово не працює.', reply_markup=keyboard)
-        core.log(m='Помилка із файлом викладачів: {}'.format(str(ex)))
+        core.log(msg='Помилка із файлом викладачів: {}'.format(str(ex)), is_error=True)
         return
 
     for teacher in all_teachers:
@@ -861,7 +861,7 @@ def admin_user_statistics(user_id, msg=''):
 def admin_update_cache():
 
     bot.send_message('204560928', 'Починаю оновлення розкладу через крон.', reply_markup=keyboard, parse_mode='HTML')
-    core.log(m='Оновлення розкладу через крон')
+    core.log(msg='Оновлення розкладу через крон')
 
     msg = schedule_updater.update_cache(60)
     updated_groups = core.update_all_groups()
@@ -875,7 +875,7 @@ def admin_update_cache():
 
     bot.send_message('204560928', msg, reply_markup=keyboard, parse_mode='HTML')
 
-    core.log(m='Розклад по крону оновлено. ')
+    core.log(msg='Розклад по крону оновлено.')
     msg = '<!doctype html>\n<head><meta charset="utf-8"><head>\n<body>' + msg + '</body></html>'
 
     return msg
@@ -894,7 +894,7 @@ def index():
     bot.delete_webhook()
     bot.set_webhook(settings.WEBHOOK_URL + settings.WEBHOOK_PATH, max_connections=1)
     bot.send_message('204560928', 'Running...')
-    core.log(m='Запуск через url. Веб-хук встановлено: {}.'.format(bot.get_webhook_info().url))
+    core.log(msg='Запуск через url. Веб-хук встановлено: {}.'.format(bot.get_webhook_info().url))
     return 'ok'
 
 
@@ -1236,18 +1236,18 @@ def main():
     if settings.USE_WEBHOOK:
         try:
             bot.set_webhook(settings.WEBHOOK_URL + settings.WEBHOOK_PATH, max_connections=1)
-            core.log(m='Веб-хук встановлено: {}'.format(bot.get_webhook_info().url))
+            core.log(msg='Веб-хук встановлено: {}'.format(bot.get_webhook_info().url))
 
         except Exception as ex:
-            core.log(m='Помилка під час встановлення веб-хуку: {}'.format(str(ex)))
+            core.log(msg='Помилка під час встановлення веб-хуку: {}'.format(str(ex)), is_error=True)
 
     try:
-        core.log(m='Запуск...')
+        core.log(msg='Запуск...')
         bot.polling(none_stop=True, interval=settings.POLLING_INTERVAL)
 
     except Exception as ex:
 
-        core.log(m='Помилка під час роботи: {}\n'.format(str(ex)))
+        core.log(msg='Помилка під час роботи: {}\n'.format(str(ex)), is_error=True)
         bot.stop_polling()
 
         if settings.SEND_ERRORS_TO_ADMIN:

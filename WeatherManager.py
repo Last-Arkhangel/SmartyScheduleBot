@@ -84,7 +84,7 @@ class WeatherManager:
 
         except Exception as ex:
             zdu_temperature = ''
-            core.log(m='Error with getting ZDU temperature: {}'.format(str(ex)))
+            core.log(msg='Error with getting ZDU temperature: {}'.format(str(ex)))
 
         today_day = datetime.datetime.now().day
         tomorrow_date = datetime.datetime.now() + datetime.timedelta(days=1)

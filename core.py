@@ -174,19 +174,21 @@ class DBManager:
 
         except sqlite3.Error as ex:
 
-            log(m='Query error: {}'.format(str(ex)))
+            log(msg='Query error: {}'.format(str(ex)))
             return -1
 
 
-def log(chat=None, m=''):
+def log(chat=None, msg='', is_error=False):
 
     now_time = datetime.datetime.now().strftime('%d-%m %H:%M:%S')
 
-    with open(os.path.join(settings.BASE_DIR, 'bot_log.txt'), 'a', encoding="utf-8") as log_file:
+    filename = 'error_log.txt' if is_error else 'bot_log.txt'
+
+    with open(os.path.join(settings.BASE_DIR, filename), 'a', encoding="utf-8") as log_file:
         if chat:
-            log_file.write('[{}]: ({} {}) {}\n'.format(now_time, chat.first_name, chat.last_name, m))
+            log_file.write('[{}]: ({} {}) {}\n'.format(now_time, chat.first_name, chat.last_name, msg))
         else:
-            log_file.write('[{}]: (Server) {}\n'.format(now_time, m))
+            log_file.write('[{}]: (Server) {}\n'.format(now_time, msg))
 
 
 def delete_html_tags(s):
@@ -455,7 +457,7 @@ def is_group_valid(user_group=''):
         return user_group in all_groups
 
     except Exception as ex:
-        log(m='Помилка перевірки валідності групи: {}'.format(str(ex)))
+        log(msg='Помилка перевірки валідності групи: {}'.format(str(ex)))
 
     return True
 
@@ -522,7 +524,7 @@ def is_teacher_valid(fullname):
         return fullname in all_teachers
 
     except Exception as ex:
-        log(m='Помилка валідації призвіща викладача: {}'.format(str(ex)))
+        log(msg='Помилка валідації призвіща викладача: {}'.format(str(ex)))
 
     return True
 

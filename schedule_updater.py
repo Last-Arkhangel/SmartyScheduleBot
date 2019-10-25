@@ -26,13 +26,13 @@ def get_timetable_to_cache(faculty='', teacher='', group='', sdate='', edate='')
             'n': 700,
         }
     except Exception as ex:
-        core.log(m='Помилка у кодуванні post_data словника при оновленні кешу.: {}'.format(str(ex)))
+        core.log(msg='Помилка у кодуванні post_data словника при оновленні кешу.: {}'.format(str(ex)))
         return False
 
     try:
         page = requests.post(settings.TIMETABLE_URL, post_data, headers=http_headers, timeout=12)
     except Exception as ex:  # Connection error to Dekanat site
-        core.log(m='Помилка з\'єднання із сайтом Деканату під час оновлення кешу')
+        core.log(msg='Помилка з\'єднання із сайтом Деканату під час оновлення кешу')
         return False
 
     parsed_page = BeautifulSoup(page.content, 'html5lib')
@@ -80,7 +80,7 @@ def update_cache(groups_limit=3000):
 
     ans += '\n\U0001F552 <b>Час:</b> {} с.'.format(round(time.time() - start_time, 2))
 
-    core.log(m='Завантаження кешу. Кількість груп: {}, час: {}'.format(len(groups), round(time.time() - start_time, 2)))
+    core.log(msg='Завантаження кешу. Кількість груп: {}, час: {}'.format(len(groups), round(time.time() - start_time, 2)))
 
     return ans
 
