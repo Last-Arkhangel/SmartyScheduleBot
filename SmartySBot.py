@@ -168,17 +168,16 @@ def clear_cache(message):
     bot.send_message(user.get_id(), 'Кеш був очищений.')
 
 
-@bot.message_handler(commands=['lf'])
+@bot.message_handler(commands=['getlogfiles'])
 def get_log_file(message):
 
     user = core.User(message.chat)
 
-    if str(user.get_id()) not in settings.ADMINS_ID:
-        bot.send_message(user.get_id(), 'Немає доступу :(')
-        return
-
     with open(os.path.join(settings.BASE_DIR, 'bot_log.txt'), 'r', encoding="utf-8") as log_file:
         bot.send_document(user.get_id(), log_file)
+
+    with open(os.path.join(settings.BASE_DIR, 'error_log.txt'), 'r', encoding="utf-8") as error_log_file:
+        bot.send_document(user.get_id(), error_log_file)
 
 
 @bot.message_handler(commands=['log'])
@@ -196,6 +195,31 @@ def get_logs(message):
         count = 65
 
     with open(os.path.join(settings.BASE_DIR, 'bot_log.txt'), 'r', encoding="utf-8") as log_file:
+        log_lines = log_file.readlines()
+
+    logs = ''
+
+    for line in log_lines[-count:]:
+        logs += line
+
+    bot.send_message(user.get_id(), logs, reply_markup=keyboard)
+
+
+@bot.message_handler(commands=['elog'])
+def get_error_logs(message):
+
+    user = core.User(message.chat)
+
+    if str(user.get_id()) not in settings.ADMINS_ID:
+        bot.send_message(user.get_id(), 'Немає доступу :(')
+        return
+
+    if len(message.text.split()) == 2:
+        count = int(message.text.split()[1])
+    else:
+        count = 65
+
+    with open(os.path.join(settings.BASE_DIR, 'error_log.txt'), 'r', encoding="utf-8") as log_file:
         log_lines = log_file.readlines()
 
     logs = ''
@@ -236,7 +260,8 @@ def del_ad_by_id(message):
            '/cu [N] - оновити кеш для N груп (по зам. 40)\n' \
            '/cc - очистити кеш\n' \
            '/log [N] - показати N рядків логів (по зам. 65)\n' \
-           '/lf - завантажити файл із логами\n' \
+           '/elog [N] - показати N рядків логів із помилками (по зам. 65)\n' \
+           '/getlogfiles - завантажити файли із логами(запити і помилки)\n' \
            '/vip <user_id> <+/-> дати/забрати ВІП статус оголошень\n' \
            '/da <user_id> - видалити оголошення'
 
