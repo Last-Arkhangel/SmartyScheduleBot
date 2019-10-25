@@ -945,14 +945,12 @@ def main_menu(message):
 
         def is_date_request_or_other():
 
-            if re.search(r'^(\d{1,2})\.(\d{1,2})$', request) or \
-               re.search(r'^(\d{1,2})\.(\d{1,2})-(\d{1,2})\.(\d{1,2})$', request) or \
-               re.search(r'^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$', request) or \
-               re.search(r'^(\d{1,2})\.(\d{1,2})\.(\d{2,4})-(\d{1,2})\.(\d{1,2})\.(\d{2,4})$', request):
+            regs = (r'^(\d{1,2})\.(\d{1,2})$',
+                    r'^(\d{1,2})\.(\d{1,2})-(\d{1,2})\.(\d{1,2})$',
+                    r'^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$',
+                    r'^(\d{1,2})\.(\d{1,2})\.(\d{2,4})-(\d{1,2})\.(\d{1,2})\.(\d{2,4})$')
 
-                return 'FOR_A_DATE'
-
-            return 'OTHER'
+            return 'FOR_A_DATE' if any([re.search(reg_expr, request) for reg_expr in regs]) else 'OTHER'
 
         # Reversed keys and values in dictionary
         request_code = {v: k for k, v in KEYBOARD.items()}.get(request, is_date_request_or_other())
