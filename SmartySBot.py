@@ -300,7 +300,7 @@ def start_handler(message):
 
 @bot.message_handler(commands=['stats'])
 def stats_handler(message):
-
+    #TODO complete it or delete
     user = core.User(message.chat)
     users_count_from_group = user.get_users_count_from_group()
     requests_count = user.get_user_requests_count()
