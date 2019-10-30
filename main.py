@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from bs4 import BeautifulSoup
 import requests
@@ -302,7 +303,7 @@ def start_handler(message):
 
 @bot.message_handler(commands=['stats'])
 def stats_handler(message):
-
+    #TODO complete it or delete
     user = core.User(message.chat)
     users_count_from_group = user.get_users_count_from_group()
     requests_count = user.get_user_requests_count()
@@ -927,6 +928,7 @@ def index():
 
 @app.route(settings.WEBHOOK_PATH, methods=['POST', 'GET'])
 def webhook():
+
     json_string = request.get_data().decode('utf-8')
     update = telebot.types.Update.de_json(json_string)
     bot.process_new_updates([update])
