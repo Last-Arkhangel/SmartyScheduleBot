@@ -24,7 +24,7 @@ bot = telebot.TeleBot(settings.BOT_TOKEN, threaded=True)
 keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
 keyboard.row(KEYBOARD['TODAY'], KEYBOARD['TOMORROW'], KEYBOARD['FOR_A_WEEK'])
 keyboard.row(KEYBOARD['FOR_A_TEACHER'], KEYBOARD['FOR_A_GROUP'])
-keyboard.row(KEYBOARD['ADS'], KEYBOARD['WEATHER'], KEYBOARD['HELP'])
+keyboard.row(KEYBOARD['ADS'], KEYBOARD['HELP'])
 
 emoji_numbers = ['0⃣', '1⃣', '2⃣', '3⃣', '4⃣', '5⃣', '6⃣', '7⃣', '8⃣', '9⃣']
 
@@ -46,7 +46,7 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
             'n': 700,
         }
     except Exception as ex:
-        core.log(msg='Помилка при кодуванні параметрів запиту: {}'.format(str(ex)), is_error=True)
+        core.log(msg='Помилка при кодуванні параметрів запиту: {}\n'.format(str(ex)), is_error=True)
         bot.send_message(user_id, 'Помилка надсилання запиту, вкажи коректні параметри (як мінімум перевір чи '
                                   'правильно вказана група, зробити це можна в Довідці)', reply_markup=keyboard)
         return False
@@ -68,7 +68,7 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
                 core.log(msg='Розклад видано з кешу')
                 return json.loads(cached_timetable[0][1])
 
-        core.log(msg='Помилка з\'єднання із сайтом Деканату.', is_error=True)
+        core.log(msg='Помилка з\'єднання із сайтом Деканату\n', is_error=True)
         bot.send_message(user_id, 'Помилка з\'єднання із сайтом Деканату. Спробуй пізніше.', reply_markup=keyboard)
         return False
 
@@ -88,7 +88,7 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
 
 def render_day_timetable(day_data):
 
-    day_timetable = '....:::: <b>\U0001F4CB {}</b> <i>{}</i> ::::....\n\n'.format(day_data['day'], day_data['date'])
+    day_timetable = '....:::: <b>\U0001F383 {}</b> <i>{}</i> \U0001F383 ::::....\n\n'.format(day_data['day'], day_data['date'])
 
     lessons = day_data['lessons']
 
@@ -110,11 +110,13 @@ def render_day_timetable(day_data):
     timetable = ['9:00 - 10:20', '10:30 - 11:50', '12:10 - 13:30', '13:40 - 15:00',
                  '15:20 - 16:40 ', '16:50 - 18:10', '18:20 - 19:40', '-']
 
+    emoji_numbers = ['\U0001F525' for i in range(20)]
+
     for i in range(start_index, end_index + 1):
         if lessons[i]:
-            day_timetable += '{} > <b>{}</b> \n{}\n\n'.format(emoji_numbers[i+1], timetable[i], lessons[i])
+            day_timetable += '{} <b>{}</b> \n{}\n\n'.format(emoji_numbers[i+1], timetable[i], lessons[i])
         else:
-            day_timetable += '{} > <b>{}</b>\nВікно 🏃🏻‍♂️\n\n'.format(emoji_numbers[i+1], timetable[i])
+            day_timetable += '{} > <b>{}</b>\nВікно \U0001F387\n\n'.format(emoji_numbers[i+1], timetable[i])
 
     return day_timetable
 
@@ -321,7 +323,7 @@ def get_teachers_list():
         with open(os.path.join(settings.BASE_DIR, 'teachers.txt'), 'r', encoding="utf-8") as file:
             all_teachers = json.loads(file.read())
     except Exception as ex:
-        core.log(msg='Помилка із файлом викладачів: {}'.format(str(ex)), is_error=True)
+        core.log(msg='Помилка із файлом викладачів: {}\n'.format(str(ex)), is_error=True)
         return
 
     [teachers_list.append(teacher) for teacher in all_teachers]
@@ -482,7 +484,7 @@ def select_teacher_by_second_name(message):
             all_teachers = json.loads(file.read())
     except Exception as ex:
         bot.send_message(message.chat.id, 'Даний функціонал тимчасово не працює.', reply_markup=keyboard)
-        core.log(msg='Помилка із файлом викладачів: {}'.format(str(ex)), is_error=True)
+        core.log(msg='Помилка із файлом викладачів: {}\n'.format(str(ex)), is_error=True)
         return
 
     for teacher in all_teachers:
@@ -1262,7 +1264,7 @@ def main():
             core.log(msg='Веб-хук встановлено: {}'.format(bot.get_webhook_info().url))
 
         except Exception as ex:
-            core.log(msg='Помилка під час встановлення веб-хуку: {}'.format(str(ex)), is_error=True)
+            core.log(msg='Помилка під час встановлення веб-хуку: {}\n'.format(str(ex)), is_error=True)
 
     try:
         core.log(msg='Запуск...')
