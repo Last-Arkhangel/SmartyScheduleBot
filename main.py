@@ -89,7 +89,7 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
 
 def render_day_timetable(day_data):
 
-    day_timetable = '....:::: <b>\U0001F383 {}</b> <i>{}</i> \U0001F383 ::::....\n\n'.format(day_data['day'], day_data['date'])
+    day_timetable = '....:::: <b>\U0001F4CB {}</b> <i>{}</i> ::::....\n\n'.format(day_data['day'], day_data['date'])
 
     lessons = day_data['lessons']
 
@@ -111,13 +111,11 @@ def render_day_timetable(day_data):
     timetable = ['9:00 - 10:20', '10:30 - 11:50', '12:10 - 13:30', '13:40 - 15:00',
                  '15:20 - 16:40 ', '16:50 - 18:10', '18:20 - 19:40', '-']
 
-    emoji_numbers = ['\U0001F525' for i in range(20)]
-
     for i in range(start_index, end_index + 1):
         if lessons[i]:
-            day_timetable += '{} <b>{}</b> \n{}\n\n'.format(emoji_numbers[i+1], timetable[i], lessons[i])
+            day_timetable += '{} > <b>{}</b> \n{}\n\n'.format(emoji_numbers[i + 1], timetable[i], lessons[i])
         else:
-            day_timetable += '{} > <b>{}</b>\nВікно \U0001F387\n\n'.format(emoji_numbers[i+1], timetable[i])
+            day_timetable += '{} > <b>{}</b>\nВікно 🏃🏻‍♂️\n\n'.format(emoji_numbers[i + 1], timetable[i])
 
     return day_timetable
 
