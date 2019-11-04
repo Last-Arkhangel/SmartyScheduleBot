@@ -66,3 +66,57 @@ KEYBOARD = {
     'CHANGE_GROUP': '\U00002699 Зм. групу',
     'MAIN_MENU': '\U0001F519 Меню',
 }
+
+lessons_time = ({
+                    'start_time': (9, 0),
+                    'end_time': (10, 20)
+                },
+                {
+                    'start_time': (10, 30),
+                    'end_time': (11, 50)
+                },
+                {
+                    'start_time': (12, 10),
+                    'end_time': (13, 30)
+                },
+                {
+                    'start_time': (13, 40),
+                    'end_time': (15, 0)
+                },
+                {
+                    'start_time': (15, 20),
+                    'end_time': (16, 40)
+                },
+                {
+                    'start_time': (16, 50),
+                    'end_time': (18, 10)
+                },
+                {
+                    'start_time': (18, 20),
+                    'end_time': (19, 40)
+                })
+
+breaks_time = ({
+                   'start_time': (10, 20),
+                   'end_time': (10, 30)
+               },
+               {
+                   'start_time': (11, 50),
+                   'end_time': (12, 10)
+               },
+               {
+                   'start_time': (13, 30),
+                   'end_time': (13, 40)
+               },
+               {
+                   'start_time': (15, 00),
+                   'end_time': (15, 20)
+               },
+               {
+                   'start_time': (16, 40),
+                   'end_time': (16, 50)
+               },
+               {
+                   'start_time': (18, 10),
+                   'end_time': (18, 20)
+               })

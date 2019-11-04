@@ -87,7 +87,7 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
     return all_days_lessons
 
 
-def render_day_timetable(day_data):
+def render_day_timetable(day_data, current_lesson=None, current_break=None):
 
     day_timetable = '....:::: <b>\U0001F4CB {}</b> <i>{}</i> ::::....\n\n'.format(day_data['day'], day_data['date'])
 
@@ -112,10 +112,19 @@ def render_day_timetable(day_data):
                  '15:20 - 16:40 ', '16:50 - 18:10', '18:20 - 19:40', '-']
 
     for i in range(start_index, end_index + 1):
+        if i == current_break:
+            day_timetable += '<b>\U000026F3 Зараз перерва\n\n</b>'
+
         if lessons[i]:
-            day_timetable += '{} > <b>{}</b> \n{}\n\n'.format(emoji_numbers[i + 1], timetable[i], lessons[i])
+            if i + 1 == current_lesson:
+                day_timetable += '<b>{} > {} \n{}\n\n</b>'.format(emoji_numbers[i + 1], timetable[i], lessons[i])
+            else:
+                day_timetable += '{} > <b>{}</b> \n{}\n\n'.format(emoji_numbers[i + 1], timetable[i], lessons[i])
         else:
-            day_timetable += '{} > <b>{}</b>\nВікно 🏃🏻‍♂️\n\n'.format(emoji_numbers[i + 1], timetable[i])
+            if i + 1 == current_lesson:
+                day_timetable += '<b>{} > {}\nВікно \U000026A1\n\n</b>'.format(emoji_numbers[i + 1], timetable[i])
+            else:
+                day_timetable += '{} > <b>{}</b>\nВікно \U000026A1\n\n'.format(emoji_numbers[i + 1], timetable[i])
 
     return day_timetable
 
@@ -967,7 +976,23 @@ def main_menu(message):
             timetable_data = get_timetable(group=user_group, user_id=user.get_id(), sdate=today, edate=today)
 
             if timetable_data:
-                timetable_for_today = render_day_timetable(timetable_data[0])
+
+                current_lesson = 0
+                current_break = -1
+                now_time = datetime.datetime.now().time()
+
+                for i, lesson in enumerate(settings.lessons_time):
+                    if datetime.time(*lesson['start_time']) <= now_time <= datetime.time(*lesson['end_time']):
+                        current_lesson = i + 1
+                        break
+
+                else:
+                    for i, _break in enumerate(settings.breaks_time):
+                        if datetime.time(*_break['start_time']) <= now_time <= datetime.time(*_break['end_time']):
+                            current_break = i + 1
+                            break
+
+                timetable_for_today = render_day_timetable(timetable_data[0], current_lesson, current_break)
                 bot.send_message(user.get_id(), timetable_for_today, parse_mode='HTML', reply_markup=keyboard)
 
             elif isinstance(timetable_data, list) and not len(timetable_data):
