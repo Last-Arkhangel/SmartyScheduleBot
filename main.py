@@ -87,7 +87,9 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
     return all_days_lessons
 
 
-def render_day_timetable(day_data, current_lesson=None, current_break=None):
+def render_day_timetable(day_data, current_lesson=None, current_break=None, seconds_to_end=None):
+
+    str_to_end = core.datetime_to_string(seconds_to_end)
 
     day_timetable = '....:::: <b>\U0001F4CB {}</b> <i>{}</i> ::::....\n\n'.format(day_data['day'], day_data['date'])
 
@@ -113,16 +115,19 @@ def render_day_timetable(day_data, current_lesson=None, current_break=None):
 
     for i in range(start_index, end_index + 1):
         if i == current_break:
-            day_timetable += '<b>\U000026F3 Зараз перерва\n\n</b>'
+            day_timetable += '\U000026F3 <b>Зараз перерва</b>  (<i>\U0001F55C {}</i>)\n\n'.format(str_to_end)
 
         if lessons[i]:
             if i + 1 == current_lesson:
-                day_timetable += '<b>{} > {} \n{}\n\n</b>'.format(emoji_numbers[i + 1], timetable[i], lessons[i])
+                day_timetable += '<b>{} > {}</b> (<i>\U0001F55C {}</i>)\n<b>{}\n\n</b>'.format(emoji_numbers[i + 1],
+                                                                                               timetable[i], str_to_end,
+                                                                                               lessons[i])
             else:
                 day_timetable += '{} > <b>{}</b> \n{}\n\n'.format(emoji_numbers[i + 1], timetable[i], lessons[i])
         else:
             if i + 1 == current_lesson:
-                day_timetable += '<b>{} > {}\nВікно \U000026A1\n\n</b>'.format(emoji_numbers[i + 1], timetable[i])
+                day_timetable += '<b>{} > {} </b>(<i>\U0001F55C {}</i>)\n<b>Вікно\U000026A1\n\n</b>'.format(emoji_numbers[i + 1],
+                                                                                                            timetable[i], str_to_end)
             else:
                 day_timetable += '{} > <b>{}</b>\nВікно \U000026A1\n\n'.format(emoji_numbers[i + 1], timetable[i])
 
@@ -979,20 +984,27 @@ def main_menu(message):
 
                 current_lesson = 0
                 current_break = -1
+                seconds_to_end = 0
                 now_time = datetime.datetime.now().time()
+                today = datetime.datetime.now()
 
                 for i, lesson in enumerate(settings.lessons_time):
                     if datetime.time(*lesson['start_time']) <= now_time <= datetime.time(*lesson['end_time']):
                         current_lesson = i + 1
+                        time_to_end = today.replace(hour=lesson['end_time'][0], minute=lesson['end_time'][1]) - today
+                        seconds_to_end = time_to_end.total_seconds()
                         break
 
                 else:
                     for i, _break in enumerate(settings.breaks_time):
                         if datetime.time(*_break['start_time']) <= now_time <= datetime.time(*_break['end_time']):
                             current_break = i + 1
+                            time_to_end = today.replace(hour=_break['end_time'][0], minute=_break['end_time'][1]) - today
+                            seconds_to_end = time_to_end.total_seconds()
                             break
 
-                timetable_for_today = render_day_timetable(timetable_data[0], current_lesson, current_break)
+                timetable_for_today = render_day_timetable(timetable_data[0], current_lesson,
+                                                           current_break, seconds_to_end)
                 bot.send_message(user.get_id(), timetable_for_today, parse_mode='HTML', reply_markup=keyboard)
 
             elif isinstance(timetable_data, list) and not len(timetable_data):
@@ -1304,10 +1316,10 @@ def main():
             for admin in settings.ADMINS_ID:
                 data = {
                     'chat_id': admin,
-                    'text': 'Щось пішло не так.\n {}'.format(str(ex))
+                    'text': ' пішло не так.\n {}'.format(str(ex))
                 }
 
-                requests.get('https://api.telegram.org/bot{}/sendMessage'.format(settings.BOT_TOKEN), params=data)
+                # requests.get('https://api.telegram.org/bot{}/sendMessage'.format(settings.BOT_TOKEN), params=data)
 
 
 if __name__ == "__main__":

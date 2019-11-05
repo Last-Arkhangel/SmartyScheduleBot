@@ -197,6 +197,35 @@ def delete_html_tags(s):
         return s.replace('>', '').replace('<', '')
 
 
+def datetime_to_string(input_seconds=0):
+
+    input_seconds = int(input_seconds)
+
+    minutes, seconds = divmod(input_seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+    hours_array = ['', "1 година", "2 години"]
+    minutes_phrases_array = ["хвилин", "хвилина", "хвилини", "хвилини",
+                             "хвилини", "хвилин", "хвилин", "хвилин",
+                             "хвилин", "хвилин", "хвилин"]
+
+    if seconds < 60 and not hours and not minutes:
+        return 'ще трішки'
+
+    if 0 <= minutes <= 10:
+        if minutes == 0:
+            total_time = hours_array[hours]
+        else:
+            total_time = hours_array[hours], str(minutes), minutes_phrases_array[minutes]
+    elif 11 <= minutes <= 20:
+        total_time = hours_array[hours], str(minutes), minutes_phrases_array[0]
+    else:
+        steammer = minutes % 10
+        total_time = hours_array[hours], str(minutes), minutes_phrases_array[steammer]
+
+    total_time_str = ' '.join(total_time)
+    return total_time_str.strip()
+
+
 class Cache:
 
     @classmethod
