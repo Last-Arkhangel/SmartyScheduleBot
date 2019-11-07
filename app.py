@@ -87,7 +87,7 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
     return all_days_lessons
 
 
-def render_day_timetable(day_data, current_lesson=None, current_break=None, seconds_to_end=None):
+def render_day_timetable(day_data, current_lesson=None, current_break=None, seconds_to_end=0):
 
     str_to_end = core.datetime_to_string(seconds_to_end)
 
