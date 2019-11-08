@@ -344,20 +344,20 @@ def get_teachers_list():
     return teachers_list
 
 
-@bot.callback_query_handler(func=lambda call_back: call_back.data in get_teachers_list())
-def show_teacher_schedule_handler(call_back):
-
-    user = core.User(call_back.message.chat)
-    req = call_back.data
-
-    if req == 'Ввести прізвище':
-
-        bot.delete_message(chat_id=user.get_id(), message_id=call_back.message.message_id)
-        sent = bot.send_message(text=req, chat_id=user.get_id(), parse_mode="HTML", reply_markup=keyboard)
-        bot.register_next_step_handler(sent, select_teacher_by_second_name)
-
-    else:
-        bot.send_message(text=req, chat_id=user.get_id(), parse_mode="HTML", reply_markup=keyboard)
+# @bot.callback_query_handler(func=lambda call_back: call_back.data in get_teachers_list())
+# def show_teacher_schedule_handler(call_back):
+#
+#     user = core.User(call_back.message.chat)
+#     req = call_back.data
+#
+#     if req == 'Ввести прізвище':
+#
+#         bot.delete_message(chat_id=user.get_id(), message_id=call_back.message.message_id)
+#         sent = bot.send_message(text=req, chat_id=user.get_id(), parse_mode="HTML", reply_markup=keyboard)
+#         bot.register_next_step_handler(sent, select_teacher_by_second_name)
+#
+#     else:
+#         bot.send_message(text=req, chat_id=user.get_id(), parse_mode="HTML", reply_markup=keyboard)
 
 
 @bot.callback_query_handler(func=lambda call_back: call_back.data in ('Поточний', 'Наступний'))
@@ -455,6 +455,25 @@ def set_group(message):
     user.update_group(group) if user.get_group() else user.registration(group)
 
     bot.send_message(message.chat.id, msg, reply_markup=keyboard, parse_mode='HTML')
+
+
+@bot.callback_query_handler(func=lambda call_back: core.is_teacher_valid(call_back.data) or 'Ввести прізвище')
+def last_teacher_handler(call_back):
+
+    user = core.User(call_back.message.chat)
+
+    bot.delete_message(chat_id=user.get_id(), message_id=call_back.message.message_id)
+
+    if call_back.data == 'Ввести прізвище':
+
+        sent = bot.send_message(call_back.message.chat.id, 'Введи прізвище')
+        bot.register_next_step_handler(sent, select_teacher_by_second_name)
+
+    else:
+        user = core.User(call_back.message.chat)
+        teacher_full_name = call_back.data
+
+        show_teachers_schedule_by_fullname(user.get_id(), teacher_full_name)
 
 
 def show_teachers_schedule_by_fullname(chat_id, teacher_name):
@@ -1173,14 +1192,15 @@ def main_menu(message):
                 bot.register_next_step_handler(sent, select_teacher_by_second_name)
 
             else:
-                kb = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-                kb.row('Вибрати викладача')
-                kb.row(last_teacher_name)
-                kb.row(KEYBOARD['MAIN_MENU'])
+                last_teacher_kb = telebot.types.InlineKeyboardMarkup()
+                last_teacher_kb.row(
+                    telebot.types.InlineKeyboardButton(last_teacher_name, callback_data=last_teacher_name)
+                )
+                last_teacher_kb.row(
+                    telebot.types.InlineKeyboardButton('Ввести прізвище', callback_data='Ввести прізвище')
+                )
 
-                sent = bot.send_message(user.get_id(), 'кому?', reply_markup=kb)
-
-                bot.register_next_step_handler(sent, show_previous_teachers_schedule_or_select_another)
+                bot.send_message(user.get_id(), 'Введи прізвище викладача', reply_markup=last_teacher_kb)
 
         elif re.search(r'^(\d{1,2})\.(\d{1,2})$', request):
 
