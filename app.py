@@ -24,8 +24,7 @@ bot = telebot.TeleBot(settings.BOT_TOKEN, threaded=True)
 
 keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
 keyboard.row(KEYBOARD['TODAY'], KEYBOARD['TOMORROW'], KEYBOARD['FOR_A_WEEK'])
-keyboard.row(KEYBOARD['FOR_A_TEACHER'], KEYBOARD['FOR_A_GROUP'])
-keyboard.row(KEYBOARD['ADS'], KEYBOARD['HELP'])
+keyboard.row(KEYBOARD['FOR_A_TEACHER'], KEYBOARD['FOR_A_GROUP'], KEYBOARD['HELP'])
 
 emoji_numbers = ['0⃣', '1⃣', '2⃣', '3⃣', '4⃣', '5⃣', '6⃣', '7⃣', '8⃣', '9⃣']
 
@@ -328,38 +327,6 @@ def stats_handler(message):
     bot.send_message(chat_id=message.chat.id, text=msg, parse_mode='HTML', reply_markup=keyboard)
 
 
-def get_teachers_list():
-
-    teachers_list = ['Ввести прізвище']
-
-    try:
-        with open(os.path.join(settings.BASE_DIR, 'teachers.txt'), 'r', encoding="utf-8") as file:
-            all_teachers = json.loads(file.read())
-    except Exception as ex:
-        core.log(msg='Помилка із файлом викладачів: {}\n'.format(str(ex)), is_error=True)
-        return
-
-    [teachers_list.append(teacher) for teacher in all_teachers]
-
-    return teachers_list
-
-
-# @bot.callback_query_handler(func=lambda call_back: call_back.data in get_teachers_list())
-# def show_teacher_schedule_handler(call_back):
-#
-#     user = core.User(call_back.message.chat)
-#     req = call_back.data
-#
-#     if req == 'Ввести прізвище':
-#
-#         bot.delete_message(chat_id=user.get_id(), message_id=call_back.message.message_id)
-#         sent = bot.send_message(text=req, chat_id=user.get_id(), parse_mode="HTML", reply_markup=keyboard)
-#         bot.register_next_step_handler(sent, select_teacher_by_second_name)
-#
-#     else:
-#         bot.send_message(text=req, chat_id=user.get_id(), parse_mode="HTML", reply_markup=keyboard)
-
-
 @bot.callback_query_handler(func=lambda call_back: call_back.data in ('Поточний', 'Наступний'))
 def week_schedule_handler(call_back):
 
@@ -658,10 +625,6 @@ def process_menu(message):
 
         sent = bot.send_message(message.chat.id, 'Введи текст оголошення (до 120 символів)', parse_mode='HTML')
         bot.register_next_step_handler(sent, add_ad)
-
-    # elif message.text == KEYBOARD['AD_LIST']:
-    #
-    #     bot.send_message(message.chat.id, result, parse_mode='HTML', reply_markup=keyboard)
 
     elif message.text == KEYBOARD['MAIN_MENU']:
         bot.send_message(message.chat.id, 'По рукам.', parse_mode='HTML', reply_markup=keyboard)
