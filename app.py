@@ -128,7 +128,7 @@ def render_day_timetable(day_data, current_lesson=None, current_break=None, seco
                 day_timetable += '<b>{} > {} </b>(<i>\U0001F55C {}</i>)\n<b>Вікно\U000026A1\n\n</b>'.format(emoji_numbers[i + 1],
                                                                                                             timetable[i], str_to_end)
             else:
-                day_timetable += '{} > <b>{}</b>\nВікно \U000026A1\n\n'.format(emoji_numbers[i + 1], timetable[i])
+                day_timetable += '{} > <b>{}</b>\n<b>Вікно</b> \U000026A1\n\n'.format(emoji_numbers[i + 1], timetable[i])
 
     return day_timetable
 
@@ -366,6 +366,25 @@ def week_schedule_handler(call_back):
                      parse_mode="HTML", reply_markup=keyboard)
 
 
+@bot.callback_query_handler(func=lambda call_back: call_back.data in (KEYBOARD['MAIN_MENU'], KEYBOARD['CHANGE_GROUP']))
+def help_menu_handler(call_back):
+
+    user = core.User(call_back.message.chat)
+    request = call_back.data
+
+    bot.delete_message(chat_id=user.get_id(), message_id=call_back.message.message_id)
+
+    if request == KEYBOARD['CHANGE_GROUP']:
+
+        msg = 'Твоя поточна група: <b>{}</b>\nвведи нову назву:'.format(user.get_group())
+
+        sent = bot.send_message(user.get_id(), msg, parse_mode='HTML')
+        bot.register_next_step_handler(sent, set_group)
+        return
+
+    bot.send_message(user.get_id(), 'Меню так меню', reply_markup=keyboard, parse_mode='HTML')
+
+
 def bot_send_message_and_post_check_group(chat_id='', text='', user_group='', parse_mode='HTML'):
 
     if not core.is_group_valid(user_group):
@@ -590,7 +609,7 @@ def add_ad(message):
 
     if text == KEYBOARD['MAIN_MENU']:
         msg = 'Окей'
-        sent = bot.send_message(message.chat.id, msg, parse_mode='HTML', reply_markup=keyboard)
+        bot.send_message(message.chat.id, msg, parse_mode='HTML', reply_markup=keyboard)
         return
 
     if text in [KEYBOARD['AD_ADD'], KEYBOARD['AD_LIST']]:
@@ -1080,7 +1099,7 @@ def main_menu(message):
             except Exception:
                 mod_time = '-'
 
-            t = '\U0001F552 <b>Час пар:</b>\n\n'
+            t = '\U0001F552 <b>Час пар:</b>\n'
             t += '{} - 9:00 - 10:20\n'.format(emoji_numbers[1])
             t += '{} - 10:30 - 11:50\n'.format(emoji_numbers[2])
             t += '{} - 12:10 - 13:30\n'.format(emoji_numbers[3])
@@ -1092,18 +1111,26 @@ def main_menu(message):
             msg = t
             # msg += '\U0001F4CA Статистика - /stats\n\n'
 
-            msg +="<b>Для пошуку по датам:</b>\n<i>15.05</i>\n<i>15.05-22.05</i>\n<i>1.1.18-10.1.18</i>\n\n" \
-                  "<b>Твоя група:</b> <code>{}</code>\n\n" \
+            msg +="\U0001F4C6 <b>Для пошуку по датам:</b>\n<i>15.05</i>\n<i>15.05-22.05</i>\n<i>1.1.18-10.1.18</i>\n\n" \
+                  "\U0001F465 <b>Твоя група:</b> <code>{}</code>\n\n" \
                   "<b>Група ЖДУ:</b> @zdu_live\n" \
                   "<b>Новини університету:</b> @zueduua\n" \
                   "<b>Канал:</b> @zdu_news\n" \
                   "<b>Розробник:</b> @Koocherov\n".format(user.get_group(), mod_time)
 
+            help_kb = telebot.types.InlineKeyboardMarkup()
+            help_kb.row(
+                telebot.types.InlineKeyboardButton(KEYBOARD['MAIN_MENU'], callback_data=KEYBOARD['MAIN_MENU'])
+            )
+            help_kb.row(
+                telebot.types.InlineKeyboardButton(KEYBOARD['CHANGE_GROUP'], callback_data=KEYBOARD['CHANGE_GROUP'])
+            )
+
             kb = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             kb.row(KEYBOARD['MAIN_MENU'])
             kb.row(KEYBOARD['CHANGE_GROUP'])
 
-            bot.send_message(message.chat.id, msg, reply_markup=kb, parse_mode='HTML')
+            bot.send_message(message.chat.id, msg, reply_markup=help_kb, parse_mode='HTML')
 
         elif request == KEYBOARD['FOR_A_GROUP']:
             sent = bot.send_message(message.chat.id,
@@ -1275,6 +1302,7 @@ def main():
     core.User.create_user_table_if_not_exists()
     core.Cache.create_cache_table_if_not_exists()
     core.MetricsManager.create_metrics_table_if_not_exists()
+    core.AdService.create_ad_service_table_if_not_exists()
 
     bot.delete_webhook()
 
