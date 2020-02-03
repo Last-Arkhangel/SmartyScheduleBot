@@ -327,7 +327,7 @@ def stats_handler(message):
     bot.send_message(chat_id=message.chat.id, text=msg, parse_mode='HTML', reply_markup=keyboard)
 
 
-@bot.callback_query_handler(func=lambda call_back: call_back.data in ('Поточний', 'Наступний'))
+@bot.callback_query_handler(func=lambda call_back: call_back.data in ('\U00002B07 Поточний', '\U000027A1 Наступний'))
 def week_schedule_handler(call_back):
 
     user = core.User(call_back.message.chat)
@@ -342,10 +342,10 @@ def week_schedule_handler(call_back):
     next_week_first_day = today + datetime.timedelta(days=diff_between_saturday_and_today + 2)
     next_week_last_day = today + datetime.timedelta(days=diff_between_saturday_and_today + 7)
 
-    if req == 'Поточний':
+    if req == '\U00002B07 Поточний':
         timetable_data = get_timetable(group=user_group, sdate=today.strftime('%d.%m.%Y'),
                                        edate=last_week_day.strftime('%d.%m.%Y'), user_id=user.get_id())
-    if req == 'Наступний':
+    if req == '\U000027A1 Наступний':
         timetable_data = get_timetable(group=user_group, sdate=next_week_first_day.strftime('%d.%m.%Y'),
                                        edate=next_week_last_day.strftime('%d.%m.%Y'), user_id=user.get_id())
 
@@ -1061,7 +1061,7 @@ def main_menu(message):
             week_type_keyboard = telebot.types.InlineKeyboardMarkup()
             week_type_keyboard.row(
                 *[telebot.types.InlineKeyboardButton(text=name, callback_data=name) for
-                  name in ["Поточний", "Наступний"]]
+                  name in ['\U00002B07 Поточний', '\U000027A1 Наступний']]
             )
 
             bot.send_message(user.get_id(), 'На який тиждень?', reply_markup=week_type_keyboard)
