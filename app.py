@@ -128,7 +128,7 @@ def render_day_timetable(day_data, current_lesson=None, current_break=None, seco
                 day_timetable += '<b>{} > {} </b>(<i>\U0001F55C {}</i>)\n<b>Вікно\U000026A1\n\n</b>'.format(emoji_numbers[i + 1],
                                                                                                             timetable[i], str_to_end)
             else:
-                day_timetable += '{} > <b>{}</b>\n<b>Вікно</b> \U000026A1\n\n'.format(emoji_numbers[i + 1], timetable[i])
+                day_timetable += '{} > <b>{}</b>\nВікно \U000026A1\n\n'.format(emoji_numbers[i + 1], timetable[i])
 
     return day_timetable
 
