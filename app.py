@@ -958,350 +958,349 @@ def main_menu(message):
     user_group = user.get_group()
     request = message.text
 
-    if user_group:
+    if not user_group:
+        bot.send_message(user.get_id(), 'Не знайшов твою групу. Введи /start, і вкажи її.')
+        return
 
-        def is_date_request_or_other():
+    def is_date_request_or_other():
 
-            regs = (r'^(\d{1,2})\.(\d{1,2})$',
-                    r'^(\d{1,2})\.(\d{1,2})-(\d{1,2})\.(\d{1,2})$',
-                    r'^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$',
-                    r'^(\d{1,2})\.(\d{1,2})\.(\d{2,4})-(\d{1,2})\.(\d{1,2})\.(\d{2,4})$')
+        regs = (r'^(\d{1,2})\.(\d{1,2})$',
+                r'^(\d{1,2})\.(\d{1,2})-(\d{1,2})\.(\d{1,2})$',
+                r'^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$',
+                r'^(\d{1,2})\.(\d{1,2})\.(\d{2,4})-(\d{1,2})\.(\d{1,2})\.(\d{2,4})$')
 
-            return 'FOR_A_DATE' if any([re.search(reg_expr, request) for reg_expr in regs]) else 'OTHER'
+        return 'FOR_A_DATE' if any([re.search(reg_expr, request) for reg_expr in regs]) else 'OTHER'
 
-        # Reversed keys and values in dictionary
-        request_code = {v: k for k, v in KEYBOARD.items()}.get(request, is_date_request_or_other())
-        core.MetricsManager.track(user.get_id(), request_code, user_group)
+    # Reversed keys and values in dictionary
+    request_code = {v: k for k, v in KEYBOARD.items()}.get(request, is_date_request_or_other())
+    core.MetricsManager.track(user.get_id(), request_code, user_group)
 
-        core.log(message.chat, '> {}'.format(message.text))
+    core.log(message.chat, '> {}'.format(message.text))
 
-        if request == KEYBOARD['TODAY']:  # Today
+    if request == KEYBOARD['TODAY']:  # Today
 
-            today = datetime.date.today().strftime('%d.%m.%Y')
+        today = datetime.date.today().strftime('%d.%m.%Y')
 
-            timetable_data = get_timetable(group=user_group, user_id=user.get_id(), sdate=today, edate=today)
+        timetable_data = get_timetable(group=user_group, user_id=user.get_id(), sdate=today, edate=today)
 
-            if timetable_data:
+        if timetable_data:
 
-                current_lesson = 0
-                current_break = -1
-                seconds_to_end = 0
-                now_time = datetime.datetime.now().time()
-                today = datetime.datetime.now()
+            current_lesson = 0
+            current_break = -1
+            seconds_to_end = 0
+            now_time = datetime.datetime.now().time()
+            today = datetime.datetime.now()
 
-                for i, lesson in enumerate(settings.lessons_time):
-                    if datetime.time(*lesson['start_time']) <= now_time <= datetime.time(*lesson['end_time']):
-                        current_lesson = i + 1
-                        time_to_end = today.replace(hour=lesson['end_time'][0], minute=lesson['end_time'][1]) - today
+            for i, lesson in enumerate(settings.lessons_time):
+                if datetime.time(*lesson['start_time']) <= now_time <= datetime.time(*lesson['end_time']):
+                    current_lesson = i + 1
+                    time_to_end = today.replace(hour=lesson['end_time'][0], minute=lesson['end_time'][1]) - today
+                    seconds_to_end = time_to_end.total_seconds()
+                    break
+
+            else:
+                for i, _break in enumerate(settings.breaks_time):
+                    if datetime.time(*_break['start_time']) <= now_time <= datetime.time(*_break['end_time']):
+                        current_break = i + 1
+                        time_to_end = today.replace(hour=_break['end_time'][0], minute=_break['end_time'][1]) - today
                         seconds_to_end = time_to_end.total_seconds()
                         break
 
-                else:
-                    for i, _break in enumerate(settings.breaks_time):
-                        if datetime.time(*_break['start_time']) <= now_time <= datetime.time(*_break['end_time']):
-                            current_break = i + 1
-                            time_to_end = today.replace(hour=_break['end_time'][0], minute=_break['end_time'][1]) - today
-                            seconds_to_end = time_to_end.total_seconds()
-                            break
+            timetable_for_today = render_day_timetable(timetable_data[0], current_lesson,
+                                                       current_break, seconds_to_end)
+            bot.send_message(user.get_id(), timetable_for_today, parse_mode='HTML', reply_markup=keyboard)
 
-                timetable_for_today = render_day_timetable(timetable_data[0], current_lesson,
-                                                           current_break, seconds_to_end)
-                bot.send_message(user.get_id(), timetable_for_today, parse_mode='HTML', reply_markup=keyboard)
+        elif isinstance(timetable_data, list) and not len(timetable_data):
+            timetable_for_today = "На сьогодні пар не знайдено."
+            bot_send_message_and_post_check_group(user.get_id(), timetable_for_today, user_group)
+            return
 
-            elif isinstance(timetable_data, list) and not len(timetable_data):
-                timetable_for_today = "На сьогодні пар не знайдено."
-                bot_send_message_and_post_check_group(user.get_id(), timetable_for_today, user_group)
-                return
+    elif request == KEYBOARD['TOMORROW']:  # Tomorrow
 
-        elif request == KEYBOARD['TOMORROW']:  # Tomorrow
+        tomorrow = datetime.date.today() + datetime.timedelta(days=1)
+        tom_day = tomorrow.strftime('%d.%m.%Y')
 
-            tomorrow = datetime.date.today() + datetime.timedelta(days=1)
-            tom_day = tomorrow.strftime('%d.%m.%Y')
+        timetable_data = get_timetable(group=user_group, sdate=tom_day, edate=tom_day, user_id=user.get_id())
 
-            timetable_data = get_timetable(group=user_group, sdate=tom_day, edate=tom_day, user_id=user.get_id())
+        if timetable_data:
+            timetable_for_tomorrow = render_day_timetable(timetable_data[0])
+            bot.send_message(user.get_id(), timetable_for_tomorrow, parse_mode='HTML', reply_markup=keyboard)
 
-            if timetable_data:
-                timetable_for_tomorrow = render_day_timetable(timetable_data[0])
-                bot.send_message(user.get_id(), timetable_for_tomorrow, parse_mode='HTML', reply_markup=keyboard)
+        elif isinstance(timetable_data, list) and not len(timetable_data):
+            timetable_for_tomorrow = "На завтра пар не знайдено."
+            bot_send_message_and_post_check_group(user.get_id(), timetable_for_tomorrow, user_group)
+            return
 
-            elif isinstance(timetable_data, list) and not len(timetable_data):
-                timetable_for_tomorrow = "На завтра пар не знайдено."
-                bot_send_message_and_post_check_group(user.get_id(), timetable_for_tomorrow, user_group)
-                return
+    elif request == KEYBOARD['FOR_A_WEEK']:  # For a week
 
-        elif request == KEYBOARD['FOR_A_WEEK']:  # For a week
+        if datetime.date.today().isoweekday() in (5, 6, 7):  # пт, сб, нд
 
-            if datetime.date.today().isoweekday() in (5, 6, 7):  # пт, сб, нд
+            timetable_for_week = ''
+            today = datetime.date.today()
+            current_week_day_number = today.isoweekday()
+            diff_between_saturday_and_today = 6 - current_week_day_number
+            next_week_first_day = today + datetime.timedelta(days=diff_between_saturday_and_today + 2)
+            next_week_last_day = today + datetime.timedelta(days=diff_between_saturday_and_today + 7)
 
-                timetable_for_week = ''
-                today = datetime.date.today()
-                current_week_day_number = today.isoweekday()
-                diff_between_saturday_and_today = 6 - current_week_day_number
-                next_week_first_day = today + datetime.timedelta(days=diff_between_saturday_and_today + 2)
-                next_week_last_day = today + datetime.timedelta(days=diff_between_saturday_and_today + 7)
-
-                timetable_data = get_timetable(group=user_group, sdate=next_week_first_day.strftime('%d.%m.%Y'),
-                                               edate=next_week_last_day.strftime('%d.%m.%Y'), user_id=user.get_id())
-
-                if timetable_data:
-                    for timetable_day in timetable_data:
-                        timetable_for_week += render_day_timetable(timetable_day)
-
-                    bot.send_message(text=timetable_for_week[:4090], chat_id=user.get_id(),
-                                     reply_markup=keyboard, parse_mode="HTML")
-                    return
-
-                elif isinstance(timetable_data, list) and not len(timetable_data):
-                    timetable_for_week = "На тиждень, з {} по {} пар не знайдено.".format(
-                        next_week_first_day.strftime('%d.%m'), next_week_last_day.strftime('%d.%m'))
-
-                    bot_send_message_and_post_check_group(user.get_id(), timetable_for_week, user_group)
-                    return
-
-            week_type_keyboard = telebot.types.InlineKeyboardMarkup()
-            week_type_keyboard.row(
-                *[telebot.types.InlineKeyboardButton(text=name, callback_data=name) for
-                  name in ['\U00002B07 Поточний', '\U000027A1 Наступний']]
-            )
-
-            bot.send_message(user.get_id(), 'На який тиждень?', reply_markup=week_type_keyboard)
-
-        elif request == KEYBOARD['TIMETABLE']:
-
-            t = '{} - 9:00 - 10:20\n'.format(emoji_numbers[1])
-            t += '{} - 10:30 - 11:50\n'.format(emoji_numbers[2])
-            t += '{} - 12:10 - 13:30\n'.format(emoji_numbers[3])
-            t += '{} - 13:40 - 15:00\n'.format(emoji_numbers[4])
-            t += '{} - 15:20 - 16:40 \n'.format(emoji_numbers[5])
-            t += '{} - 16:50 - 18:10 \n'.format(emoji_numbers[6])
-            t += '{} - 18:20 - 19:40 \n'.format(emoji_numbers[7])
-
-            bot.send_message(user.get_id(), t, reply_markup=keyboard)
-
-        elif request == KEYBOARD['CHANGE_GROUP']:
-
-            user_group = user.get_group()
-
-            cancel_kb = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-            cancel_kb.row('Відміна')
-
-            msg = 'Твоя група: {}\nЩоб змінити введи нову групу'.format(user_group)
-
-            sent = bot.send_message(message.chat.id, msg, parse_mode='HTML', reply_markup=cancel_kb)
-            bot.register_next_step_handler(sent, set_group)
-
-        elif request == KEYBOARD['HELP']:
-
-            try:
-                forecast_update_date = os.path.getmtime(os.path.join(settings.BASE_DIR, 'forecast.txt'))
-                mod_time = datetime.datetime.fromtimestamp(forecast_update_date).strftime('%H:%M')
-
-            except Exception:
-                mod_time = '-'
-
-            t = '\U0001F552 <b>Час пар:</b>\n'
-            t += '{} - 9:00 - 10:20\n'.format(emoji_numbers[1])
-            t += '{} - 10:30 - 11:50\n'.format(emoji_numbers[2])
-            t += '{} - 12:10 - 13:30\n'.format(emoji_numbers[3])
-            t += '{} - 13:40 - 15:00\n'.format(emoji_numbers[4])
-            t += '{} - 15:20 - 16:40 \n'.format(emoji_numbers[5])
-            t += '{} - 16:50 - 18:10 \n'.format(emoji_numbers[6])
-            t += '{} - 18:20 - 19:40 \n\n'.format(emoji_numbers[7])
-
-            msg = t
-            # msg += '\U0001F4CA Статистика - /stats\n\n'
-
-            msg +="\U0001F4C6 <b>Для пошуку по датам:</b>\n<i>15.05</i>\n<i>15.05-22.05</i>\n<i>1.1.18-10.1.18</i>\n\n" \
-                  "\U0001F465 <b>Твоя група:</b> <code>{}</code>\n\n" \
-                  "<b>Група ЖДУ:</b> @zdu_live\n" \
-                  "<b>Новини університету:</b> @zueduua\n" \
-                  "<b>Канал:</b> @zdu_news\n" \
-                  "<b>Розробник:</b> @Koocherov\n".format(user.get_group(), mod_time)
-
-            help_kb = telebot.types.InlineKeyboardMarkup()
-            help_kb.row(
-                telebot.types.InlineKeyboardButton(KEYBOARD['MAIN_MENU'], callback_data=KEYBOARD['MAIN_MENU'])
-            )
-            help_kb.row(
-                telebot.types.InlineKeyboardButton(KEYBOARD['CHANGE_GROUP'], callback_data=KEYBOARD['CHANGE_GROUP'])
-            )
-
-            kb = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-            kb.row(KEYBOARD['MAIN_MENU'])
-            kb.row(KEYBOARD['CHANGE_GROUP'])
-
-            bot.send_message(message.chat.id, msg, reply_markup=help_kb, parse_mode='HTML')
-
-        elif request == KEYBOARD['FOR_A_GROUP']:
-            sent = bot.send_message(message.chat.id,
-                                    'Для того щоб подивитись розклад будь якої групи на тиждень введи її назву')
-            bot.register_next_step_handler(sent, show_other_group)
-
-        elif request == KEYBOARD['ADS']:
-
-            ads_kb = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-
-            if core.AdService.check_if_user_have_ad(user.get_id()):
-                ads_kb.row(KEYBOARD['AD_DEL'])
-            else:
-                ads_kb.row(KEYBOARD['AD_ADD'])
-            ads_kb.row(KEYBOARD['MAIN_MENU'])
-
-            ads_stat = core.MetricsManager.get_statistics_by_types_during_the_week().get('ADS', 'хз')
-
-            rendered_ads = core.AdService.render_ads()
-
-            msg = 'Переглядів за тиждень: {} \U0001F440\n\n{}'.format(ads_stat, rendered_ads)
-
-            sent = bot.send_message(user.get_id(), msg, parse_mode='HTML', reply_markup=ads_kb)
-
-            bot.register_next_step_handler(sent, process_menu)
-
-        elif request == KEYBOARD['WEATHER']:
-
-            try:
-
-                weather_manager = WeatherManager()
-                weather_manager.get_forecast()
-
-                with open(os.path.join(settings.BASE_DIR, 'forecast.txt'), 'r', encoding="utf-8") as forecast_file:
-                    forecast = forecast_file.read()
-
-                bot.send_message(message.chat.id, forecast, reply_markup=keyboard, parse_mode='HTML')
-
-            except Exception:
-                bot.send_message(message.chat.id, 'Погоду не завантажено.', reply_markup=keyboard, parse_mode='HTML')
-
-        elif request == KEYBOARD['FOR_A_TEACHER']:
-
-            last_teacher_name = user.get_last_teacher()
-
-            if not last_teacher_name:
-                m = 'Для того щоб подивитись розклад викладача на поточний тиждень - введи його прізвище.'
-                sent = bot.send_message(message.chat.id, m)
-                bot.register_next_step_handler(sent, select_teacher_by_second_name)
-
-            else:
-                last_teacher_kb = telebot.types.InlineKeyboardMarkup()
-                last_teacher_kb.row(
-                    telebot.types.InlineKeyboardButton(last_teacher_name, callback_data=last_teacher_name)
-                )
-                last_teacher_kb.row(
-                    telebot.types.InlineKeyboardButton('Ввести прізвище', callback_data='Ввести прізвище')
-                )
-
-                bot.send_message(user.get_id(), 'Введи прізвище викладача', reply_markup=last_teacher_kb)
-
-        elif re.search(r'^(\d{1,2})\.(\d{1,2})$', request):
-
-            date = request + '.' + str(datetime.date.today().year)
-            timetable_data = get_timetable(group=user_group, edate=date, sdate=date, user_id=user.get_id())
-
-            if timetable_data:
-                timetable_for_date = render_day_timetable(timetable_data[0])
-
-            elif isinstance(timetable_data, list) and not len(timetable_data):
-                msg = 'Щоб подивитися розклад на конкретний день, введи дату в такому форматі:' \
-                      '\n<b>05.03</b> або <b>5.3</b>\nПо кільком дням: \n<b>5.03-15.03</b>\n' \
-                      '\nДата вводиться без пробілів (день.місяць)<b> рік вводити не треба</b> ' \
-
-                timetable_for_date = 'На <b>{}</b>, для групи <b>{}</b> пар не знайдено.\n\n{}'.format(date,
-                                                                                                       user_group,
-                                                                                                       msg)
-            else:
-                return
-
-            bot.send_message(message.chat.id, timetable_for_date, parse_mode='HTML', reply_markup=keyboard)
-
-        elif re.search(r'^(\d{1,2})\.(\d{1,2})-(\d{1,2})\.(\d{1,2})$', request):
-
-            s_date = message.text.split('-')[0] + '.' + str(datetime.date.today().year)
-            e_date = message.text.split('-')[1] + '.' + str(datetime.date.today().year)
-            timetable_for_days = ''
-            timetable_data = get_timetable(group=user_group, sdate=s_date, edate=e_date, user_id=user.get_id())
+            timetable_data = get_timetable(group=user_group, sdate=next_week_first_day.strftime('%d.%m.%Y'),
+                                           edate=next_week_last_day.strftime('%d.%m.%Y'), user_id=user.get_id())
 
             if timetable_data:
                 for timetable_day in timetable_data:
-                    timetable_for_days += render_day_timetable(timetable_day)
+                    timetable_for_week += render_day_timetable(timetable_day)
+
+                bot.send_message(text=timetable_for_week[:4090], chat_id=user.get_id(),
+                                 reply_markup=keyboard, parse_mode="HTML")
+                return
 
             elif isinstance(timetable_data, list) and not len(timetable_data):
-                msg = 'Щоб подивитися розклад на конкретний день, введи дату в такому форматі:' \
-                      '\n<b>05.03</b> або <b>5.3</b>\nПо кільком дням: \n<b>5.03-15.03</b>\n' \
-                      '\nДата вводиться без пробілів (день.місяць)<b> рік вводити не треба</b> '
-                timetable_for_days = 'На <b>{} - {}</b>, для групи <b>{}</b> пар не знайдено.\n\n{}'.format(s_date,
-                                                                                                            e_date,
-                                                                                                            user_group,
-                                                                                                            msg)
+                timetable_for_week = "На тиждень, з {} по {} пар не знайдено.".format(
+                    next_week_first_day.strftime('%d.%m'), next_week_last_day.strftime('%d.%m'))
 
-            bot.send_message(user.get_id(), timetable_for_days[:4090], parse_mode='HTML', reply_markup=keyboard)
+                bot_send_message_and_post_check_group(user.get_id(), timetable_for_week, user_group)
+                return
 
-        elif re.search(r'^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$', request):
+        week_type_keyboard = telebot.types.InlineKeyboardMarkup()
+        week_type_keyboard.row(
+            *[telebot.types.InlineKeyboardButton(text=name, callback_data=name) for
+              name in ['\U00002B07 Поточний', '\U000027A1 Наступний']]
+        )
 
-            date = request
-            timetable_data = get_timetable(group=user_group, edate=date, sdate=date, user_id=user.get_id())
+        bot.send_message(user.get_id(), 'На який тиждень?', reply_markup=week_type_keyboard)
 
-            if timetable_data:
-                timetable_for_date = render_day_timetable(timetable_data[0])
-            elif isinstance(timetable_data, list) and not len(timetable_data):
-                msg = 'Щоб подивитися розклад на конкретний день, введи дату в такому форматі:' \
-                      '\n<b>05.03</b> або <b>5.3</b>\nПо кільком дням: \n<b>5.03-15.03</b>\n' \
-                      '\nДата вводиться без пробілів (день.місяць)<b> рік вводити не треба</b> ' \
+    elif request == KEYBOARD['TIMETABLE']:
 
-                timetable_for_date = 'На <b>{}</b>, для групи <b>{}</b> пар не знайдено.\n\n{}'.format(date,
-                                                                                                       user_group,
-                                                                                                       msg)
+        t = '{} - 9:00 - 10:20\n'.format(emoji_numbers[1])
+        t += '{} - 10:30 - 11:50\n'.format(emoji_numbers[2])
+        t += '{} - 12:10 - 13:30\n'.format(emoji_numbers[3])
+        t += '{} - 13:40 - 15:00\n'.format(emoji_numbers[4])
+        t += '{} - 15:20 - 16:40 \n'.format(emoji_numbers[5])
+        t += '{} - 16:50 - 18:10 \n'.format(emoji_numbers[6])
+        t += '{} - 18:20 - 19:40 \n'.format(emoji_numbers[7])
 
-            bot.send_message(message.chat.id, timetable_for_date, parse_mode='HTML', reply_markup=keyboard)
+        bot.send_message(user.get_id(), t, reply_markup=keyboard)
 
-        elif re.search(r'^(\d{1,2})\.(\d{1,2})\.(\d{2,4})-(\d{1,2})\.(\d{1,2})\.(\d{2,4})$', request):
+    elif request == KEYBOARD['CHANGE_GROUP']:
 
-            s_date = request.split('-')[0]
-            e_date = request.split('-')[1]
-            timetable_for_days = ''
-            timetable_data = get_timetable(group=user_group, sdate=s_date, edate=e_date, user_id=user.get_id())
+        user_group = user.get_group()
 
-            if timetable_data:
-                for timetable_day in timetable_data:
-                    timetable_for_days += render_day_timetable(timetable_day)
+        cancel_kb = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        cancel_kb.row('Відміна')
 
-            elif isinstance(timetable_data, list) and not len(timetable_data):
-                msg = 'Щоб подивитися розклад на конкретний день, введи дату в такому форматі:' \
-                      '\n<b>05.03</b> або <b>5.3</b>\nПо кільком дням: \n<b>5.03-15.03</b>\n' \
-                      '\nДата вводиться без пробілів (день.місяць)<b> рік вводити не треба</b> '
-                timetable_for_days = 'На <b>{} - {}</b>, для групи <b>{}</b> пар не знайдено.\n\n{}'.format(s_date,
-                                                                                                            e_date,
-                                                                                                            user_group,
-                                                                                                            msg)
+        msg = 'Твоя група: {}\nЩоб змінити введи нову групу'.format(user_group)
 
-            bot.send_message(user.get_id(), timetable_for_days[:4090], parse_mode='HTML', reply_markup=keyboard)
+        sent = bot.send_message(message.chat.id, msg, parse_mode='HTML', reply_markup=cancel_kb)
+        bot.register_next_step_handler(sent, set_group)
 
-        elif any(map(str.isdigit, request)):
+    elif request == KEYBOARD['HELP']:
 
-            msg = '\U00002139 Якщо ти хочеш подивитися розклад по датам - вводь дату в такому форматі:\n\n' \
-                  '<i>[ДЕНЬ.МІСЯЦЬ], наприклад</i>\n<i>15.5</i>\n<i>15.5-22.5</i>\n<i>1.1.18-10.1.18</i>'
+        try:
+            forecast_update_date = os.path.getmtime(os.path.join(settings.BASE_DIR, 'forecast.txt'))
+            mod_time = datetime.datetime.fromtimestamp(forecast_update_date).strftime('%H:%M')
 
-            bot.send_message(user.get_id(), msg, parse_mode='HTML', reply_markup=keyboard)
+        except Exception:
+            mod_time = '-'
 
-        elif request == KEYBOARD['MAIN_MENU']:
-            bot.send_message(user.get_id(), 'Ок', reply_markup=keyboard)
+        t = '\U0001F552 <b>Час пар:</b>\n'
+        t += '{} - 9:00 - 10:20\n'.format(emoji_numbers[1])
+        t += '{} - 10:30 - 11:50\n'.format(emoji_numbers[2])
+        t += '{} - 12:10 - 13:30\n'.format(emoji_numbers[3])
+        t += '{} - 13:40 - 15:00\n'.format(emoji_numbers[4])
+        t += '{} - 15:20 - 16:40 \n'.format(emoji_numbers[5])
+        t += '{} - 16:50 - 18:10 \n'.format(emoji_numbers[6])
+        t += '{} - 18:20 - 19:40 \n\n'.format(emoji_numbers[7])
 
-        elif 'якую' in request or 'пасибо' in request or 'thank' in request:
-            bot.send_message(user.get_id(), 'будь-ласка)', reply_markup=keyboard)
+        msg = t
+        # msg += '\U0001F4CA Статистика - /stats\n\n'
 
-        elif core.is_group_valid(request):
-            msg = 'Якщо ти хочеш змінити групу, тоді зайди в пункт меню {}'.format(KEYBOARD['HELP'])
-            bot.send_message(user.get_id(), text=msg, reply_markup=keyboard)
+        msg +="\U0001F4C6 <b>Для пошуку по датам:</b>\n<i>15.05</i>\n<i>15.05-22.05</i>\n<i>1.1.18-10.1.18</i>\n\n" \
+              "\U0001F465 <b>Твоя група:</b> <code>{}</code>\n\n" \
+              "<b>Група ЖДУ:</b> @zdu_live\n" \
+              "<b>Новини університету:</b> @zueduua\n" \
+              "<b>Канал:</b> @zdu_news\n" \
+              "<b>Розробник:</b> @Koocherov\n".format(user.get_group(), mod_time)
 
-        elif request[-1] == '?':
-            answers = ['да', 'хз', 'ноу', 'думаю ні']
-            bot.send_message(user.get_id(), random.choice(answers), reply_markup=keyboard)
+        help_kb = telebot.types.InlineKeyboardMarkup()
+        help_kb.row(
+            telebot.types.InlineKeyboardButton(KEYBOARD['MAIN_MENU'], callback_data=KEYBOARD['MAIN_MENU'])
+        )
+        help_kb.row(
+            telebot.types.InlineKeyboardButton(KEYBOARD['CHANGE_GROUP'], callback_data=KEYBOARD['CHANGE_GROUP'])
+        )
+
+        kb = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        kb.row(KEYBOARD['MAIN_MENU'])
+        kb.row(KEYBOARD['CHANGE_GROUP'])
+
+        bot.send_message(message.chat.id, msg, reply_markup=help_kb, parse_mode='HTML')
+
+    elif request == KEYBOARD['FOR_A_GROUP']:
+        sent = bot.send_message(message.chat.id,
+                                'Для того щоб подивитись розклад будь якої групи на тиждень введи її назву')
+        bot.register_next_step_handler(sent, show_other_group)
+
+    elif request == KEYBOARD['ADS']:
+
+        ads_kb = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+
+        if core.AdService.check_if_user_have_ad(user.get_id()):
+            ads_kb.row(KEYBOARD['AD_DEL'])
+        else:
+            ads_kb.row(KEYBOARD['AD_ADD'])
+        ads_kb.row(KEYBOARD['MAIN_MENU'])
+
+        ads_stat = core.MetricsManager.get_statistics_by_types_during_the_week().get('ADS', 'хз')
+
+        rendered_ads = core.AdService.render_ads()
+
+        msg = 'Переглядів за тиждень: {} \U0001F440\n\n{}'.format(ads_stat, rendered_ads)
+
+        sent = bot.send_message(user.get_id(), msg, parse_mode='HTML', reply_markup=ads_kb)
+
+        bot.register_next_step_handler(sent, process_menu)
+
+    elif request == KEYBOARD['WEATHER']:
+
+        try:
+
+            weather_manager = WeatherManager()
+            weather_manager.get_forecast()
+
+            with open(os.path.join(settings.BASE_DIR, 'forecast.txt'), 'r', encoding="utf-8") as forecast_file:
+                forecast = forecast_file.read()
+
+            bot.send_message(message.chat.id, forecast, reply_markup=keyboard, parse_mode='HTML')
+
+        except Exception:
+            bot.send_message(message.chat.id, 'Погоду не завантажено.', reply_markup=keyboard, parse_mode='HTML')
+
+    elif request == KEYBOARD['FOR_A_TEACHER']:
+
+        last_teacher_name = user.get_last_teacher()
+
+        if not last_teacher_name:
+            m = 'Для того щоб подивитись розклад викладача на поточний тиждень - введи його прізвище.'
+            sent = bot.send_message(message.chat.id, m)
+            bot.register_next_step_handler(sent, select_teacher_by_second_name)
 
         else:
-            answers = ['м?', 'хм.. \U0001F914', 'не розумію(', 'вибери потрібне в меню', 'моя твоя не понімать', 'wot?']
-            bot.send_message(user.get_id(), random.choice(answers), reply_markup=keyboard)
+            last_teacher_kb = telebot.types.InlineKeyboardMarkup()
+            last_teacher_kb.row(
+                telebot.types.InlineKeyboardButton(last_teacher_name, callback_data=last_teacher_name)
+            )
+            last_teacher_kb.row(
+                telebot.types.InlineKeyboardButton('Ввести прізвище', callback_data='Ввести прізвище')
+            )
+
+            bot.send_message(user.get_id(), 'Введи прізвище викладача', reply_markup=last_teacher_kb)
+
+    elif re.search(r'^(\d{1,2})\.(\d{1,2})$', request):
+
+        date = request + '.' + str(datetime.date.today().year)
+        timetable_data = get_timetable(group=user_group, edate=date, sdate=date, user_id=user.get_id())
+
+        if timetable_data:
+            timetable_for_date = render_day_timetable(timetable_data[0])
+
+        elif isinstance(timetable_data, list) and not len(timetable_data):
+            msg = 'Щоб подивитися розклад на конкретний день, введи дату в такому форматі:' \
+                  '\n<b>05.03</b> або <b>5.3</b>\nПо кільком дням: \n<b>5.03-15.03</b>\n' \
+                  '\nДата вводиться без пробілів (день.місяць)<b> рік вводити не треба</b> ' \
+
+            timetable_for_date = 'На <b>{}</b>, для групи <b>{}</b> пар не знайдено.\n\n{}'.format(date,
+                                                                                                   user_group,
+                                                                                                   msg)
+        else:
+            return
+
+        bot.send_message(message.chat.id, timetable_for_date, parse_mode='HTML', reply_markup=keyboard)
+
+    elif re.search(r'^(\d{1,2})\.(\d{1,2})-(\d{1,2})\.(\d{1,2})$', request):
+
+        s_date = message.text.split('-')[0] + '.' + str(datetime.date.today().year)
+        e_date = message.text.split('-')[1] + '.' + str(datetime.date.today().year)
+        timetable_for_days = ''
+        timetable_data = get_timetable(group=user_group, sdate=s_date, edate=e_date, user_id=user.get_id())
+
+        if timetable_data:
+            for timetable_day in timetable_data:
+                timetable_for_days += render_day_timetable(timetable_day)
+
+        elif isinstance(timetable_data, list) and not len(timetable_data):
+            msg = 'Щоб подивитися розклад на конкретний день, введи дату в такому форматі:' \
+                  '\n<b>05.03</b> або <b>5.3</b>\nПо кільком дням: \n<b>5.03-15.03</b>\n' \
+                  '\nДата вводиться без пробілів (день.місяць)<b> рік вводити не треба</b> '
+            timetable_for_days = 'На <b>{} - {}</b>, для групи <b>{}</b> пар не знайдено.\n\n{}'.format(s_date,
+                                                                                                        e_date,
+                                                                                                        user_group,
+                                                                                                        msg)
+
+        bot.send_message(user.get_id(), timetable_for_days[:4090], parse_mode='HTML', reply_markup=keyboard)
+
+    elif re.search(r'^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$', request):
+
+        date = request
+        timetable_data = get_timetable(group=user_group, edate=date, sdate=date, user_id=user.get_id())
+
+        if timetable_data:
+            timetable_for_date = render_day_timetable(timetable_data[0])
+        elif isinstance(timetable_data, list) and not len(timetable_data):
+            msg = 'Щоб подивитися розклад на конкретний день, введи дату в такому форматі:' \
+                  '\n<b>05.03</b> або <b>5.3</b>\nПо кільком дням: \n<b>5.03-15.03</b>\n' \
+                  '\nДата вводиться без пробілів (день.місяць)<b> рік вводити не треба</b> ' \
+
+            timetable_for_date = 'На <b>{}</b>, для групи <b>{}</b> пар не знайдено.\n\n{}'.format(date,
+                                                                                                   user_group,
+                                                                                                   msg)
+
+        bot.send_message(message.chat.id, timetable_for_date, parse_mode='HTML', reply_markup=keyboard)
+
+    elif re.search(r'^(\d{1,2})\.(\d{1,2})\.(\d{2,4})-(\d{1,2})\.(\d{1,2})\.(\d{2,4})$', request):
+
+        s_date = request.split('-')[0]
+        e_date = request.split('-')[1]
+        timetable_for_days = ''
+        timetable_data = get_timetable(group=user_group, sdate=s_date, edate=e_date, user_id=user.get_id())
+
+        if timetable_data:
+            for timetable_day in timetable_data:
+                timetable_for_days += render_day_timetable(timetable_day)
+
+        elif isinstance(timetable_data, list) and not len(timetable_data):
+            msg = 'Щоб подивитися розклад на конкретний день, введи дату в такому форматі:' \
+                  '\n<b>05.03</b> або <b>5.3</b>\nПо кільком дням: \n<b>5.03-15.03</b>\n' \
+                  '\nДата вводиться без пробілів (день.місяць)<b> рік вводити не треба</b> '
+            timetable_for_days = 'На <b>{} - {}</b>, для групи <b>{}</b> пар не знайдено.\n\n{}'.format(s_date,
+                                                                                                        e_date,
+                                                                                                        user_group,
+                                                                                                        msg)
+
+        bot.send_message(user.get_id(), timetable_for_days[:4090], parse_mode='HTML', reply_markup=keyboard)
+
+    elif any(map(str.isdigit, request)):
+
+        msg = '\U00002139 Якщо ти хочеш подивитися розклад по датам - вводь дату в такому форматі:\n\n' \
+              '<i>[ДЕНЬ.МІСЯЦЬ], наприклад</i>\n<i>15.5</i>\n<i>15.5-22.5</i>\n<i>1.1.18-10.1.18</i>'
+
+        bot.send_message(user.get_id(), msg, parse_mode='HTML', reply_markup=keyboard)
+
+    elif request == KEYBOARD['MAIN_MENU']:
+        bot.send_message(user.get_id(), 'Ок', reply_markup=keyboard)
+
+    elif 'якую' in request or 'пасибо' in request or 'thank' in request:
+        bot.send_message(user.get_id(), 'будь-ласка)', reply_markup=keyboard)
+
+    elif core.is_group_valid(request):
+        msg = 'Якщо ти хочеш змінити групу, тоді зайди в пункт меню {}'.format(KEYBOARD['HELP'])
+        bot.send_message(user.get_id(), text=msg, reply_markup=keyboard)
+
+    elif request[-1] == '?':
+        answers = ['да', 'хз', 'ноу', 'думаю ні']
+        bot.send_message(user.get_id(), random.choice(answers), reply_markup=keyboard)
 
     else:
-        bot.send_message(user.get_id(), 'Не знайшов твою групу. Введи /start, і вкажи її.')
+        answers = ['м?', 'хм.. \U0001F914', 'не розумію(', 'вибери потрібне в меню', 'моя твоя не понімать', 'wot?']
+        bot.send_message(user.get_id(), random.choice(answers), reply_markup=keyboard)
 
 
 def main():
