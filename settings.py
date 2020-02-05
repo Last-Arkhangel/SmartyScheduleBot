@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
 
-# Bot version
-VERSION = '10.0'
-
 # Database name
 DATABASE = 'SmartyS_DB.sqlite'
 
@@ -23,10 +20,10 @@ POLLING_INTERVAL = 2
 USE_CACHE = True
 
 # Use webhook instead polling
-USE_WEBHOOK = True
+USE_WEBHOOK = False
 
 # Address bot running. For example https://mydomain.com
-WEBHOOK_URL = '/<url>'
+WEBHOOK_URL = 'https://mydomain.com'
 
 # Path that telegram sends updates
 WEBHOOK_PATH = '/fl/'
@@ -35,7 +32,7 @@ WEBHOOK_PATH = '/fl/'
 TIMETABLE_URL = 'https://dekanat.zu.edu.ua/cgi-bin/timetable.cgi'
 
 # Http user agent sends to requests
-HTTP_USER_AGENT = 'Telegram-SmartySBot v.{}'.format(VERSION)
+HTTP_USER_AGENT = 'Telegram-SmartySBot'
 
 # If it True, bot would send errors to admins in list below
 SEND_ERRORS_TO_ADMIN = True
@@ -58,7 +55,7 @@ KEYBOARD = {
     'TIMETABLE': '\U0001F552 Час пар',
     'FOR_A_GROUP': '\U0001F465 По групі',
     'WEATHER': '\U0001F30D Погода',
-    'HELP': '\U0001F4AC Довідка',
+    'HELP': '\U00002139 Довідка',
     'ADS': '\U0001F4E2 Оголошення',
     'AD_LIST': '\U0001F4F0 Список',
     'AD_ADD': '\U00002795 Додати',

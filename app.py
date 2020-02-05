@@ -1275,6 +1275,13 @@ def main_menu(message):
 
             bot.send_message(user.get_id(), timetable_for_days[:4090], parse_mode='HTML', reply_markup=keyboard)
 
+        elif any(map(str.isdigit, request)):
+
+            msg = '\U00002139 Якщо ти хочеш подивитися розклад по датам - вводь дату в такому форматі:\n\n' \
+                  '<i>[ДЕНЬ.МІСЯЦЬ], наприклад</i>\n<i>15.5</i>\n<i>15.5-22.5</i>\n<i>1.1.18-10.1.18</i>'
+
+            bot.send_message(user.get_id(), msg, parse_mode='HTML', reply_markup=keyboard)
+
         elif request == KEYBOARD['MAIN_MENU']:
             bot.send_message(user.get_id(), 'Ок', reply_markup=keyboard)
 
