@@ -427,7 +427,7 @@ def set_group(message):
 
         possible_groups = core.get_possible_groups(group)
         msg = 'Групу <b>{}</b> я зберіг, але її немає в базі розкладу. ' \
-              'Тому якщо розклад не буде відображатись - перевір правильність вводу.\n\n' \
+              'Тому якщо розклад не буде відображатись - перевір правильність вводу. \U0001f9d0\n\n' \
               '<i>Щоб змінити групу жми: </i>{} > {}\n'.format(group, KEYBOARD['HELP'], KEYBOARD['CHANGE_GROUP'])
 
         if possible_groups:
@@ -436,7 +436,7 @@ def set_group(message):
                 msg += '{}\n'.format(possible_group.get('group'))
 
     else:
-        msg = 'Добро 👍, буду показувати розклад для групи {}.'.format(group)
+        msg = '\U0001f917 Добро, буду показувати розклад для групи <b>{}</b>.'.format(group)
 
     user.update_group(group) if user.get_group() else user.registration(group)
 
@@ -476,7 +476,7 @@ def show_teachers_schedule_by_fullname(chat_id, teacher_name):
         for rozklad_day in rozklad_data:
             rozklad_for_week += render_day_timetable(rozklad_day)
     else:
-        rozklad_for_week = 'На тиждень пар у викладача <b>{}</b> не знайдено.'.format(teacher_name)
+        rozklad_for_week = '\U0001f914 На тиждень пар у викладача <b>{}</b> не знайдено.'.format(teacher_name)
 
     core.User(u_id=chat_id).set_last_teacher(teacher_name)
 
@@ -545,7 +545,7 @@ def show_other_group(message):
     if not core.is_group_valid(group):
 
         possible_groups = core.get_possible_groups(group)
-        msg = 'Групи <b>{}</b> немає в базі розкладу.\n'.format(group)
+        msg = '\U0001f914 Групи <b>{}</b> немає в базі розкладу.\n'.format(group)
 
         if possible_groups:
 
@@ -1113,12 +1113,12 @@ def main_menu(message):
         msg = t
         # msg += '\U0001F4CA Статистика - /stats\n\n'
 
-        msg +="\U0001F4C6 <b>Для пошуку по датам:</b>\n<i>15.05</i>\n<i>15.05-22.05</i>\n<i>1.1.18-10.1.18</i>\n\n" \
-              "\U0001F465 <b>Твоя група:</b> <code>{}</code>\n\n" \
-              "<b>Група ЖДУ:</b> @zdu_live\n" \
-              "<b>Новини університету:</b> @zueduua\n" \
-              "<b>Канал:</b> @zdu_news\n" \
-              "<b>Розробник:</b> @Koocherov\n".format(user.get_group(), mod_time)
+        msg += "\U0001F4C6 <b>Для пошуку по датам:</b>\n<i>15.05</i>\n<i>15.05-22.05</i>\n<i>1.1.18-10.1.18</i>\n\n" \
+               "<b>Твоя група:</b> <code>{}</code> (\U0001F465 {})\n\n" \
+               "<b>Група ЖДУ:</b> @zdu_live\n" \
+               "<b>Новини університету:</b> @zueduua\n" \
+               "<b>Канал:</b> @zdu_news\n" \
+               "<b>Розробник:</b> @Koocherov\n".format(user.get_group(), user.get_users_count_from_group())
 
         help_kb = telebot.types.InlineKeyboardMarkup()
         help_kb.row(
