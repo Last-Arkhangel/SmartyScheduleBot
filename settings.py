@@ -5,7 +5,7 @@ import os
 DATABASE = 'SmartyS_DB.sqlite'
 
 # Telegram Bot token
-BOT_TOKEN = '<token>'
+BOT_TOKEN = '497493722:AAGG__xWKwPLCrOoFHvSxPa2zSVzTJiVQaY'
 
 # OpenWeatherMap.org token
 OPEN_WEATHER_MAP_TOKEN = '<token>'
