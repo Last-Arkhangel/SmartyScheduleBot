@@ -752,7 +752,7 @@ def admin_del_user(user_id):
     if u:
         data['message'] = 'Користувач <b>{} {}</b> був успішно видалений. <br> ' \
                           '<b>група:</b> {}, <b>реєстрація:</b> {}, ' \
-                          '<b>остання активність:</b> {}'.format(u[2], u[3] or '', u[4], u[5], u[6])
+                          '<b>остання активність:</b> {}'.format(u[2], u[3] or '', u[4], u[6], u[7])
     else:
         data['message'] = 'Такого користувача не знайдено.'
 
@@ -773,6 +773,12 @@ def admin_users():
     }
 
     return render_template('users.html', data=data)
+
+
+@app.route('/')
+def admin_redirect_to_login():
+
+    return admin_login()
 
 
 @app.route('/fl/send_message', methods=['POST', 'GET'])
