@@ -922,7 +922,7 @@ def admin_update_cache():
     return msg
 
 
-@app.route('/fl/run')
+@app.route('/fl/init')
 def index():
 
     if not session.get('login'):
@@ -934,19 +934,19 @@ def index():
     core.AdService.create_ad_service_table_if_not_exists()
     bot.delete_webhook()
     bot.set_webhook(settings.WEBHOOK_URL + settings.WEBHOOK_PATH, max_connections=1)
-    bot.send_message('204560928', 'Running...')
+    bot.send_message('204560928', 'Запуск через /fl/init')
     core.log(msg='Запуск через url. Веб-хук встановлено: {}.'.format(bot.get_webhook_info().url))
     return 'ok'
 
 
-@app.route(settings.WEBHOOK_PATH, methods=['POST', 'GET'])
+@app.route(settings.WEBHOOK_PATH, methods=['POST'])
 def webhook():
 
     json_string = request.get_data().decode('utf-8')
     update = telebot.types.Update.de_json(json_string)
     bot.process_new_updates([update])
 
-    return "!", 200
+    return "ok", 200
 
 
 @bot.message_handler(content_types=["text"])
