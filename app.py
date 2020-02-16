@@ -715,6 +715,8 @@ def admin_metrics():
     active_today_users_count = core.MetricsManager.get_active_today_users_count()
     active_yesterday_users_count = core.MetricsManager.get_active_yesterday_users_count()
     active_week_users_count = core.MetricsManager.get_active_week_users_count()
+    top_groups_by_users = core.MetricsManager.get_top_groups(15)
+    top_groups_by_requests = core.MetricsManager.get_top_request_groups_during_the_week(15)
 
     try:
         forecast_update_date = os.path.getmtime(os.path.join(settings.BASE_DIR, 'groups.txt'))
@@ -735,7 +737,8 @@ def admin_metrics():
         'active_today_users_count': active_today_users_count,
         'active_yesterday_users_count': active_yesterday_users_count,
         'active_week_users_count': active_week_users_count,
-
+        'top_groups_by_users': top_groups_by_users,
+        'top_groups_by_requests': top_groups_by_requests,
         'groups_update_time': groups_update_time,
         'teachers_update_time': teachers_update_time,
     }

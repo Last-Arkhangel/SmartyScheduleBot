@@ -369,6 +369,18 @@ class MetricsManager:
 
         return {}
 
+    @staticmethod
+    def get_top_request_groups_during_the_week(n=10):
+
+        query = """SELECT user_group, count(request_id) as 'count' FROM metrics 
+        WHERE request_datetime > datetime('now','localtime', 'start of day', '-7 day')
+        and request_datetime < datetime('now', 'localtime', 'start of day', '+1 day')
+        GROUP BY user_group ORDER BY count DESC LIMIT {}""".format(n)
+
+        result = DBManager.execute_query(query)
+
+        return result
+
     @classmethod
     def get_last_days_statistics(cls):
 
@@ -434,6 +446,16 @@ class MetricsManager:
             })
 
         return user_actions
+
+    @staticmethod
+    def get_top_groups(n=10):
+
+        query = 'SELECT u_group, count(*) FROM users ' \
+                'GROUP BY u_group ORDER BY count(*) DESC LIMIT {}'.format(n)
+
+        groups = DBManager.execute_query(query)
+
+        return groups
 
 
 def update_all_groups():

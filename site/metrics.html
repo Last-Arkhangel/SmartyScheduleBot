@@ -4,18 +4,24 @@
 
 {% block content %}
 
-      <div class="content">
+    <div class="content">
         <div class="row">
-          <div class="col-md-6">
-            <b>Користувачів зареєстровано:</b> {{ data.all_users_count }} <br>
-            <b>Зареєстровано за тиждень:</b> {{ data.users_registered_week }} <br>
-            <b>Груп в системі:</b> {{ data.all_groups_count }} <br>
-          </div>
-          <div class="col-md-6">
-            <b>Активних за сьогодні:</b> {% if data.all_users_count %}{{ data.active_today_users_count }} ({{ (data.active_today_users_count / data.all_users_count * 100)|round(1, 'floor') }}%){% else %}0{% endif %}<br>
-            <b>Активних за вчора:</b> {% if data.all_users_count %}{{ data.active_yesterday_users_count }} ({{ (data.active_yesterday_users_count / data.all_users_count * 100)|round(1, 'floor') }}%){% else %}0{% endif %}<br>
-            <b>Активних за тиждень:</b> {% if data.all_users_count %}{{ data.active_week_users_count }} ({{ (data.active_week_users_count / data.all_users_count * 100)|round(1, 'floor') }}%){% else %}0{% endif %}<br>
-          </div>
+            <div class="col-md-6">
+                <b>Користувачів зареєстровано:</b> {{ data.all_users_count }} <br>
+                <b>Зареєстровано за тиждень:</b> {{ data.users_registered_week }} <br>
+                <b>Груп в системі:</b> {{ data.all_groups_count }} <br>
+            </div>
+            <div class="col-md-6">
+                <b>Активних за сьогодні:</b> {% if data.all_users_count %}{{ data.active_today_users_count }} (
+                {{ (data.active_today_users_count / data.all_users_count * 100)|round(1, 'floor') }}%){% else %}
+                0{% endif %}<br>
+                <b>Активних за вчора:</b> {% if data.all_users_count %}{{ data.active_yesterday_users_count }} (
+                {{ (data.active_yesterday_users_count / data.all_users_count * 100)|round(1, 'floor') }}%){% else %}
+                0{% endif %}<br>
+                <b>Активних за тиждень:</b> {% if data.all_users_count %}{{ data.active_week_users_count }} (
+                {{ (data.active_week_users_count / data.all_users_count * 100)|round(1, 'floor') }}%){% else %}
+                0{% endif %}<br>
+            </div>
         </div>
         <br>
         <hr>
@@ -32,24 +38,67 @@
                 <canvas id="requests-on-hours"></canvas>
             </div>
         </div>
-          
-        <br><br>
-          <br><hr>
-      <div class="row">
-          <div class="col-md-6 col-sm-12">
-            <h4>Оновлення викладачів</h4>
-            <div>Останнє оновлення: {{data.teachers_update_time}}</div>
-             <a class="btn btn-warning" href="/fl/update_teachers" role="button" target="_blank">Оновити</a>
-          </div><br>
-         <div class="col-md-6 col-sm-12">
-            <h4>Оновлення груп</h4>
-            <div>Останнє оновлення: {{data.groups_update_time}}</div>
-             <a class="btn btn-success" href="/fl/update_groups" role="button" target="_blank">Оновити</a>
-          </div>
+        <br>
+        <hr>
+        <div class="row">
+            <div class="col-md-6 col-sm-12">
+                <h4>Топ {{ data.top_groups_by_users|length }} груп по студентам</h4>
+                <table class="table table-bordered">
+                    <thead>
+                    <tr>
+                        <th scope="col">Назва</th>
+                        <th scope="col">Кількість студентів</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for group in data.top_groups_by_users %}
+                        <tr>
+                            <td>{{ group[0] }}</td>
+                            <td>{{ group[1] }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-md-6 col-sm-12">
+                <h4>Топ {{ data.top_groups_by_requests|length }} груп по запитам</h4>
+                <table class="table table-bordered">
+                    <thead>
+                    <tr>
+                        <th scope="col">Назва</th>
+                        <th scope="col">Кількість запитів</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for group in data.top_groups_by_requests %}
+                        <tr>
+                            <td>{{ group[0] }}</td>
+                            <td>{{ group[1] }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-      </div>
-      <br>
+        <br>
+        <hr>
+        <div class="row">
+            <div class="col-md-6 col-sm-12">
+                <h4>Оновлення викладачів</h4>
+                <div>Останнє оновлення: {{ data.teachers_update_time }}</div>
+                <a class="btn btn-warning" href="/fl/update_teachers" role="button" target="_blank">Оновити</a>
+            </div>
+            <br>
+            <div class="col-md-6 col-sm-12">
+                <h4>Оновлення груп</h4>
+                <div>Останнє оновлення: {{ data.groups_update_time }}</div>
+                <a class="btn btn-success" href="/fl/update_groups" role="button" target="_blank">Оновити</a>
+            </div>
+        </div>
+
+    </div>
+    <br>
 
 {% endblock %}
 
