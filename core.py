@@ -113,18 +113,6 @@ class User:
 
         return DBManager.execute_query(query, (self.get_id(),))[0][0]
 
-    def set_last_teacher(self, teacher_name=''):
-
-        query = "UPDATE users SET last_teacher=? WHERE t_id=?"
-
-        return DBManager.execute_query(query, (teacher_name, self.get_id(),))
-
-    def get_last_teacher(self):
-
-        query = "SELECT last_teacher FROM users WHERE t_id=?"
-
-        return DBManager.execute_query(query, (self.get_id(),))[0][0]
-
     @classmethod
     def get_users(cls):
 
@@ -174,7 +162,7 @@ class DBManager:
 
         except sqlite3.Error as ex:
 
-            log(msg='Query error: {}'.format(str(ex)))
+            log(msg='Помилка запиту: {}\n{}'.format(str(ex), query), is_error=True)
             return -1
 
 
@@ -456,6 +444,68 @@ class MetricsManager:
         groups = DBManager.execute_query(query)
 
         return groups
+
+
+class Teachers:
+
+    @staticmethod
+    def create_saved_teachers_table_if_not_exists():
+
+        query = """CREATE TABLE IF NOT EXISTS saved_teachers(
+                      telegram_id TEXT  NOT NULL,
+                      teacher_name TEXT NOT NULL,
+                      added_time TEXT DEFAULT (datetime('now', 'localtime')),
+                      PRIMARY KEY (telegram_id, teacher_name))"""
+
+        return DBManager.execute_query(query)
+
+    @staticmethod
+    def add_teacher_to_user(user_id, teacher_name):
+
+        user_saved_teachers = Teachers.get_user_saved_teachers(user_id)
+
+        if teacher_name in user_saved_teachers:
+            return
+
+        query = """INSERT INTO saved_teachers(
+                telegram_id, 
+                teacher_name) VALUES (?, ?)"""
+
+        DBManager.execute_query(query, (user_id, teacher_name))
+
+        if len(user_saved_teachers) > settings.NUMBER_OF_TEACHERS_TO_SAVE - 1:
+            Teachers.delete_teacher_in_user(user_id, user_saved_teachers[0])
+
+    @staticmethod
+    def delete_teacher_in_user(user_id, teacher_name):
+
+        query = "DELETE FROM saved_teachers WHERE telegram_id=? AND teacher_name=?"
+
+        return DBManager.execute_query(query, (user_id, teacher_name))
+
+    @staticmethod
+    def get_user_saved_teachers(user_id):
+
+        query = """SELECT teacher_name FROM saved_teachers WHERE telegram_id = ? ORDER BY added_time"""
+
+        saved_teachers_raw = DBManager.execute_query(query, (user_id, )) or []
+
+        saved_teachers = []
+
+        for teacher in saved_teachers_raw:
+            saved_teachers.append(teacher[0])
+
+        # TODO delete it later
+        if len(saved_teachers) > settings.NUMBER_OF_TEACHERS_TO_SAVE:
+            data = {
+                'chat_id': settings.ADMINS_ID[0],
+                'parse_mode': 'HTML',
+                'text': 'Увага, у юзера {} більше 4 викладачів'.format(user_id)
+            }
+
+            requests.get('https://api.telegram.org/bot{}/sendMessage'.format(settings.BOT_TOKEN), params=data).json()
+
+        return saved_teachers
 
 
 def update_all_groups():

@@ -34,6 +34,9 @@ TIMETABLE_URL = 'https://dekanat.zu.edu.ua/cgi-bin/timetable.cgi'
 # Http user agent sends to requests
 HTTP_USER_AGENT = 'Telegram-SmartySBot'
 
+# Number of teachers to save
+NUMBER_OF_TEACHERS_TO_SAVE = 4
+
 # If it True, bot would send errors to admins in list below
 SEND_ERRORS_TO_ADMIN = True
 

@@ -483,7 +483,7 @@ def show_teachers_schedule_by_fullname(chat_id, teacher_name):
     else:
         rozklad_for_week = '\U0001f914 На тиждень пар у викладача <b>{}</b> не знайдено.'.format(teacher_name)
 
-    core.User(u_id=chat_id).set_last_teacher(teacher_name)
+    core.Teachers.add_teacher_to_user(chat_id, teacher_name)
 
     bot.send_message(chat_id, rozklad_for_week, reply_markup=keyboard, parse_mode='HTML')
 
@@ -946,6 +946,7 @@ def index():
     core.MetricsManager.create_metrics_table_if_not_exists()
     core.Cache.create_cache_table_if_not_exists()
     core.AdService.create_ad_service_table_if_not_exists()
+    core.Teachers.create_saved_teachers_table_if_not_exists()
     bot.delete_webhook()
     bot.set_webhook(settings.WEBHOOK_URL + settings.WEBHOOK_PATH, max_connections=1)
     bot.send_message('204560928', 'Запуск через /fl/init')
@@ -1190,23 +1191,25 @@ def main_menu(message):
 
     elif request == KEYBOARD['FOR_A_TEACHER']:
 
-        last_teacher_name = user.get_last_teacher()
+        user_saved_teachers = core.Teachers.get_user_saved_teachers(user.get_id())
 
-        if not last_teacher_name:
+        if not user_saved_teachers:
             m = 'Для того щоб подивитись розклад викладача на поточний тиждень - введи його прізвище.'
             sent = bot.send_message(message.chat.id, m)
             bot.register_next_step_handler(sent, select_teacher_by_second_name)
 
         else:
-            last_teacher_kb = telebot.types.InlineKeyboardMarkup()
-            last_teacher_kb.row(
-                telebot.types.InlineKeyboardButton(last_teacher_name, callback_data=last_teacher_name)
-            )
-            last_teacher_kb.row(
-                telebot.types.InlineKeyboardButton('Ввести прізвище', callback_data='Ввести прізвище')
+            last_teachers_kb = telebot.types.InlineKeyboardMarkup(row_width=2)
+            for teacher in user_saved_teachers:
+                last_teachers_kb.row(
+                    telebot.types.InlineKeyboardButton('\U0001F464 ' + teacher, callback_data=teacher),
+                )
+
+            last_teachers_kb.row(
+                telebot.types.InlineKeyboardButton('\U0001F50D Ввести прізвище', callback_data='Ввести прізвище')
             )
 
-            bot.send_message(user.get_id(), 'Введи прізвище викладача', reply_markup=last_teacher_kb)
+            bot.send_message(user.get_id(), 'Введи прізвище викладача', reply_markup=last_teachers_kb)
 
     elif re.search(r'^(\d{1,2})\.(\d{1,2})$', request):
 
