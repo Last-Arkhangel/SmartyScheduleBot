@@ -5,7 +5,7 @@ import os
 DATABASE = 'SmartyS_DB.sqlite'
 
 # Telegram Bot token
-BOT_TOKEN = '497493722:AAGG__xWKwPLCrOoFHvSxPa2zSVzTJiVQaY'
+BOT_TOKEN = '<token>'
 
 # OpenWeatherMap.org token
 OPEN_WEATHER_MAP_TOKEN = '<token>'
@@ -23,7 +23,7 @@ USE_CACHE = True
 USE_WEBHOOK = False
 
 # Address bot running. For example https://mydomain.com
-WEBHOOK_URL = 'https://mydomain.com'
+WEBHOOK_URL = 'https://openbiblio.zu.edu.ua'
 
 # Path that telegram sends updates
 WEBHOOK_PATH = '/fl/'
@@ -54,7 +54,7 @@ KEYBOARD = {
     'TODAY': '\U0001F4D8 Сьогодні',
     'TOMORROW': '\U0001F4D9 Завтра',
     'FOR_A_WEEK': '\U0001F4DA Тиждень',
-    'FOR_A_TEACHER': '\U0001F464 По викладачу',
+    'FOR_A_TEACHER': '\U0001F464 По викл.',
     'TIMETABLE': '\U0001F552 Час пар',
     'FOR_A_GROUP': '\U0001F465 По групі',
     'WEATHER': '\U0001F30D Погода',
