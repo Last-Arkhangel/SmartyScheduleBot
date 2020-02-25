@@ -186,14 +186,15 @@ def delete_html_tags(s):
 
 
 def datetime_to_string(input_seconds=0):
+
     input_seconds = int(input_seconds)
 
     minutes, seconds = divmod(input_seconds, 60)
     hours, minutes = divmod(minutes, 60)
     hours_array = ['', "1 год.", "2 год."]
 
-    if seconds < 60 and not hours and not minutes:
-        return "ще трішки"
+    if not hours and minutes <= 1:
+        return 'ще трішки'
     else:
         total_time = hours_array[hours], str(minutes), "хв."
 

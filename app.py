@@ -86,9 +86,33 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
     return all_days_lessons
 
 
-def render_day_timetable(day_data, current_lesson=None, current_break=None, seconds_to_end=0):
+def render_day_timetable(day_data, show_current=False):
 
-    str_to_end = core.datetime_to_string(seconds_to_end)
+    current_lesson = 0
+    current_break = -1
+    seconds_to_end = 0
+    str_to_end = ''
+    now_time = datetime.datetime.now().time()
+    today = datetime.datetime.now()
+
+    if show_current:
+
+        for i, lesson in enumerate(settings.lessons_time):
+            if datetime.time(*lesson['start_time']) <= now_time <= datetime.time(*lesson['end_time']):
+                current_lesson = i + 1
+                time_to_end = today.replace(hour=lesson['end_time'][0], minute=lesson['end_time'][1]) - today
+                seconds_to_end = time_to_end.total_seconds()
+                break
+
+        else:
+            for i, _break in enumerate(settings.breaks_time):
+                if datetime.time(*_break['start_time']) <= now_time <= datetime.time(*_break['end_time']):
+                    current_break = i + 1
+                    time_to_end = today.replace(hour=_break['end_time'][0], minute=_break['end_time'][1]) - today
+                    seconds_to_end = time_to_end.total_seconds()
+                    break
+
+        str_to_end = core.datetime_to_string(seconds_to_end)
 
     day_timetable = '....:::: <b>\U0001F4CB {}</b> <i>{}</i> ::::....\n\n'.format(day_data['day'], day_data['date'])
 
@@ -448,6 +472,64 @@ def set_group(message):
     bot.send_message(message.chat.id, msg, reply_markup=keyboard, parse_mode='HTML')
 
 
+@bot.callback_query_handler(func=lambda call_back: call_back.data[:3] in ('T_S', 'T_Z', 'T_W'))
+def schedule_teacher_time_handler(call_back):
+
+    user = core.User(call_back.message.chat)
+    time_type, teacher_name = call_back.data.split(':')
+
+    # TODO grep it in log later. This should save time request type
+    core.log(msg='{} дивиться розклад у {} x-code на {}'.format(user.get_id(), teacher_name, time_type))
+
+    if time_type == 'T_S':  # Today
+
+        today = datetime.date.today().strftime('%d.%m.%Y')
+        timetable_data = get_timetable(teacher=teacher_name, user_id=user.get_id(), sdate=today, edate=today)
+
+        if timetable_data:
+            timetable_for_today = '\U0001F464 Пари для <b>{}</b> на сьогодні:\n\n'.format(teacher_name)
+            timetable_for_today += render_day_timetable(timetable_data[0], show_current=True)
+        else:
+            timetable_for_today = 'На сьогодні пар у <b>{}</b> не знайдено.'.format(teacher_name)
+
+        bot.send_message(user.get_id(), timetable_for_today, reply_markup=keyboard, parse_mode='HTML')
+
+    if time_type == 'T_Z':  # Tomorrow
+
+        tomorrow = datetime.date.today() + datetime.timedelta(days=1)
+        tom_day = tomorrow.strftime('%d.%m.%Y')
+
+        timetable_data = get_timetable(teacher=teacher_name, sdate=tom_day, edate=tom_day, user_id=user.get_id())
+
+        if timetable_data:
+            timetable_for_tomorrow = '\U0001F464 Пари для <b>{}</b> на завтра:\n\n'.format(teacher_name)
+            timetable_for_tomorrow += render_day_timetable(timetable_data[0])
+
+        elif isinstance(timetable_data, list) and not len(timetable_data):
+            timetable_for_tomorrow = 'На завтра пар для викладача <b>{}</b> не знайдено.'.format(teacher_name)
+
+        bot.send_message(user.get_id(), timetable_for_tomorrow, parse_mode='HTML', reply_markup=keyboard)
+
+    if time_type == 'T_W':  # Week
+
+        in_week = datetime.date.today() + datetime.timedelta(days=7)
+
+        in_week_day = in_week.strftime('%d.%m.%Y')
+        today = datetime.date.today().strftime('%d.%m.%Y')
+
+        rozklad_data = get_timetable(teacher=teacher_name, sdate=today, edate=in_week_day, user_id=user.get_id())
+
+        if rozklad_data:
+            rozklad_for_week = '\U0001F464 Розклад на тиждень у <b>{}</b>:\n\n'.format(teacher_name)
+            for rozklad_day in rozklad_data:
+                rozklad_for_week += render_day_timetable(rozklad_day)
+        else:
+            rozklad_for_week = '\U0001f914 На тиждень пар у викладача <b>{}</b> не знайдено.'.format(teacher_name)
+
+        bot.send_message(user.get_id(), rozklad_for_week, reply_markup=keyboard, parse_mode='HTML')
+
+    bot.delete_message(chat_id=user.get_id(), message_id=call_back.message.message_id)
+
 @bot.callback_query_handler(func=lambda call_back: core.is_teacher_valid(call_back.data) or 'Ввести прізвище')
 def last_teacher_handler(call_back):
 
@@ -464,37 +546,26 @@ def last_teacher_handler(call_back):
         user = core.User(call_back.message.chat)
         teacher_full_name = call_back.data
 
-        show_teachers_schedule_by_fullname(user.get_id(), teacher_full_name)
+        select_time_to_show_teachers_schedule(user.get_id(), teacher_full_name)
 
 
-def show_teachers_schedule_by_fullname(chat_id, teacher_name):
+def select_time_to_show_teachers_schedule(chat_id, teacher_name):
 
-    in_week = datetime.date.today() + datetime.timedelta(days=7)
-
-    in_week_day = in_week.strftime('%d.%m.%Y')
-    today = datetime.date.today().strftime('%d.%m.%Y')
-
-    rozklad_data = get_timetable(teacher=teacher_name, sdate=today, edate=in_week_day, user_id=chat_id)
-
-    if rozklad_data:
-        rozklad_for_week = 'Розклад на тиждень у <b>{}</b>:\n\n'.format(teacher_name)
-        for rozklad_day in rozklad_data:
-            rozklad_for_week += render_day_timetable(rozklad_day)
-    else:
-        rozklad_for_week = '\U0001f914 На тиждень пар у викладача <b>{}</b> не знайдено.'.format(teacher_name)
 
     core.Teachers.add_teacher_to_user(chat_id, teacher_name)
 
-    bot.send_message(chat_id, rozklad_for_week, reply_markup=keyboard, parse_mode='HTML')
+    select_time_to_show_keyboard = telebot.types.InlineKeyboardMarkup()
+    select_time_to_show_keyboard.row(
+        telebot.types.InlineKeyboardButton(KEYBOARD['TODAY'], callback_data='{}:{}'.format('T_S', teacher_name)),
+        telebot.types.InlineKeyboardButton(KEYBOARD['TOMORROW'], callback_data='{}:{}'.format('T_Z', teacher_name))
+    )
+    select_time_to_show_keyboard.row(
+        telebot.types.InlineKeyboardButton(KEYBOARD['FOR_A_WEEK'], callback_data='{}:{}'.format('T_W', teacher_name)),
+    )
 
+    msg = 'На коли показати розклад для <b>{}</b>?'.format(teacher_name)
 
-def select_teacher_from_request(message):  # ф-я викликається коли є 2 і більше викладачі з таким прізвищем
-
-    if message.text == 'Назад':
-        bot.send_message(message.chat.id, 'Окей)', reply_markup=keyboard)
-        return
-
-    show_teachers_schedule_by_fullname(message.chat.id, message.text)
+    bot.send_message(chat_id, msg, reply_markup=select_time_to_show_keyboard, parse_mode='HTML')
 
 
 def select_teacher_by_second_name(message):
@@ -522,19 +593,17 @@ def select_teacher_by_second_name(message):
         return
 
     if len(tchrs) == 1:
-        show_teachers_schedule_by_fullname(message.chat.id, tchrs[0])
+        select_time_to_show_teachers_schedule(message.chat.id, tchrs[0])
         return
 
     if len(tchrs) > 1:
-
-        teachers_keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        teachers_keyboard = telebot.types.InlineKeyboardMarkup()
         for teacher in tchrs:
-            teachers_keyboard.row(teacher)
+            teachers_keyboard.row(
+                telebot.types.InlineKeyboardButton('\U0001F464 ' + teacher, callback_data=teacher),
+            )
 
-        teachers_keyboard.row('Назад')
-        sent = bot.send_message(message.chat.id, 'Вибери викладача:', reply_markup=teachers_keyboard)
-        bot.register_next_step_handler(sent, select_teacher_from_request)
-        return
+        bot.send_message(message.chat.id, 'Вибери викладача:', reply_markup=teachers_keyboard)
 
 
 def show_other_group(message):
@@ -586,24 +655,6 @@ def show_other_group(message):
         return
 
     bot.send_message(message.chat.id, timetable_for_week[:4090], parse_mode='HTML', reply_markup=keyboard)
-
-
-def show_previous_teachers_schedule_or_select_another(message):
-
-    user = core.User(message.chat)
-    teacher = message.text
-
-    if teacher == 'Вибрати викладача':
-
-        msg = 'Для того щоб подивитись розклад викладача на поточний тиждень - введи його прізвище.'
-        sent = bot.send_message(user.get_id(), msg)
-        bot.register_next_step_handler(sent, select_teacher_by_second_name)
-
-    elif core.is_teacher_valid(teacher):
-        show_teachers_schedule_by_fullname(user.get_id(), teacher)
-
-    else:
-        bot.send_message(user.get_id(), 'Лови меню', reply_markup=keyboard)
 
 
 def add_ad(message):
@@ -1000,29 +1051,7 @@ def main_menu(message):
 
         if timetable_data:
 
-            current_lesson = 0
-            current_break = -1
-            seconds_to_end = 0
-            now_time = datetime.datetime.now().time()
-            today = datetime.datetime.now()
-
-            for i, lesson in enumerate(settings.lessons_time):
-                if datetime.time(*lesson['start_time']) <= now_time <= datetime.time(*lesson['end_time']):
-                    current_lesson = i + 1
-                    time_to_end = today.replace(hour=lesson['end_time'][0], minute=lesson['end_time'][1]) - today
-                    seconds_to_end = time_to_end.total_seconds()
-                    break
-
-            else:
-                for i, _break in enumerate(settings.breaks_time):
-                    if datetime.time(*_break['start_time']) <= now_time <= datetime.time(*_break['end_time']):
-                        current_break = i + 1
-                        time_to_end = today.replace(hour=_break['end_time'][0], minute=_break['end_time'][1]) - today
-                        seconds_to_end = time_to_end.total_seconds()
-                        break
-
-            timetable_for_today = render_day_timetable(timetable_data[0], current_lesson,
-                                                       current_break, seconds_to_end)
+            timetable_for_today = render_day_timetable(timetable_data[0], show_current=True)
             bot.send_message(user.get_id(), timetable_for_today, parse_mode='HTML', reply_markup=keyboard)
 
         elif isinstance(timetable_data, list) and not len(timetable_data):
@@ -1199,7 +1228,7 @@ def main_menu(message):
             bot.register_next_step_handler(sent, select_teacher_by_second_name)
 
         else:
-            last_teachers_kb = telebot.types.InlineKeyboardMarkup(row_width=2)
+            last_teachers_kb = telebot.types.InlineKeyboardMarkup()
             for teacher in user_saved_teachers:
                 last_teachers_kb.row(
                     telebot.types.InlineKeyboardButton('\U0001F464 ' + teacher, callback_data=teacher),
