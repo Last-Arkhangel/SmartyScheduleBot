@@ -327,9 +327,16 @@ def del_ad_by_id(message):
 @bot.message_handler(commands=['start'])
 def start_handler(message):
 
-    if message.chat.id < 0:
+    user = core.User(message.chat)
+
+    if user.get_group():
+        msg = 'Ти вже зареєстрований(на), твоя група - {}'.format(user.get_group())
+        bot.send_message(chat_id=user.get_id(), text=msg, parse_mode='HTML', reply_markup=keyboard)
+        return
+
+    if user.get_id() < 0:
         msg = 'Сорі, братан, мене у групу нізя додавати) Якщо тут якась помилка, напиши сюди - @koocherov'
-        bot.send_message(chat_id=message.chat.id, text=msg, parse_mode='HTML')
+        bot.send_message(chat_id=user.get_id(), text=msg, parse_mode='HTML')
         return
 
     msg = 'Хай, {} 😊. Я Бот розкладу для студентів ЖДУ ім.Івана Франка. Я можу показати твій розклад на сьогодні, ' \
@@ -337,7 +344,7 @@ def start_handler(message):
           'Для початку скажи мені свою групу (Напр. 33Бд-СОінф), ' \
           '<b>змінити ти її зможеш в пункті меню {}</b>'.format(message.chat.first_name, KEYBOARD['HELP'])
 
-    sent = bot.send_message(chat_id=message.chat.id, text=msg, parse_mode='HTML')
+    sent = bot.send_message(chat_id=user.get_id(), text=msg, parse_mode='HTML')
     bot.register_next_step_handler(sent, set_group)
 
 
