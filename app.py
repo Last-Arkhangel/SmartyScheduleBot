@@ -13,7 +13,6 @@ import json
 import schedule_updater
 import random
 import hashlib
-from WeatherManager import WeatherManager
 from settings import KEYBOARD
 from flask import Flask, request, render_template, jsonify, session
 
@@ -86,7 +85,7 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
     return all_days_lessons
 
 
-def render_day_timetable(day_data, show_current=False):
+def render_day_timetable(day_data, show_current=False, user_id=''):
 
     current_lesson = 0
     current_break = -1
@@ -114,7 +113,15 @@ def render_day_timetable(day_data, show_current=False):
 
         str_to_end = core.datetime_to_string(seconds_to_end)
 
-    day_timetable = '....:::: <b>\U0001F4CB {}</b> <i>{}</i> ::::....\n\n'.format(day_data['day'], day_data['date'])
+    if str(user_id) in ('204560928', '437220616',):
+        emoji = ('\U0001f31d', '\U0001F41F', '\U0001F41D', '\U0001F422', '\U0001F42C', '\U0001F43C', '\U0001F525',
+                 '\U0001F537', '\U0001F608', '\U0001F31A', '\U0001F680', '\U0001F697', '\U0001F346', '\U0001F340',
+                 '\U0001F33A', '\U0001F388', '\U0001F365', '\U0001F33F')
+
+        random_emoji_header = random.choice(emoji)
+        day_timetable = '....:::: <b>{} {}</b> <i>{}</i> ::::....\n\n'.format(random_emoji_header, day_data['day'], day_data['date'])
+    else:
+        day_timetable = '....:::: <b>\U0001F4CB {}</b> <i>{}</i> ::::....\n\n'.format(day_data['day'], day_data['date'])
 
     lessons = day_data['lessons']
 
@@ -389,7 +396,7 @@ def week_schedule_handler(call_back):
 
     if timetable_data:
         for timetable_day in timetable_data:
-            timetable_for_week += render_day_timetable(timetable_day)
+            timetable_for_week += render_day_timetable(timetable_day, user_id=user.get_id())
 
     elif isinstance(timetable_data, list) and not len(timetable_data):
         timetable_for_week = "На тиждень пар не знайдено."
@@ -495,7 +502,7 @@ def schedule_teacher_time_handler(call_back):
 
         if timetable_data:
             timetable_for_today = '\U0001F464 Пари для <b>{}</b> на сьогодні:\n\n'.format(teacher_name)
-            timetable_for_today += render_day_timetable(timetable_data[0], show_current=True)
+            timetable_for_today += render_day_timetable(timetable_data[0], show_current=True, user_id=user.get_id())
         else:
             timetable_for_today = 'На сьогодні пар у <b>{}</b> не знайдено.'.format(teacher_name)
 
@@ -510,7 +517,7 @@ def schedule_teacher_time_handler(call_back):
 
         if timetable_data:
             timetable_for_tomorrow = '\U0001F464 Пари для <b>{}</b> на завтра:\n\n'.format(teacher_name)
-            timetable_for_tomorrow += render_day_timetable(timetable_data[0])
+            timetable_for_tomorrow += render_day_timetable(timetable_data[0], user_id=user.get_id())
 
         elif isinstance(timetable_data, list) and not len(timetable_data):
             timetable_for_tomorrow = 'На завтра пар для викладача <b>{}</b> не знайдено.'.format(teacher_name)
@@ -529,7 +536,7 @@ def schedule_teacher_time_handler(call_back):
         if rozklad_data:
             rozklad_for_week = '\U0001F464 Розклад на тиждень у <b>{}</b>:\n\n'.format(teacher_name)
             for rozklad_day in rozklad_data:
-                rozklad_for_week += render_day_timetable(rozklad_day)
+                rozklad_for_week += render_day_timetable(rozklad_day, user_id=user.get_id())
         else:
             rozklad_for_week = '\U0001f914 На тиждень пар у викладача <b>{}</b> не знайдено.'.format(teacher_name)
 
@@ -1058,7 +1065,7 @@ def main_menu(message):
 
         if timetable_data:
 
-            timetable_for_today = render_day_timetable(timetable_data[0], show_current=True)
+            timetable_for_today = render_day_timetable(timetable_data[0], show_current=True, user_id=user.get_id())
             bot.send_message(user.get_id(), timetable_for_today, parse_mode='HTML', reply_markup=keyboard)
 
         elif isinstance(timetable_data, list) and not len(timetable_data):
@@ -1074,7 +1081,7 @@ def main_menu(message):
         timetable_data = get_timetable(group=user_group, sdate=tom_day, edate=tom_day, user_id=user.get_id())
 
         if timetable_data:
-            timetable_for_tomorrow = render_day_timetable(timetable_data[0])
+            timetable_for_tomorrow = render_day_timetable(timetable_data[0], user_id=user.get_id())
             bot.send_message(user.get_id(), timetable_for_tomorrow, parse_mode='HTML', reply_markup=keyboard)
 
         elif isinstance(timetable_data, list) and not len(timetable_data):
@@ -1098,7 +1105,7 @@ def main_menu(message):
 
             if timetable_data:
                 for timetable_day in timetable_data:
-                    timetable_for_week += render_day_timetable(timetable_day)
+                    timetable_for_week += render_day_timetable(timetable_day, user_id=user.get_id())
 
                 bot.send_message(text=timetable_for_week[:4090], chat_id=user.get_id(),
                                  reply_markup=keyboard, parse_mode="HTML")
@@ -1210,21 +1217,6 @@ def main_menu(message):
 
         bot.register_next_step_handler(sent, process_menu)
 
-    elif request == KEYBOARD['WEATHER']:
-
-        try:
-
-            weather_manager = WeatherManager()
-            weather_manager.get_forecast()
-
-            with open(os.path.join(settings.BASE_DIR, 'forecast.txt'), 'r', encoding="utf-8") as forecast_file:
-                forecast = forecast_file.read()
-
-            bot.send_message(message.chat.id, forecast, reply_markup=keyboard, parse_mode='HTML')
-
-        except Exception:
-            bot.send_message(message.chat.id, 'Погоду не завантажено.', reply_markup=keyboard, parse_mode='HTML')
-
     elif request == KEYBOARD['FOR_A_TEACHER']:
 
         user_saved_teachers = core.Teachers.get_user_saved_teachers(user.get_id())
@@ -1253,7 +1245,7 @@ def main_menu(message):
         timetable_data = get_timetable(group=user_group, edate=date, sdate=date, user_id=user.get_id())
 
         if timetable_data:
-            timetable_for_date = render_day_timetable(timetable_data[0])
+            timetable_for_date = render_day_timetable(timetable_data[0], user_id=user.get_id())
 
         elif isinstance(timetable_data, list) and not len(timetable_data):
             msg = 'Щоб подивитися розклад на конкретний день, введи дату в такому форматі:' \
@@ -1277,7 +1269,7 @@ def main_menu(message):
 
         if timetable_data:
             for timetable_day in timetable_data:
-                timetable_for_days += render_day_timetable(timetable_day)
+                timetable_for_days += render_day_timetable(timetable_day, user_id=user.get_id())
 
         elif isinstance(timetable_data, list) and not len(timetable_data):
             msg = 'Щоб подивитися розклад на конкретний день, введи дату в такому форматі:' \
@@ -1296,7 +1288,7 @@ def main_menu(message):
         timetable_data = get_timetable(group=user_group, edate=date, sdate=date, user_id=user.get_id())
 
         if timetable_data:
-            timetable_for_date = render_day_timetable(timetable_data[0])
+            timetable_for_date = render_day_timetable(timetable_data[0], user_id=user.get_id())
         elif isinstance(timetable_data, list) and not len(timetable_data):
             msg = 'Щоб подивитися розклад на конкретний день, введи дату в такому форматі:' \
                   '\n<b>05.03</b> або <b>5.3</b>\nПо кільком дням: \n<b>5.03-15.03</b>\n' \
@@ -1317,7 +1309,7 @@ def main_menu(message):
 
         if timetable_data:
             for timetable_day in timetable_data:
-                timetable_for_days += render_day_timetable(timetable_day)
+                timetable_for_days += render_day_timetable(timetable_day, user_id=user.get_id())
 
         elif isinstance(timetable_data, list) and not len(timetable_data):
             msg = 'Щоб подивитися розклад на конкретний день, введи дату в такому форматі:' \
