@@ -132,7 +132,6 @@ class User:
                 'first_name': user[2],
                 'last_name': user[3] or '-',
                 'group': user[4],
-                'last_teacher': user[5] or '-',
                 'register_date': user[6],
                 'last_use_date': user[7],
                 'requests_count': user[8],

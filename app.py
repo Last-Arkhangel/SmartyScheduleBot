@@ -971,6 +971,7 @@ def admin_user_statistics(user_id, msg=''):
     data = {
         'user': core.User.get_userinfo_by_id(user_id),
         'actions': core.MetricsManager.get_stats_by_user_id(user_id),
+        'saved_teachers': core.Teachers.get_user_saved_teachers(user_id),
         'message': msg
     }
 
