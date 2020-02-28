@@ -41,7 +41,7 @@
         <br>
         <hr>
         <div class="row">
-            <div class="col-md-6 col-sm-12">
+            <div class="col-md-4 col-sm-12">
                 <h4>Топ {{ data.top_groups_by_users|length }} груп по студентам</h4>
                 <table class="table table-bordered">
                     <thead>
@@ -60,7 +60,7 @@
                     </tbody>
                 </table>
             </div>
-            <div class="col-md-6 col-sm-12">
+            <div class="col-md-4 col-sm-12">
                 <h4>Топ {{ data.top_groups_by_requests|length }} груп по запитам</h4>
                 <table class="table table-bordered">
                     <thead>
@@ -79,6 +79,26 @@
                     </tbody>
                 </table>
             </div>
+            <div class="col-md-4 col-sm-12">
+                <h4>Топ {{ data.top_teachers|length }} виккладачів:</h4>
+                <table class="table table-bordered">
+                    <thead>
+                    <tr>
+                        <th scope="col">Ім'я</th>
+                        <th scope="col" style="width: 100px;">Кількість збережень</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for teacher in data.top_teachers %}
+                        <tr>
+                            <td>{{ teacher[0] }}</td>
+                            <td>{{ teacher[1] }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
         </div>
 
         <br>

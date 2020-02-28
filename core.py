@@ -507,6 +507,16 @@ class Teachers:
 
         return saved_teachers
 
+    @staticmethod
+    def get_top_teachers(n=10):
+
+        query = 'SELECT teacher_name, count(*) FROM saved_teachers ' \
+                'GROUP BY teacher_name ORDER BY count(*) DESC LIMIT {}'.format(n)
+
+        groups = DBManager.execute_query(query)
+
+        return groups
+
 
 def update_all_groups():
 
