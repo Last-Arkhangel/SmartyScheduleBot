@@ -513,7 +513,7 @@ class Teachers:
         query = 'SELECT teacher_name, count(*) FROM saved_teachers ' \
                 'GROUP BY teacher_name ORDER BY count(*) DESC LIMIT {}'.format(n)
 
-        groups = DBManager.execute_query(query)
+        groups = DBManager.execute_query(query) or []
 
         return groups
 

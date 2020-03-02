@@ -1240,7 +1240,8 @@ def main_menu(message):
                 telebot.types.InlineKeyboardButton('\U0001F50D Ввести прізвище', callback_data='Ввести прізвище')
             )
 
-            bot.send_message(user.get_id(), 'Введи прізвище викладача', reply_markup=last_teachers_kb)
+            msg = 'Вибери викладача із списку або натисни \U0001F50D Ввести прізвище'
+            bot.send_message(user.get_id(), msg, reply_markup=last_teachers_kb)
 
     elif re.search(r'^(\d{1,2})\.(\d{1,2})$', request):
 
@@ -1357,6 +1358,7 @@ def main():
     core.Cache.create_cache_table_if_not_exists()
     core.MetricsManager.create_metrics_table_if_not_exists()
     core.AdService.create_ad_service_table_if_not_exists()
+    core.Teachers.create_saved_teachers_table_if_not_exists()
 
     bot.delete_webhook()
 
