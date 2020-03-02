@@ -492,9 +492,6 @@ def schedule_teacher_time_handler(call_back):
     user = core.User(call_back.message.chat)
     time_type, teacher_name = call_back.data.split(':')
 
-    # TODO grep it in log later. This should save time request type
-    core.log(msg='{} дивиться розклад у {} x-code на {}'.format(user.get_id(), teacher_name, time_type))
-
     if time_type == 'T_S':  # Today
 
         today = datetime.date.today().strftime('%d.%m.%Y')
