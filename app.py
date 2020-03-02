@@ -1007,11 +1007,8 @@ def index():
     if not session.get('login'):
         return admin_login()
 
-    core.User.create_user_table_if_not_exists()
-    core.MetricsManager.create_metrics_table_if_not_exists()
-    core.Cache.create_cache_table_if_not_exists()
-    core.AdService.create_ad_service_table_if_not_exists()
-    core.Teachers.create_saved_teachers_table_if_not_exists()
+    core.DBManager.create_db_tables()
+
     bot.delete_webhook()
     bot.set_webhook(settings.WEBHOOK_URL + settings.WEBHOOK_PATH, max_connections=1)
     bot.send_message('204560928', 'Запуск через /fl/init')
@@ -1351,11 +1348,7 @@ def main_menu(message):
 
 def main():
 
-    core.User.create_user_table_if_not_exists()
-    core.Cache.create_cache_table_if_not_exists()
-    core.MetricsManager.create_metrics_table_if_not_exists()
-    core.AdService.create_ad_service_table_if_not_exists()
-    core.Teachers.create_saved_teachers_table_if_not_exists()
+    core.DBManager.create_db_tables()
 
     bot.delete_webhook()
 

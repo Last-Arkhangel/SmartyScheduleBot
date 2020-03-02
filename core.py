@@ -142,8 +142,8 @@ class User:
 
 class DBManager:
 
-    @classmethod
-    def execute_query(cls, query, *args):  # returns result or true if success, or false when something go wrong
+    @staticmethod
+    def execute_query(query, *args):  # returns result or true if success, or false when something go wrong
 
         try:
             connection = sqlite3.connect(os.path.join(settings.BASE_DIR, settings.DATABASE), check_same_thread=False)
@@ -164,6 +164,14 @@ class DBManager:
             log(msg='Помилка запиту: {}\n{}'.format(str(ex), query), is_error=True)
             return -1
 
+    @staticmethod
+    def create_db_tables():
+
+        User.create_user_table_if_not_exists()
+        MetricsManager.create_metrics_table_if_not_exists()
+        Cache.create_cache_table_if_not_exists()
+        AdService.create_ad_service_table_if_not_exists()
+        Teachers.create_saved_teachers_table_if_not_exists()
 
 def log(chat=None, msg='', is_error=False):
 
