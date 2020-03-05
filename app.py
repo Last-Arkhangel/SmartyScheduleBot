@@ -436,11 +436,9 @@ def bot_send_message_and_post_check_group(chat_id='', text='', user_group='', pa
                 'тому перевір правильність вводу.'.format(user_group)
 
         if possible_groups:
-            text += '\n<b>Можливі варіанти:</b>\n'
-            for possible_group in possible_groups:
-                text += '{}\n'.format(possible_group.get('group'))
+            text += '\n\n<b>Можливі варіанти:</b>\n' + '\n'.join(possible_groups)
 
-        text += '\nЩоб змінити групу жми {} > {}'.format(KEYBOARD['HELP'], KEYBOARD['CHANGE_GROUP'])
+        text += '\n\n\U0001f9d0 Щоб змінити групу жми: {} > {}'.format(KEYBOARD['HELP'], KEYBOARD['CHANGE_GROUP'])
 
     bot.send_message(chat_id=chat_id, text=text, parse_mode=parse_mode, reply_markup=keyboard)
 
@@ -470,13 +468,12 @@ def set_group(message):
 
         possible_groups = core.get_possible_groups(group)
         msg = 'Групу <b>{}</b> я зберіг, але її немає в базі розкладу. ' \
-              'Тому якщо розклад не буде відображатись - перевір правильність вводу \U0001f9d0\n\n' \
-              '<i>Щоб змінити групу жми: </i>{} > {}\n'.format(group, KEYBOARD['HELP'], KEYBOARD['CHANGE_GROUP'])
+              'Тому якщо розклад не буде відображатись - перевір правильність вводу \U0001f9d0'.format(group)
 
         if possible_groups:
-            msg += '<b>Можливі варіанти:</b>\n'
-            for possible_group in possible_groups:
-                msg += '{}\n'.format(possible_group.get('group'))
+            msg += '\n\n<b>Можливі варіанти:</b>\n' + '\n'.join(possible_groups)
+
+        msg += '\n\n\U0001f9d0 Щоб змінити групу жми: {} > {}'.format(KEYBOARD['HELP'], KEYBOARD['CHANGE_GROUP'])
 
     else:
         msg = '\U0001f917 Добро, буду показувати розклад для групи <b>{}</b>.'.format(group)
@@ -630,18 +627,16 @@ def show_other_group(message):
     if not core.is_group_valid(group):
 
         possible_groups = core.get_possible_groups(group)
-        msg = '\U0001f914 Групи <b>{}</b> немає в базі розкладу.\n'.format(group)
+        msg = '\U0001f914 Групи <b>{}</b> немає в базі розкладу.\n\n'.format(group)
 
         if possible_groups:
-
             msg += '<b>Можливі варіанти:</b>\n'
             groups_kb = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-
             groups_kb.row(KEYBOARD['MAIN_MENU'])
 
             for group in possible_groups:
-                msg += '{}\n'.format(group.get('group'))
-                groups_kb.row(group.get('group'))
+                msg += '{}\n'.format(group)
+                groups_kb.row(group)
 
             sent = bot.send_message(message.chat.id, msg, parse_mode='HTML', reply_markup=groups_kb)
             bot.register_next_step_handler(sent, show_other_group)
@@ -1388,7 +1383,7 @@ def main():
                     'text': ' пішло не так.\n {}'.format(str(ex))
                 }
 
-                # requests.get('https://api.telegram.org/bot{}/sendMessage'.format(settings.BOT_TOKEN), params=data)
+                requests.get('https://api.telegram.org/bot{}/sendMessage'.format(settings.BOT_TOKEN), params=data)
 
 
 if __name__ == "__main__":

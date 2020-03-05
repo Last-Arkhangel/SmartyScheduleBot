@@ -4,6 +4,8 @@ import os
 import datetime
 import json
 import requests
+import pprint
+import difflib
 
 
 class User:
@@ -585,31 +587,11 @@ def is_group_valid(user_group=''):
 
 def get_possible_groups(user_group='', variants=4):
 
-    def get_tanimoto_koef(s1, s2):
-        a, b, c = len(s1), len(s2), 0.0
-
-        for sym in s1:
-            if sym in s2:
-                c += 1
-
-        return c / (a + b - c)
-
-    possible_groups = []
-
     with open(os.path.join(settings.BASE_DIR, 'groups.txt'), 'r', encoding="utf-8") as file:
         all_groups = json.loads(file.read())
 
-    for group in all_groups:
-        tanimoto_koef = get_tanimoto_koef(user_group, group)
-        if tanimoto_koef > 0.5:
-            possible_groups.append({
-                'k': tanimoto_koef,
-                'group': group
-            })
+    return difflib.get_close_matches(user_group, all_groups, n=variants)
 
-    sorted_groups = sorted(possible_groups, key=lambda d: d['k'], reverse=True)
-
-    return sorted_groups[:variants]
 
 
 def update_all_teachers():
