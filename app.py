@@ -905,6 +905,16 @@ def last_days_statistics():
     return jsonify(data=stats)
 
 
+@app.route('/fl/admin_last_requests')
+def admin_last_requests():
+
+    offset = request.args.get('offset')
+
+    last_requests = core.MetricsManager.get_last_requests(offset)
+
+    return jsonify(last_requests)
+
+
 @app.route('/fl/last_hours_statistics')
 def last_hours_statistics():
 

@@ -453,6 +453,15 @@ class MetricsManager:
 
         return groups
 
+    @staticmethod
+    def get_last_requests(offset):
+
+        query = """SELECT request_type FROM metrics WHERE request_id > ? ORDER BY request_id"""
+
+        requests_list = DBManager.execute_query(query, (offset,)) or []
+        x = [settings.KEYBOARD.get(request[0], '-') for request in requests_list]
+
+        return x
 
 class Teachers:
 
