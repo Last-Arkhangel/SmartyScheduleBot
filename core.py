@@ -534,6 +534,12 @@ class Teachers:
 
         return groups
 
+    @staticmethod
+    def get_users_saved_teachers_count():
+
+        query = """SELECT count(*) FROM saved_teachers"""
+
+        return DBManager.execute_query(query)[0][0]
 
 def update_all_groups():
 

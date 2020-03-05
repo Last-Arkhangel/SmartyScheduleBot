@@ -780,6 +780,7 @@ def admin_metrics():
     top_groups_by_users = core.MetricsManager.get_top_groups(15)
     top_groups_by_requests = core.MetricsManager.get_top_request_groups_during_the_week(15)
     top_teachers = core.Teachers.get_top_teachers(15)
+    saved_teachers_count = core.Teachers.get_users_saved_teachers_count()
 
     try:
         forecast_update_date = os.path.getmtime(os.path.join(settings.BASE_DIR, 'groups.txt'))
@@ -805,6 +806,7 @@ def admin_metrics():
         'top_teachers': top_teachers,
         'groups_update_time': groups_update_time,
         'teachers_update_time': teachers_update_time,
+        'saved_teachers_count': saved_teachers_count,
     }
 
     return render_template('metrics.html', data=metrics_values)
