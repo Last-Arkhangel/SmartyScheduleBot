@@ -175,6 +175,7 @@ class DBManager:
         AdService.create_ad_service_table_if_not_exists()
         Teachers.create_saved_teachers_table_if_not_exists()
 
+
 def log(chat=None, msg='', is_error=False):
 
     now_time = datetime.datetime.now().strftime('%d-%m %H:%M:%S')
@@ -465,6 +466,7 @@ class MetricsManager:
 
         return x
 
+
 class Teachers:
 
     @staticmethod
@@ -542,6 +544,7 @@ class Teachers:
         query = """SELECT count(*) FROM saved_teachers"""
 
         return DBManager.execute_query(query)[0][0]
+
 
 def update_all_groups():
 
@@ -641,6 +644,17 @@ def is_teacher_valid(fullname):
         log(msg='Помилка валідації призвіща викладача: {}'.format(str(ex)))
 
     return True
+
+
+def get_teacher_fullname_by_first_symbols(name):
+
+    with open(os.path.join(settings.BASE_DIR, 'teachers.txt'), 'r', encoding='utf-8') as file:
+        all_teachers = json.loads(file.read())
+
+    for teacher in all_teachers:
+        if teacher.startswith(name):
+            return teacher
+    return ''
 
 
 class AdService:

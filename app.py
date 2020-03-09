@@ -483,13 +483,14 @@ def set_group(message):
     bot.send_message(message.chat.id, msg, reply_markup=keyboard, parse_mode='HTML')
 
 
-@bot.callback_query_handler(func=lambda call_back: call_back.data[:3] in ('T_S', 'T_Z', 'T_W'))
+@bot.callback_query_handler(func=lambda call_back: call_back.data[:2] in ('_S', '_Z', '_W'))
 def schedule_teacher_time_handler(call_back):
 
     user = core.User(call_back.message.chat)
     time_type, teacher_name = call_back.data.split(':')
+    teacher_name = core.get_teacher_fullname_by_first_symbols(teacher_name)
 
-    if time_type == 'T_S':  # Today
+    if time_type == '_S':  # Today
 
         today = datetime.date.today().strftime('%d.%m.%Y')
         timetable_data = get_timetable(teacher=teacher_name, user_id=user.get_id(), sdate=today, edate=today)
@@ -502,7 +503,7 @@ def schedule_teacher_time_handler(call_back):
 
         bot.send_message(user.get_id(), timetable_for_today, reply_markup=keyboard, parse_mode='HTML')
 
-    if time_type == 'T_Z':  # Tomorrow
+    if time_type == '_Z':  # Tomorrow
 
         tomorrow = datetime.date.today() + datetime.timedelta(days=1)
         tom_day = tomorrow.strftime('%d.%m.%Y')
@@ -513,12 +514,12 @@ def schedule_teacher_time_handler(call_back):
             timetable_for_tomorrow = '\U0001F464 Пари для <b>{}</b> на завтра:\n\n'.format(teacher_name)
             timetable_for_tomorrow += render_day_timetable(timetable_data[0], user_id=user.get_id())
 
-        elif isinstance(timetable_data, list) and not len(timetable_data):
+        else:
             timetable_for_tomorrow = 'На завтра пар для викладача <b>{}</b> не знайдено.'.format(teacher_name)
 
         bot.send_message(user.get_id(), timetable_for_tomorrow, parse_mode='HTML', reply_markup=keyboard)
 
-    if time_type == 'T_W':  # Week
+    if time_type == '_W':  # Week
 
         in_week = datetime.date.today() + datetime.timedelta(days=7)
 
@@ -538,7 +539,9 @@ def schedule_teacher_time_handler(call_back):
 
     bot.delete_message(chat_id=user.get_id(), message_id=call_back.message.message_id)
 
-@bot.callback_query_handler(func=lambda call_back: core.is_teacher_valid(call_back.data) or 'Ввести прізвище')
+
+@bot.callback_query_handler(func=lambda call_back: call_back.data == 'Ввести прізвище'
+                                                   or core.is_teacher_valid(core.get_teacher_fullname_by_first_symbols(call_back.data)))
 def last_teacher_handler(call_back):
 
     user = core.User(call_back.message.chat)
@@ -559,16 +562,16 @@ def last_teacher_handler(call_back):
 
 def select_time_to_show_teachers_schedule(chat_id, teacher_name):
 
-
+    teacher_name = core.get_teacher_fullname_by_first_symbols(teacher_name)
     core.Teachers.add_teacher_to_user(chat_id, teacher_name)
 
     select_time_to_show_keyboard = telebot.types.InlineKeyboardMarkup()
     select_time_to_show_keyboard.row(
-        telebot.types.InlineKeyboardButton(KEYBOARD['TODAY'], callback_data='{}:{}'.format('T_S', teacher_name)),
-        telebot.types.InlineKeyboardButton(KEYBOARD['TOMORROW'], callback_data='{}:{}'.format('T_Z', teacher_name))
+        telebot.types.InlineKeyboardButton(KEYBOARD['TODAY'], callback_data='{}:{}'.format('_S', teacher_name[:28])),
+        telebot.types.InlineKeyboardButton(KEYBOARD['TOMORROW'], callback_data='{}:{}'.format('_Z', teacher_name[:28]))
     )
     select_time_to_show_keyboard.row(
-        telebot.types.InlineKeyboardButton(KEYBOARD['FOR_A_WEEK'], callback_data='{}:{}'.format('T_W', teacher_name)),
+        telebot.types.InlineKeyboardButton(KEYBOARD['FOR_A_WEEK'], callback_data='{}:{}'.format('_W', teacher_name[:28])),
     )
 
     msg = 'На коли показати розклад для <b>{}</b>?'.format(teacher_name)
@@ -605,7 +608,7 @@ def select_teacher_by_second_name(message):
         teachers_keyboard = telebot.types.InlineKeyboardMarkup()
         for teacher in possible_teaches:
             teachers_keyboard.row(
-                telebot.types.InlineKeyboardButton('\U0001F464 ' + teacher, callback_data=teacher),
+                telebot.types.InlineKeyboardButton('\U0001F464 ' + teacher, callback_data=teacher[:30]),
             )
 
         bot.send_message(user.get_id(), 'Вибери викладача:', reply_markup=teachers_keyboard)
@@ -1238,7 +1241,7 @@ def main_menu(message):
             last_teachers_kb = telebot.types.InlineKeyboardMarkup()
             for teacher in user_saved_teachers:
                 last_teachers_kb.row(
-                    telebot.types.InlineKeyboardButton('\U0001F464 ' + teacher, callback_data=teacher),
+                    telebot.types.InlineKeyboardButton('\U0001F464 ' + teacher, callback_data=teacher[:30]),
                 )
 
             last_teachers_kb.row(
