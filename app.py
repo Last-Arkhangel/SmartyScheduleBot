@@ -578,8 +578,11 @@ def select_time_to_show_teachers_schedule(chat_id, teacher_name):
 
 def select_teacher_by_second_name(message):
 
-    core.log(message.chat, '> (по викладачу) {}'.format(message.text))
-    tchrs = []
+    requested_teacher_lastname = message.text.upper().split()[0]
+    user = core.User(message.chat)
+
+    core.log(message.chat, '> (по викладачу) {}'.format(requested_teacher_lastname.capitalize()))
+    possible_teaches = []
 
     try:
         with open(os.path.join(settings.BASE_DIR, 'teachers.txt'), 'r', encoding="utf-8") as file:
@@ -589,29 +592,30 @@ def select_teacher_by_second_name(message):
         core.log(msg='Помилка із файлом викладачів: {}\n'.format(str(ex)), is_error=True)
         return
 
+    possible_teacher = core.get_possible_teacher_by_lastname(requested_teacher_lastname)
+
     for teacher in all_teachers:
-        if teacher.split()[0].upper() == message.text.upper().split()[0]:
-            tchrs.append(teacher)
+        if teacher.split()[0].upper() == possible_teacher:
+            possible_teaches.append(teacher)
 
-    if not tchrs:
-        msg = 'Не можу знайти викладача з прізвищем <b>{}</b>. Якщо при вводі була допущена помилка ' \
-              '- знову натисни в меню кнопку "{}" і введи заново.'.format(message.text, KEYBOARD['FOR_A_TEACHER'])
+    if len(possible_teaches) == 1:
+        select_time_to_show_teachers_schedule(user.get_id(), possible_teaches[0])
 
-        bot.send_message(message.chat.id, msg, reply_markup=keyboard, parse_mode='HTML')
-        return
-
-    if len(tchrs) == 1:
-        select_time_to_show_teachers_schedule(message.chat.id, tchrs[0])
-        return
-
-    if len(tchrs) > 1:
+    elif len(possible_teaches) > 1:
         teachers_keyboard = telebot.types.InlineKeyboardMarkup()
-        for teacher in tchrs:
+        for teacher in possible_teaches:
             teachers_keyboard.row(
                 telebot.types.InlineKeyboardButton('\U0001F464 ' + teacher, callback_data=teacher),
             )
 
-        bot.send_message(message.chat.id, 'Вибери викладача:', reply_markup=teachers_keyboard)
+        bot.send_message(user.get_id(), 'Вибери викладача:', reply_markup=teachers_keyboard)
+
+    else:
+        msg = 'Не можу знайти викладача з прізвищем <b>{}</b>. Якщо при вводі була допущена помилка ' \
+              '- знову натисни в меню кнопку "{}" і введи заново.'.format(requested_teacher_lastname.capitalize(),
+                                                                          KEYBOARD['FOR_A_TEACHER'])
+
+        bot.send_message(user.get_id(), msg, reply_markup=keyboard, parse_mode='HTML')
 
 
 def show_other_group(message):

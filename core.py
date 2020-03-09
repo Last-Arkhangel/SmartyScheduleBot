@@ -593,6 +593,17 @@ def get_possible_groups(user_group='', variants=4):
     return difflib.get_close_matches(user_group, all_groups, n=variants)
 
 
+def get_possible_teacher_by_lastname(last_name='', variants=1):
+
+    with open(os.path.join(settings.BASE_DIR, 'teachers.txt'), 'r', encoding="utf-8") as file:
+        all_teachers_fullnames = json.loads(file.read())
+
+    all_teachers_lastnames = [teacher_fullname.split()[0].upper() for teacher_fullname in all_teachers_fullnames]
+
+    possible_lastname_teacher = difflib.get_close_matches(last_name, all_teachers_lastnames, n=variants)
+
+    return possible_lastname_teacher[0] if possible_lastname_teacher else ''
+
 
 def update_all_teachers():
 
