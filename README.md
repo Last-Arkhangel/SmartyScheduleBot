@@ -8,6 +8,26 @@ Telegram timetable bot, for Zhytomyr Ivan Franko State University students. It u
 1. Add **@ZDU_bot** to your Telegram contacts.
 2. Use [this](https://t.me/zdu_bot) link
 
+### How to run locally:
+```shell script
+git clone https://github.com/0xVK/SmartyScheduleBot.git
+
+cd SmartyScheduleBot 
+
+python3 -m venv VENV
+
+source VENV/bin/activate
+
+pip install -r requirements.txt
+
+!! open file settings.py and set your BOT_TOKEN value
+
+python app.py # to run bot
+!! or 
+python app.py web # to run web
+```
+
+
 ### Bot features:
 - Today/tomorrow/all week schedule.
 - Schedule by date.
@@ -18,5 +38,5 @@ Telegram timetable bot, for Zhytomyr Ivan Franko State University students. It u
 - Schedule caching system. Requests are cached to increase speed. It saves about 35% requests to timetable server.
 
 ### Screenshots
-![SmartySBot](https://i.imgur.com/gP0Qb3M.jpg)
-![SmartySBot](https://i.imgur.com/6FMghrH.jpg)
+![SmartySBot](https://i.imgur.com/a03uins.jpg)
+![SmartySBot](https://i.imgur.com/PBwE2vr.jpg)
