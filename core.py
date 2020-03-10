@@ -632,7 +632,7 @@ def update_all_teachers():
 
 def is_teacher_valid(fullname):
 
-    fullname = fullname.title().strip()
+    fullname = fullname.strip()
 
     try:
         with open(os.path.join(settings.BASE_DIR, 'teachers.txt'), 'r', encoding='utf-8') as file:
