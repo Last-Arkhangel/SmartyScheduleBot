@@ -1068,7 +1068,7 @@ def main_menu(message):
 
     core.log(message.chat, '> {}'.format(message.text))
 
-    if request == KEYBOARD['TODAY']:  # Today
+    if request == KEYBOARD['TODAY'] or request == '\U0001F4D7 Сьогодні':  # Today
 
         today = datetime.date.today().strftime('%d.%m.%Y')
 
@@ -1387,7 +1387,7 @@ def main():
             for admin in settings.ADMINS_ID:
                 data = {
                     'chat_id': admin,
-                    'text': ' пішло не так.\n {}'.format(str(ex))
+                    'text': 'Щось пішло не так.\n {}'.format(str(ex))
                 }
 
                 requests.get('https://api.telegram.org/bot{}/sendMessage'.format(settings.BOT_TOKEN), params=data)
