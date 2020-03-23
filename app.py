@@ -1282,6 +1282,9 @@ def main_menu(message):
         if timetable_data:
             for timetable_day in timetable_data:
                 timetable_for_days += render_day_timetable(timetable_day, user_id=user.get_id())
+                if len(timetable_for_days) > 4000:
+                    timetable_for_days += '\n\U00002139 Досягнуто ліміт по довжині повідомлення. Введи менший проміжок часу.'
+                    break
 
         elif isinstance(timetable_data, list) and not len(timetable_data):
             msg = 'Щоб подивитися розклад на конкретний день, введи дату в такому форматі:' \
@@ -1292,7 +1295,7 @@ def main_menu(message):
                                                                                                         user_group,
                                                                                                         msg)
 
-        bot.send_message(user.get_id(), timetable_for_days[:4090], parse_mode='HTML', reply_markup=keyboard)
+        bot.send_message(user.get_id(), timetable_for_days, parse_mode='HTML', reply_markup=keyboard)
 
     elif re.search(r'^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$', request):
 
@@ -1322,6 +1325,9 @@ def main_menu(message):
         if timetable_data:
             for timetable_day in timetable_data:
                 timetable_for_days += render_day_timetable(timetable_day, user_id=user.get_id())
+                if len(timetable_for_days) > 4000:
+                    timetable_for_days += '\n\U00002139 Досягнуто ліміт по довжині повідомлення. Введи менший проміжок часу.'
+                    break
 
         elif isinstance(timetable_data, list) and not len(timetable_data):
             msg = 'Щоб подивитися розклад на конкретний день, введи дату в такому форматі:' \
@@ -1332,7 +1338,7 @@ def main_menu(message):
                                                                                                         user_group,
                                                                                                         msg)
 
-        bot.send_message(user.get_id(), timetable_for_days[:4090], parse_mode='HTML', reply_markup=keyboard)
+        bot.send_message(user.get_id(), timetable_for_days, parse_mode='HTML', reply_markup=keyboard)
 
     elif any(map(str.isdigit, request)):
 
