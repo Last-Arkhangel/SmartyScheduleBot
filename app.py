@@ -405,7 +405,7 @@ def week_schedule_handler(call_back):
         return
 
     bot.delete_message(chat_id=user.get_id(), message_id=call_back.message.message_id)
-    bot.send_message(text=timetable_for_week[:4090], chat_id=user.get_id(),
+    bot.send_message(text=timetable_for_week, chat_id=user.get_id(),
                      parse_mode="HTML", reply_markup=keyboard)
 
 
@@ -667,7 +667,7 @@ def show_other_group(message):
     else:
         return
 
-    bot.send_message(message.chat.id, timetable_for_week[:4090], parse_mode='HTML', reply_markup=keyboard)
+    bot.send_message(message.chat.id, timetable_for_week, parse_mode='HTML', reply_markup=keyboard)
 
 
 def add_ad(message):
@@ -1118,7 +1118,7 @@ def main_menu(message):
                 for timetable_day in timetable_data:
                     timetable_for_week += render_day_timetable(timetable_day, user_id=user.get_id())
 
-                bot.send_message(text=timetable_for_week[:4090], chat_id=user.get_id(),
+                bot.send_message(text=timetable_for_week, chat_id=user.get_id(),
                                  reply_markup=keyboard, parse_mode="HTML")
                 return
 
