@@ -71,7 +71,7 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
                 return json.loads(cached_timetable[0][1])
 
         core.log(msg='Помилка з\'єднання із сайтом Деканату\n', is_error=True)
-        bot.send_message(user_id, 'Помилка з\'єднання із сайтом Деканату. Спробуй пізніше.', reply_markup=keyboard)
+        bot.send_message(user_id, '\U00002139 На сайті деканату проводяться технічні роботи. Спробуй пізніше.', reply_markup=keyboard)
         return False
 
     parsed_page = BeautifulSoup(page.content, 'html5lib')
@@ -471,7 +471,7 @@ def set_group(message):
 
         possible_groups = core.get_possible_groups(group)
         msg = 'Групу <b>{}</b> я зберіг, але її немає в базі розкладу. ' \
-              'Тому якщо розклад не буде відображатись - перевір правильність вводу \U0001f9d0'.format(group)
+              'Тому якщо розклад не буде відображатись - перевір правильність вводу'.format(group)
 
         if possible_groups:
             msg += '\n\n<b>Можливі варіанти:</b>\n' + '\n'.join(possible_groups)
