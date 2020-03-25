@@ -52,6 +52,9 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
 
     try:
         page = requests.post(settings.TIMETABLE_URL, post_data, headers=http_headers, timeout=40)
+        if page.status_code != 200:
+            bot.send_message('204560928', 'Помилка з\'єднання із сайтом Деканату.', reply_markup=keyboard)
+            raise ConnectionError
     except Exception as ex:  # Connection error to Dekanat site
 
         if settings.USE_CACHE:
