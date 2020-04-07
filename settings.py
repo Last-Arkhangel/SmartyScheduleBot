@@ -31,6 +31,9 @@ WEBHOOK_PATH = '/fl/'
 # Timetable URL
 TIMETABLE_URL = 'https://dekanat.zu.edu.ua/cgi-bin/timetable.cgi'
 
+# Export URL
+API_LINK = 'https://dekanat.zu.edu.ua/cgi-bin/timetable_export.cgi'
+
 # Http user agent sends to requests
 HTTP_USER_AGENT = 'Telegram-SmartySBot'
 

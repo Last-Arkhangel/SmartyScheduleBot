@@ -13,6 +13,7 @@ import json
 import schedule_updater
 import random
 import hashlib
+import xmltodict
 from settings import KEYBOARD
 from flask import Flask, request, render_template, jsonify, session
 
@@ -29,6 +30,103 @@ emoji_numbers = ['0⃣', '1⃣', '2⃣', '3⃣', '4⃣', '5⃣', '6⃣', '7⃣',
 
 
 def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=None):
+
+    try:
+
+        def get_teachers_last_name_and_initials(full_name):
+
+            if len(full_name.split()) == 3:
+                last_name, first_name, third_name = full_name.split()
+
+                return f'{last_name} {first_name[0]}.{third_name[0]}.'
+
+        def get_valid_case_group(group):
+
+            with open(os.path.join(settings.BASE_DIR, 'valid_case_groups.txt'), 'r', encoding="utf-8") as file:
+                all_groups = json.loads(file.read())
+
+            for possible_group in all_groups:
+                if group.lower() == possible_group.lower():
+                    return possible_group
+
+        group = get_valid_case_group(group)
+
+        request_params = {
+            'req_type': 'rozklad',
+            'dep_name': '',
+            'OBJ_ID': '',
+            # 'ros_text': 'separated',
+            'ros_text': 'united',
+            'begin_date': sdate,
+            'end_date': edate,
+            'req_format': 'xml',
+            'coding_mode': 'UTF8',
+            'bs': 'ok',
+            'show_empty': 'no',
+        }
+
+        if group:
+            request_params['req_mode'] = 'group'
+            request_params['OBJ_name'] = group.encode('windows-1251')
+        else:
+            request_params['req_mode'] = 'teacher'
+            teacher = get_teachers_last_name_and_initials(teacher)
+            request_params['OBJ_name'] = teacher.encode('windows-1251')
+
+        response = requests.get(settings.API_LINK, params=request_params)
+
+        timetable = json.loads(json.dumps(xmltodict.parse(response.text), ensure_ascii=False))
+
+        if not timetable.get('psrozklad_export').get('roz_items'):
+            return []
+
+        d = {}
+
+        def get_day_name_by_date(str_date):
+
+            day, month, year = map(int, str_date.split('.'))
+            date = datetime.date(year, month, day)
+
+            day_in_week_number = date.isoweekday()
+
+            day_names = ['Понеділок', 'Вівторок', 'Середа', 'Четвер', 'П\'ятниця', 'Субота', 'Неділя']
+
+            return day_names[day_in_week_number - 1]
+
+        def clear_text(text):
+
+            if text:
+                # text = text.replace('<br> ', '\n', text.count('<br>') - 1)
+                text = text.replace('<br>', '')
+
+            return text
+
+        for lesson in timetable.get('psrozklad_export').get('roz_items').get('item'):
+            d[lesson.get('date')] = {
+                'day': get_day_name_by_date(lesson.get('date')),
+                'date': lesson.get('date')[:5],
+                'lessons': [],
+            }
+
+        for lesson in timetable.get('psrozklad_export').get('roz_items').get('item'):
+            d[lesson.get('date')].get('lessons').append(
+                clear_text(lesson.get('lesson_description'))
+            )
+
+        all_days_lessons = []
+
+        for day in d.keys():
+            all_days_lessons.append(d[day])
+
+    except Exception as ex:
+        core.log(msg='Помилка при відправленні запиту: {}\n.'.format(str(ex)), is_error=True)
+        bot.send_message('204560928', f'Помилка {ex},\n\n {user_id}', reply_markup=keyboard)
+        return []
+
+    return all_days_lessons
+
+
+def get_timetable_old(faculty='', teacher='', group='', sdate='', edate='', user_id=None):
 
     http_headers = {
             'User-Agent': settings.HTTP_USER_AGENT,
@@ -1399,7 +1497,7 @@ def main():
                     'text': 'Щось пішло не так.\n {}'.format(str(ex))
                 }
 
-                requests.get('https://api.telegram.org/bot{}/sendMessage'.format(settings.BOT_TOKEN), params=data)
+                # requests.get('https://api.telegram.org/bot{}/sendMessage'.format(settings.BOT_TOKEN), params=data)
 
 
 if __name__ == "__main__":
