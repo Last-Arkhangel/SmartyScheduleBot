@@ -888,24 +888,18 @@ def admin_login():
     req_ip = request.remote_addr
     req_agent = request.user_agent
 
-    data = {
-        'parse_mode': 'HTML',
-        'chat_id': '204560928',
-    }
-
     if request.method == 'POST' and request.form.get('password') == settings.ADMIN_PASSWORD:
         session['login'] = True
-
-        data['text'] = 'Авторизація в панелі адміністратора.\n<b>IP: </b>{}\n<b>UA: </b>{}'.format(req_ip, req_agent)
-        requests.get('https://api.telegram.org/bot{}/sendMessage'.format(settings.BOT_TOKEN), params=data)
-
+        msg = f'Авторизація в панелі адміністратора.\n<b>IP: </b>{req_ip}\n<b>UA: </b>{req_agent}'
+        bot.send_message('204560928', msg, parse_mode='HTML')
         return admin_metrics()
 
     else:
 
-        data['text'] = 'Неправильний пароль під час авторизації в панелі адміністратора.\n' \
-                       '<b>IP: </b>{}\n<b>UA: </b>{}'.format(req_ip, req_agent)
-        requests.get('https://api.telegram.org/bot{}/sendMessage'.format(settings.BOT_TOKEN), params=data)
+        msg = f'Неправильний пароль під час авторизації в панелі адміністратора.\n' \
+              f'<b>IP: </b>{req_ip}\n<b>UA: </b>{req_agent}'
+
+        bot.send_message('204560928', msg, parse_mode='HTML')
 
         return 'Неправильний пароль'
 
