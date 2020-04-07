@@ -510,6 +510,26 @@ def week_schedule_handler(call_back):
                      parse_mode="HTML", reply_markup=keyboard)
 
 
+@bot.callback_query_handler(func=lambda call_back: call_back.data.startswith('SET_GP'))
+def update_group_handler(call_back):
+
+    user = core.User(call_back.message.chat)
+    request = call_back.data
+
+    bot.delete_message(chat_id=user.get_id(), message_id=call_back.message.message_id)
+
+    _, group = request.split(':')
+
+    if group == 'INPUT':
+
+        sent = bot.send_message(user.get_id(), 'Введи назву групи')
+        bot.register_next_step_handler(sent, set_group)
+
+    else:
+        call_back.message.text = group
+        set_group(call_back.message)
+
+
 @bot.callback_query_handler(func=lambda call_back: call_back.data in (KEYBOARD['MAIN_MENU'], KEYBOARD['CHANGE_GROUP']))
 def help_menu_handler(call_back):
 
@@ -520,7 +540,30 @@ def help_menu_handler(call_back):
 
     if request == KEYBOARD['CHANGE_GROUP']:
 
-        msg = 'Твоя поточна група: <b>{}</b>\nвведи нову назву:'.format(user.get_group())
+        msg = f'Твоя поточна група: <b>{user.get_group()}</b>\nвведи нову назву:'
+
+        if not core.is_group_valid(user.get_group()):
+            possible_groups = core.get_possible_groups(user.get_group())
+
+            if possible_groups:
+
+                msg = f"Твоя поточна група: <b>{user.get_group()}</b>\n\n" \
+                      f"Вибери іншу із списку, або натисни\n {KEYBOARD['INPUT_GROUP_NAME']}:"
+
+                possible_groups_kb = telebot.types.InlineKeyboardMarkup()
+                for group in possible_groups:
+                    possible_groups_kb.row(
+                        telebot.types.InlineKeyboardButton(group, callback_data=f'SET_GP:{group}')
+                    )
+                possible_groups_kb.row(
+                    telebot.types.InlineKeyboardButton(KEYBOARD['INPUT_GROUP_NAME'], callback_data=f'SET_GP:INPUT')
+                )
+                possible_groups_kb.row(
+                    telebot.types.InlineKeyboardButton(KEYBOARD['MAIN_MENU'], callback_data=KEYBOARD['MAIN_MENU'])
+                )
+
+                bot.send_message(user.get_id(), msg, parse_mode='HTML', reply_markup=possible_groups_kb)
+                return
 
         sent = bot.send_message(user.get_id(), msg, parse_mode='HTML')
         bot.register_next_step_handler(sent, set_group)
@@ -531,17 +574,24 @@ def help_menu_handler(call_back):
 
 def bot_send_message_and_post_check_group(chat_id='', text='', user_group='', parse_mode='HTML'):
 
+    bot.send_message(chat_id=chat_id, text=text, parse_mode=parse_mode, reply_markup=keyboard)
+
     if not core.is_group_valid(user_group):
         possible_groups = core.get_possible_groups(user_group)
-        text += '\n\nТвоєї групи <b>{}</b> немає в базі розкладу, ' \
-                'тому перевір правильність вводу.'.format(user_group)
+        text = '\n\nТвоєї групи <b>{}</b> немає в базі розкладу, ' \
+            'тому перевір правильність вводу.'.format(user_group)
 
         if possible_groups:
             text += '\n\n<b>Можливі варіанти:</b>\n' + '\n'.join(possible_groups)
 
-        text += '\n\n\U0001f9d0 Щоб змінити групу жми: {} > {}'.format(KEYBOARD['HELP'], KEYBOARD['CHANGE_GROUP'])
+        # text += '\n\n\U0001f9d0 Щоб змінити групу жми: {} > {}'.format(KEYBOARD['HELP'], KEYBOARD['CHANGE_GROUP'])
 
-    bot.send_message(chat_id=chat_id, text=text, parse_mode=parse_mode, reply_markup=keyboard)
+    change_group_kb = telebot.types.InlineKeyboardMarkup()
+    change_group_kb.row(
+        telebot.types.InlineKeyboardButton(KEYBOARD['CHANGE_GROUP'], callback_data=KEYBOARD['CHANGE_GROUP'])
+    )
+
+    bot.send_message(chat_id=chat_id, text=text, parse_mode=parse_mode, reply_markup=change_group_kb)
 
 
 def set_group(message):
@@ -1250,18 +1300,6 @@ def main_menu(message):
 
         bot.send_message(user.get_id(), t, reply_markup=keyboard)
 
-    elif request == KEYBOARD['CHANGE_GROUP']:
-
-        user_group = user.get_group()
-
-        cancel_kb = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-        cancel_kb.row('Відміна')
-
-        msg = 'Твоя група: {}\nЩоб змінити введи нову групу'.format(user_group)
-
-        sent = bot.send_message(message.chat.id, msg, parse_mode='HTML', reply_markup=cancel_kb)
-        bot.register_next_step_handler(sent, set_group)
-
     elif request == KEYBOARD['HELP']:
 
         try:
@@ -1497,7 +1535,7 @@ def main():
                     'text': 'Щось пішло не так.\n {}'.format(str(ex))
                 }
 
-                # requests.get('https://api.telegram.org/bot{}/sendMessage'.format(settings.BOT_TOKEN), params=data)
+                requests.get('https://api.telegram.org/bot{}/sendMessage'.format(settings.BOT_TOKEN), params=data)
 
 
 if __name__ == "__main__":
