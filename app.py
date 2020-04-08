@@ -376,6 +376,23 @@ def get_error_logs(message):
     bot.send_message(user.get_id(), logs, reply_markup=keyboard)
 
 
+@bot.message_handler(commands=['getwebhookinfo'])
+def bot_admin_get_webhook_info(message):
+
+    user = core.User(message.chat)
+
+    if str(user.get_id()) not in settings.ADMINS_ID:
+        bot.send_message(user.get_id(), 'Немає доступу :(')
+        return
+
+    webhook = bot.get_webhook_info()
+
+    msg = f"*URL:* {webhook.url or '-'}\n*Счікує обробки:* {webhook.pending_update_count}\n" \
+          f"*Остання помилка:* {webhook.last_error_message} ({webhook.last_error_date})"
+
+    bot.send_message(user.get_id(), msg, reply_markup=keyboard, parse_mode='markdown')
+
+
 @bot.message_handler(commands=['vip'])
 def set_vip_by_id(message):
 
@@ -408,6 +425,7 @@ def bot_admin_help_cmd(message):
            '/log [N] - показати N рядків логів (по зам. 65)\n' \
            '/elog [N] - показати N рядків логів із помилками (по зам. 65)\n' \
            '/getlogfiles - завантажити файли із логами(запити і помилки)\n' \
+           '/getwebhookinfo - інформація про Веб-хук\n' \
            '/vip <user_id> <+/-> дати/забрати ВІП статус оголошень\n' \
            '/da <user_id> - видалити оголошення'
 
@@ -1161,21 +1179,38 @@ def admin_update_cache():
 
 
 @app.route('/fl/init')
-def index():
+def admin_init_redirect():
+
+    return admin_init(1)
+
+
+@app.route('/fl/init/<number>')
+def admin_init(number):
 
     if not session.get('login'):
         return admin_login()
 
     core.DBManager.create_db_tables()
 
-    bot.delete_webhook()
-    bot.set_webhook(settings.WEBHOOK_URL + settings.WEBHOOK_PATH, max_connections=1)
-    bot.send_message('204560928', 'Запуск через /fl/init')
-    core.log(msg='Запуск через url. Веб-хук встановлено: {}.'.format(bot.get_webhook_info().url))
-    return 'ok'
+    domain = settings.WEBHOOK_DOMAINS.get(number, settings.WEBHOOK_DOMAINS['1'])
+
+    try:
+        status = bot.set_webhook(f'{domain}/fl/{settings.WEBHOOK_PATH}', max_connections=2)
+    except telebot.apihelper.ApiException as ex:
+
+        status = False
+        error_text = ex.result.json().get('description')
+
+    if status:
+        bot.send_message('204560928', f'Запуск через /fl/init\nВебхук: {bot.get_webhook_info().url}')
+        core.log(msg='Запуск через url. Веб-хук встановлено: {}.'.format(bot.get_webhook_info().url))
+
+        return f'Успіх<br><br> Встановлено вебхук на: {bot.get_webhook_info().url}'
+    else:
+        return f'Помилка<br><br>{error_text}'
 
 
-@app.route(settings.WEBHOOK_PATH, methods=['POST'])
+@app.route(f'/fl/{settings.WEBHOOK_PATH}', methods=['POST'])
 def webhook():
 
     json_string = request.get_data().decode('utf-8')
@@ -1505,31 +1540,8 @@ def main():
 
     bot.delete_webhook()
 
-    if settings.USE_WEBHOOK:
-        try:
-            bot.set_webhook(settings.WEBHOOK_URL + settings.WEBHOOK_PATH, max_connections=1)
-            core.log(msg='Веб-хук встановлено: {}'.format(bot.get_webhook_info().url))
-
-        except Exception as ex:
-            core.log(msg='Помилка під час встановлення веб-хуку: {}\n'.format(str(ex)), is_error=True)
-
-    try:
-        core.log(msg='Запуск...')
-        bot.polling(none_stop=True, interval=settings.POLLING_INTERVAL)
-
-    except Exception as ex:
-
-        core.log(msg='Помилка під час роботи: {}\n'.format(str(ex)), is_error=True)
-        bot.stop_polling()
-
-        if settings.SEND_ERRORS_TO_ADMIN:
-            for admin in settings.ADMINS_ID:
-                data = {
-                    'chat_id': admin,
-                    'text': 'Щось пішло не так.\n {}'.format(str(ex))
-                }
-
-                requests.get('https://api.telegram.org/bot{}/sendMessage'.format(settings.BOT_TOKEN), params=data)
+    core.log(msg='Запуск...')
+    bot.polling(none_stop=True, interval=settings.POLLING_INTERVAL)
 
 
 if __name__ == "__main__":
