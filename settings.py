@@ -68,6 +68,7 @@ KEYBOARD = {
     'AD_DEL': '\U0000274C Видалити',
     'CHANGE_GROUP': '\U00002699 Зм. групу',
     'MAIN_MENU': '\U0001F519 Меню',
+    'INPUT_GROUP': '\U0000270F Ввести іншу групу',
 }
 
 lessons_time = ({

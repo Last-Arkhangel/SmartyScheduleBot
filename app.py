@@ -448,7 +448,7 @@ def start_handler(message):
         return
 
     msg = 'Хай, {} 😊. Я Бот розкладу для студентів ЖДУ ім.Івана Франка. Я можу показати твій розклад на сьогодні, ' \
-          'на завтра, по викладачу, по групі і так далі. ' \
+          'на завтра, по викладачу, по групі і так далі.\n' \
           'Для початку скажи мені свою групу (Напр. 33Бд-СОінф), ' \
           '<b>змінити ти її зможеш в пункті меню {}</b>'.format(message.chat.first_name, KEYBOARD['HELP'])
 
@@ -547,8 +547,8 @@ def help_menu_handler(call_back):
 
             if possible_groups:
 
-                msg = f"Твоя поточна група: <b>{user.get_group()}</b>\n\n" \
-                      f"Вибери іншу із списку, або натисни\n {KEYBOARD['INPUT_GROUP_NAME']}:"
+                msg = "Твоя поточна група: <b>{}</b>\n\n" \
+                      "Вибери іншу із списку, або натисни\n {}:".format(user.get_group(), KEYBOARD['INPUT_GROUP'])
 
                 possible_groups_kb = telebot.types.InlineKeyboardMarkup()
                 for group in possible_groups:
@@ -556,7 +556,7 @@ def help_menu_handler(call_back):
                         telebot.types.InlineKeyboardButton(group, callback_data=f'SET_GP:{group}')
                     )
                 possible_groups_kb.row(
-                    telebot.types.InlineKeyboardButton(KEYBOARD['INPUT_GROUP_NAME'], callback_data=f'SET_GP:INPUT')
+                    telebot.types.InlineKeyboardButton(KEYBOARD['INPUT_GROUP'], callback_data=f'SET_GP:INPUT')
                 )
                 possible_groups_kb.row(
                     telebot.types.InlineKeyboardButton(KEYBOARD['MAIN_MENU'], callback_data=KEYBOARD['MAIN_MENU'])
