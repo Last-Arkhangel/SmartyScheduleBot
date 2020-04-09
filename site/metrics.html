@@ -25,22 +25,12 @@
         </div>
         <br>
         <hr>
-        <div class="row">
-            <div class="col-md-6 col-sm-12">
-                <canvas id="requests-types-chart"></canvas>
-            </div>
-            <div class="col-md-6 col-sm-12">
-                <canvas id="requests-on-days"></canvas>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-sm-12">
-                <canvas id="requests-on-hours"></canvas>
-            </div>
-        </div>
-        <br>
-        <hr>
-        <div class="row">
+            <a class="btn btn-primary" data-toggle="collapse" href="#collapseGetTop" role="button" aria-expanded="false" aria-controls="collapseExample">
+            Топ
+        </a>
+        <div class="collapse" id="collapseGetTop">
+            <br>
+            <div class="row">
             <div class="col-md-4 col-sm-12">
                 <h4>Топ {{ data.top_groups_by_users|length }} груп по студентам</h4>
                 <table class="table table-bordered">
@@ -100,7 +90,20 @@
             </div>
 
         </div>
-
+        </div>
+        <div class="row">
+            <div class="col-md-6 col-sm-12">
+                <canvas id="requests-types-chart"></canvas>
+            </div>
+            <div class="col-md-6 col-sm-12">
+                <canvas id="requests-on-days"></canvas>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <canvas id="requests-on-hours"></canvas>
+            </div>
+        </div>
         <br>
         <hr>
         <div class="row">
@@ -116,6 +119,23 @@
                 <a class="btn btn-success" href="/fl/update_groups" role="button" target="_blank">Оновити</a>
             </div>
         </div>
+        <br>
+        <hr>
+        <br>
+        <h4>Вебхук:</h4>
+        <div class="row">
+            <div class="col-sm-6">
+                <b>Url:</b> {% if data.webhook.url %} {{ data.webhook.url }} {% else %} - {% endif %}<br>
+                <b>Очікують обробки:</b> {{ data.webhook.pending_update_count }}<br>
+            </div>
+            <div class="col-sm-6">
+                <b>Остання помилка:</b> {% if data.webhook.last_error_message %} {{ data.webhook.last_error_message }} {% else %} - {% endif %}<br>
+                {% if data.webhook.last_error_date %}({{ data.webhook.last_error_date }}){% endif %}
+            </div>
+        </div>
+        <br>
+        <a class="btn btn-outline-info" href="/fl/init/1" role="button" target="_blank">Встановити openbiblio.zu.edu.ua</a>
+        <a class="btn btn-outline-secondary" href="/fl/init/2" role="button" target="_blank">Встановити bot.zu.edu.ua</a>
 
     </div>
     <br>

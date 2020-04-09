@@ -17,7 +17,7 @@ ADMIN_PASSWORD = '<pass>'
 POLLING_INTERVAL = 2
 
 # Use cache
-USE_CACHE = True
+USE_CACHE = False
 
 # Use webhook instead polling
 USE_WEBHOOK = False
@@ -25,7 +25,7 @@ USE_WEBHOOK = False
 # Address bot running. For example https://mydomain.com
 WEBHOOK_DOMAINS = {
     '1': 'https://openbiblio.zu.edu.ua',
-    '2': 'https://another.zu.edu.ua',
+    '2': 'https://bot.zu.edu.ua',
 }
 
 # Path that telegram sends updates

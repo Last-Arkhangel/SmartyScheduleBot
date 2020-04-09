@@ -128,6 +128,8 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
 
 def get_timetable_old(faculty='', teacher='', group='', sdate='', edate='', user_id=None):
 
+    # TODO this is deprecated function
+
     http_headers = {
             'User-Agent': settings.HTTP_USER_AGENT,
             'Accept': 'text/html',
@@ -972,6 +974,7 @@ def admin_metrics():
         'groups_update_time': groups_update_time,
         'teachers_update_time': teachers_update_time,
         'saved_teachers_count': saved_teachers_count,
+        'webhook': bot.get_webhook_info(),
     }
 
     return render_template('metrics.html', data=metrics_values)
@@ -1205,7 +1208,11 @@ def admin_init(number):
         bot.send_message('204560928', f'Запуск через /fl/init\nВебхук: {bot.get_webhook_info().url}')
         core.log(msg='Запуск через url. Веб-хук встановлено: {}.'.format(bot.get_webhook_info().url))
 
-        return f'Успіх<br><br> Встановлено вебхук на: {bot.get_webhook_info().url}'
+        url = bot.get_webhook_info().url
+        url = url.replace('<', '&lt;')
+        url = url.replace('>', '&gt;')
+
+        return f'Успіх<br><br> Встановлено вебхук на: {url}'
     else:
         return f'Помилка<br><br>{error_text}'
 
