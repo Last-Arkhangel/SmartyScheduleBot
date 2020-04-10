@@ -606,12 +606,12 @@ def bot_send_message_and_post_check_group(chat_id='', text='', user_group='', pa
 
         # text += '\n\n\U0001f9d0 Щоб змінити групу жми: {} > {}'.format(KEYBOARD['HELP'], KEYBOARD['CHANGE_GROUP'])
 
-    change_group_kb = telebot.types.InlineKeyboardMarkup()
-    change_group_kb.row(
-        telebot.types.InlineKeyboardButton(KEYBOARD['CHANGE_GROUP'], callback_data=KEYBOARD['CHANGE_GROUP'])
-    )
+        change_group_kb = telebot.types.InlineKeyboardMarkup()
+        change_group_kb.row(
+            telebot.types.InlineKeyboardButton(KEYBOARD['CHANGE_GROUP'], callback_data=KEYBOARD['CHANGE_GROUP'])
+        )
 
-    bot.send_message(chat_id=chat_id, text=text, parse_mode=parse_mode, reply_markup=change_group_kb)
+        bot.send_message(chat_id=chat_id, text=text, parse_mode=parse_mode, reply_markup=change_group_kb)
 
 
 def set_group(message):
