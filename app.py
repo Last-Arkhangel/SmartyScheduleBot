@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from bs4 import BeautifulSoup
 import requests
 import telebot
 import datetime
@@ -51,6 +50,10 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
 
         group = get_valid_case_group(group)
 
+        http_headers = {
+            'User-Agent': settings.HTTP_USER_AGENT,
+        }
+
         request_params = {
             'req_type': 'rozklad',
             'dep_name': '',
@@ -73,9 +76,9 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
             teacher = get_teachers_last_name_and_initials(teacher)
             request_params['OBJ_name'] = teacher.encode('windows-1251')
 
-        response = requests.get(settings.API_LINK, params=request_params)
+        response = requests.get(settings.API_LINK, params=request_params, headers=http_headers, timeout=30)
 
-        timetable = json.loads(json.dumps(xmltodict.parse(response.text), ensure_ascii=False))
+        timetable = xmltodict.parse(response.text)
 
         if not timetable.get('psrozklad_export').get('roz_items'):
             return []
@@ -118,47 +121,18 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
         for day in d.keys():
             all_days_lessons.append(d[day])
 
+        if settings.USE_CACHE:
+            request_key = '{}{}:{}-{}'.format(group.lower(), teacher, sdate, edate)
+            _json = json.dumps(all_days_lessons, sort_keys=True, ensure_ascii=False, separators=(',', ':'), indent=2)
+            core.Cache.put_in_cache(request_key, _json)
+
     except Exception as ex:
+
         core.log(msg='Помилка при відправленні запиту: {}\n.'.format(str(ex)), is_error=True)
         bot.send_message('204560928', f'Помилка {ex},\n\n {user_id}', reply_markup=keyboard)
-        return []
-
-    return all_days_lessons
-
-
-def get_timetable_old(faculty='', teacher='', group='', sdate='', edate='', user_id=None):
-
-    # TODO this is deprecated function
-
-    http_headers = {
-            'User-Agent': settings.HTTP_USER_AGENT,
-            'Accept': 'text/html',
-    }
-
-    try:
-        post_data = {
-            'faculty': faculty,
-            'teacher': teacher.encode('windows-1251'),
-            'group': group.encode('windows-1251'),
-            'sdate': sdate,
-            'edate': edate,
-            'n': 700,
-        }
-    except Exception as ex:
-        core.log(msg='Помилка при кодуванні параметрів запиту: {}\n'.format(str(ex)), is_error=True)
-        bot.send_message(user_id, 'Помилка надсилання запиту, вкажи коректні параметри (як мінімум перевір чи '
-                                  'правильно вказана група, зробити це можна в Довідці)', reply_markup=keyboard)
-        return False
-
-    try:
-        page = requests.post(settings.TIMETABLE_URL, post_data, headers=http_headers, timeout=40)
-        if page.status_code != 200:
-            bot.send_message('204560928', 'Помилка з\'єднання із сайтом Деканату.', reply_markup=keyboard)
-            raise ConnectionError
-    except Exception as ex:  # Connection error to Dekanat site
 
         if settings.USE_CACHE:
-            request_key = '{}{} : {} > {}'.format(group.lower(), teacher, sdate, edate)
+            request_key = '{}{}:{}-{}'.format(group.lower(), teacher, sdate, edate)
             cached_timetable = core.Cache.get_from_cache(request_key)
 
             if cached_timetable:
@@ -168,22 +142,10 @@ def get_timetable_old(faculty='', teacher='', group='', sdate='', edate='', user
                     '(теоретично, його вже могли змінити)'.format(cached_timetable[0][2][11:])
                 bot.send_message(user_id, m, reply_markup=keyboard)
                 core.log(msg='Розклад видано з кешу')
+                bot.send_message('204560928', 'Розклад видано з кешу', reply_markup=keyboard)
                 return json.loads(cached_timetable[0][1])
 
-        core.log(msg='Помилка з\'єднання із сайтом Деканату\n', is_error=True)
-        bot.send_message(user_id, '\U00002139 На сайті деканату проводяться технічні роботи. Спробуй пізніше.', reply_markup=keyboard)
-        return False
-
-    parsed_page = BeautifulSoup(page.content, 'html5lib')
-    all_days_list = parsed_page.find_all('div', class_='col-md-6')[1:]
-    all_days_lessons = []
-
-    for one_day_table in all_days_list:
-        all_days_lessons.append({
-            'day': one_day_table.find('h4').find('small').text,
-            'date': one_day_table.find('h4').text[:5],
-            'lessons': [' '.join(lesson.text.split()) for lesson in one_day_table.find_all('td')[2::3]]
-        })
+        return []
 
     return all_days_lessons
 
