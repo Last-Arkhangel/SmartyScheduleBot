@@ -76,7 +76,7 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
             teacher = get_teachers_last_name_and_initials(teacher)
             request_params['OBJ_name'] = teacher.encode('windows-1251')
 
-        response = requests.get(settings.API_LINK, params=request_params, headers=http_headers, timeout=30)
+        response = requests.get(settings.API_LINK, params=request_params, headers=http_headers, timeout=45)
 
         timetable = xmltodict.parse(response.text)
 
