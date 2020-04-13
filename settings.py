@@ -17,7 +17,7 @@ ADMIN_PASSWORD = '<pass>'
 POLLING_INTERVAL = 2
 
 # Use cache
-USE_CACHE = False
+USE_CACHE = True
 
 # Use webhook instead polling
 USE_WEBHOOK = False
