@@ -122,7 +122,7 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
             all_days_lessons.append(d[day])
 
         if settings.USE_CACHE:
-            request_key = '{}{}:{}-{}'.format(group.lower(), teacher, sdate, edate)
+            request_key = '{}{}:{}-{}'.format(group, teacher, sdate, edate)
             _json = json.dumps(all_days_lessons, sort_keys=True, ensure_ascii=False, separators=(',', ':'), indent=2)
             core.Cache.put_in_cache(request_key, _json)
 
@@ -132,7 +132,7 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
         bot.send_message('204560928', f'Помилка {ex},\n\n {user_id}', reply_markup=keyboard)
 
         if settings.USE_CACHE:
-            request_key = '{}{}:{}-{}'.format(group.lower(), teacher, sdate, edate)
+            request_key = '{}{}:{}-{}'.format(group, teacher, sdate, edate)
             cached_timetable = core.Cache.get_from_cache(request_key)
 
             if cached_timetable:
