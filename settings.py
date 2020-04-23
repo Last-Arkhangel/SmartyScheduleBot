@@ -26,6 +26,7 @@ USE_WEBHOOK = False
 WEBHOOK_DOMAINS = {
     '1': 'https://openbiblio.zu.edu.ua',
     '2': 'https://bot.zu.edu.ua',
+    '3': 'https://koocherov.pythonanywhere.com',
 }
 
 # Path that telegram sends updates
