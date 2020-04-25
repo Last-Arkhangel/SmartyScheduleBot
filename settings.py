@@ -25,7 +25,7 @@ USE_WEBHOOK = False
 # Address bot running. For example https://mydomain.com
 WEBHOOK_DOMAINS = {
     '1': 'https://openbiblio.zu.edu.ua',
-    '2': 'https://bot.zu.edu.ua',
+    '2': 'https://bot.zu.edu.ua:8443',
     '3': 'https://koocherov.pythonanywhere.com',
 }
 
