@@ -1258,7 +1258,7 @@ def main_menu(message):
             bot.send_message(user.get_id(), timetable_for_today, parse_mode='HTML', reply_markup=keyboard)
 
         elif isinstance(timetable_data, list) and not len(timetable_data):
-            timetable_for_today = "На сьогодні пар не знайдено."
+            timetable_for_today = 'Сьогодні пар немає'
             bot_send_message_and_post_check_group(user.get_id(), timetable_for_today, user_group)
             return
 
@@ -1274,7 +1274,7 @@ def main_menu(message):
             bot.send_message(user.get_id(), timetable_for_tomorrow, parse_mode='HTML', reply_markup=keyboard)
 
         elif isinstance(timetable_data, list) and not len(timetable_data):
-            timetable_for_tomorrow = "На завтра пар не знайдено."
+            timetable_for_tomorrow = 'Завтра пар немає'
             bot_send_message_and_post_check_group(user.get_id(), timetable_for_tomorrow, user_group)
             return
 
@@ -1487,8 +1487,9 @@ def main_menu(message):
 
     elif any(map(str.isdigit, request)):
 
-        msg = '\U00002139 Якщо ти хочеш подивитися розклад по датам - вводь дату в такому форматі:\n\n' \
-              '<i>[ДЕНЬ.МІСЯЦЬ], наприклад</i>\n<i>15.5</i>\n<i>15.5-22.5</i>\n<i>1.1.18-10.1.18</i>'
+        msg = '\U0001F446 Якщо ти хочеш подивитися розклад по датам - вводь дату у форматі <b>ДЕНЬ.МІСЯЦЬ</b>\n' \
+              '\n  <i>наприклад:</i>\n  <i>15.5</i>\n  <i>15.5-22.5</i>\n  <i>1.1.18-10.1.18</i>\n\n' \
+              '\U0001F446 Щоб змінити групу, зайди в {}'.format(KEYBOARD['HELP'])
 
         bot.send_message(user.get_id(), msg, parse_mode='HTML', reply_markup=keyboard)
 
