@@ -1316,38 +1316,16 @@ def main_menu(message):
 
             bot.send_message(user.get_id(), 'На який тиждень?', reply_markup=week_type_keyboard)
 
-    elif request == KEYBOARD['TIMETABLE']:
-
-        t = '{} - 9:00 - 10:20\n'.format(emoji_numbers[1])
-        t += '{} - 10:30 - 11:50\n'.format(emoji_numbers[2])
-        t += '{} - 12:10 - 13:30\n'.format(emoji_numbers[3])
-        t += '{} - 13:40 - 15:00\n'.format(emoji_numbers[4])
-        t += '{} - 15:20 - 16:40 \n'.format(emoji_numbers[5])
-        t += '{} - 16:50 - 18:10 \n'.format(emoji_numbers[6])
-        t += '{} - 18:20 - 19:40 \n'.format(emoji_numbers[7])
-
-        bot.send_message(user.get_id(), t, reply_markup=keyboard)
-
     elif request == KEYBOARD['HELP']:
 
-        try:
-            forecast_update_date = os.path.getmtime(os.path.join(settings.BASE_DIR, 'forecast.txt'))
-            mod_time = datetime.datetime.fromtimestamp(forecast_update_date).strftime('%H:%M')
-
-        except Exception:
-            mod_time = '-'
-
-        t = '\U0001F552 <b>Час пар:</b>\n'
-        t += '{} - 9:00 - 10:20\n'.format(emoji_numbers[1])
-        t += '{} - 10:30 - 11:50\n'.format(emoji_numbers[2])
-        t += '{} - 12:10 - 13:30\n'.format(emoji_numbers[3])
-        t += '{} - 13:40 - 15:00\n'.format(emoji_numbers[4])
-        t += '{} - 15:20 - 16:40 \n'.format(emoji_numbers[5])
-        t += '{} - 16:50 - 18:10 \n'.format(emoji_numbers[6])
-        t += '{} - 18:20 - 19:40 \n\n'.format(emoji_numbers[7])
-
-        msg = t
-        # msg += '\U0001F4CA Статистика - /stats\n\n'
+        msg = '\U0001F552 <b>Час пар:</b>\n'
+        msg += f'{emoji_numbers[1]} - 9:00 - 10:20\n'
+        msg += f'{emoji_numbers[2]} - 10:30 - 11:50\n'
+        msg += f'{emoji_numbers[3]} - 12:10 - 13:30\n'
+        msg += f'{emoji_numbers[4]} - 13:40 - 15:00\n'
+        msg += f'{emoji_numbers[5]} - 15:20 - 16:40 \n'
+        msg += f'{emoji_numbers[6]} - 16:50 - 18:10 \n'
+        msg += f'{emoji_numbers[7]} - 18:20 - 19:40 \n\n'
 
         msg += "\U0001F4C6 <b>Для пошуку по датам:</b>\n<i>15.05</i>\n<i>15.05-22.05</i>\n<i>1.1.18-10.1.18</i>\n\n" \
                "<b>Твоя група:</b> <code>{}</code> (\U0001F465 {})\n\n" \
