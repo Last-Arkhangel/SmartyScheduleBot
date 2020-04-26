@@ -166,7 +166,7 @@ def render_day_timetable(day_data, show_current=False, user_id=''):
     now_time = datetime.datetime.now().time()
     today = datetime.datetime.now()
 
-    if show_current:
+    if show_current and settings.SHOW_TIME_TO_LESSON_END:
 
         for i, lesson in enumerate(settings.lessons_time):
             if datetime.time(*lesson['start_time']) <= now_time <= datetime.time(*lesson['end_time']):
@@ -1147,6 +1147,38 @@ def admin_user_statistics(user_id, msg=''):
 
     return render_template('user_stat.html', data=data)
 
+
+@app.route('/fl/settings', methods=['POST', 'GET'])
+def admin_settings():
+
+    # TODO done it or delete
+
+    if not session.get('login'):
+        return admin_login()
+
+    if request.method == 'GET':
+        return render_template('settings.html')
+
+    timetable = request.form.get('set_timetable')
+
+    lessons_full_time = timetable.split(';')  # Split to the single rows
+    lessons_full_time = map(lambda s: s.strip(), lessons_full_time)  # Delete \n\r in the string
+
+    lessons_time_generated = []
+
+    for lesson_time in lessons_full_time:
+        lesson_start_time = lesson_time.split('-')[0]
+        lesson_end_time = lesson_time.split('-')[1]
+        lessons_time_generated.append(
+            {
+                'start_time': [lesson_start_time.split(':')[0], lesson_start_time.split(':')[1]],  # 0 hour, 1 - minutes
+                'end_time': [lesson_end_time.split(':')[0], lesson_end_time.split(':')[1]],
+            }
+        )
+
+    print(lessons_time_generated)
+
+    return render_template('settings.html')
 
 @app.route('/fl/upd_cache_cron')
 def admin_update_cache():

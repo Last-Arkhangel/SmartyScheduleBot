@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Налаштування{% endblock %}
+
+{% block content %}
+
+    <div class="content">
+
+        <h4>Час пар</h4>
+        <form action="/fl/settings" method="post">
+        <textarea cols="10" rows="10" name="set_timetable"></textarea>
+            <br>
+            <button type="submit" class="btn btn-success">Обновити</button>
+        </form>
+    </div>
+
+{% endblock %}
