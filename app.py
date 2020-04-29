@@ -507,8 +507,7 @@ def week_schedule_handler(call_back):
         for timetable_day in timetable_data:
             timetable_for_week += render_day_timetable(timetable_day, user_id=user.get_id())
 
-            bot.send_message(text=timetable_for_week, chat_id=user.get_id(),
-                             parse_mode="HTML", reply_markup=keyboard)
+        bot.send_message(text=timetable_for_week, chat_id=user.get_id(), parse_mode="HTML", reply_markup=keyboard)
 
     elif isinstance(timetable_data, list) and not len(timetable_data):
         timetable_for_week = "На тиждень пар не знайдено."
