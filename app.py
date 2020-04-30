@@ -1550,7 +1550,7 @@ def main():
     bot.delete_webhook()
 
     core.log(msg='Запуск...')
-    bot.polling(none_stop=True, interval=settings.POLLING_INTERVAL)
+    bot.infinity_polling(interval=settings.POLLING_INTERVAL, timeout=5, none_stop=True)
 
 
 if __name__ == "__main__":
