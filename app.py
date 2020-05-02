@@ -1453,16 +1453,9 @@ def main_menu(message):
         s_date = message.text.split('-')[0] + '.' + str(datetime.date.today().year)
         e_date = message.text.split('-')[1] + '.' + str(datetime.date.today().year)
         timetable_for_days = ''
-        timetable_data = get_timetable(group=user_group, sdate=s_date, edate=e_date, user_id=user.get_id())
+        timetable_days = get_timetable(group=user_group, sdate=s_date, edate=e_date, user_id=user.get_id())
 
-        if timetable_data:
-            for timetable_day in timetable_data:
-                timetable_for_days += render_day_timetable(timetable_day, user_id=user.get_id())
-                if len(timetable_for_days) > 4000:
-                    timetable_for_days += '\n\U00002139 Досягнуто ліміт по довжині повідомлення. Введи менший проміжок часу.'
-                    break
-
-        elif isinstance(timetable_data, list) and not len(timetable_data):
+        if isinstance(timetable_days, list) and not len(timetable_days):
             msg = 'Щоб подивитися розклад на конкретний день, введи дату в такому форматі:' \
                   '\n<b>05.03</b> або <b>5.3</b>\nПо кільком дням: \n<b>5.03-15.03</b>\n' \
                   '\nДата вводиться без пробілів (день.місяць)<b> рік вводити не треба</b> '
@@ -1471,7 +1464,25 @@ def main_menu(message):
                                                                                                         user_group,
                                                                                                         msg)
 
-        bot.send_message(user.get_id(), timetable_for_days, parse_mode='HTML', reply_markup=keyboard)
+            bot.send_message(user.get_id(), timetable_for_days, parse_mode='HTML', reply_markup=keyboard)
+            return
+
+        current_number = 1
+
+        while timetable_days:
+            timetable_day = timetable_days.pop(0)
+
+            timetable_for_days += render_day_timetable(timetable_day, user_id=user.get_id())
+
+            if current_number < settings.LIMIT_OF_DAYS_PER_ONE_MESSAGE_IN_TO_DATE_TIMETABLE:
+                current_number += 1
+            else:
+                current_number = 1
+                bot.send_message(user.get_id(), timetable_for_days, parse_mode='HTML', reply_markup=keyboard)
+                timetable_for_days = ''
+
+        if timetable_for_days:
+            bot.send_message(user.get_id(), timetable_for_days, parse_mode='HTML', reply_markup=keyboard)
 
     elif re.search(r'^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$', request):
 
@@ -1496,16 +1507,9 @@ def main_menu(message):
         s_date = request.split('-')[0]
         e_date = request.split('-')[1]
         timetable_for_days = ''
-        timetable_data = get_timetable(group=user_group, sdate=s_date, edate=e_date, user_id=user.get_id())
+        timetable_days = get_timetable(group=user_group, sdate=s_date, edate=e_date, user_id=user.get_id())
 
-        if timetable_data:
-            for timetable_day in timetable_data:
-                timetable_for_days += render_day_timetable(timetable_day, user_id=user.get_id())
-                if len(timetable_for_days) > 4000:
-                    timetable_for_days += '\n\U00002139 Досягнуто ліміт по довжині повідомлення. Введи менший проміжок часу.'
-                    break
-
-        elif isinstance(timetable_data, list) and not len(timetable_data):
+        if isinstance(timetable_days, list) and not len(timetable_days):
             msg = 'Щоб подивитися розклад на конкретний день, введи дату в такому форматі:' \
                   '\n<b>05.03</b> або <b>5.3</b>\nПо кільком дням: \n<b>5.03-15.03</b>\n' \
                   '\nДата вводиться без пробілів (день.місяць)<b> рік вводити не треба</b> '
@@ -1514,7 +1518,25 @@ def main_menu(message):
                                                                                                         user_group,
                                                                                                         msg)
 
-        bot.send_message(user.get_id(), timetable_for_days, parse_mode='HTML', reply_markup=keyboard)
+            bot.send_message(user.get_id(), timetable_for_days, parse_mode='HTML', reply_markup=keyboard)
+            return
+
+        current_number = 1
+
+        while timetable_days:
+            timetable_day = timetable_days.pop(0)
+
+            timetable_for_days += render_day_timetable(timetable_day, user_id=user.get_id())
+
+            if current_number < settings.LIMIT_OF_DAYS_PER_ONE_MESSAGE_IN_TO_DATE_TIMETABLE:
+                current_number += 1
+            else:
+                current_number = 1
+                bot.send_message(user.get_id(), timetable_for_days, parse_mode='HTML', reply_markup=keyboard)
+                timetable_for_days = ''
+
+        if timetable_for_days:
+            bot.send_message(user.get_id(), timetable_for_days, parse_mode='HTML', reply_markup=keyboard)
 
     elif any(map(str.isdigit, request)):
 
