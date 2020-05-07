@@ -12,14 +12,14 @@
                 <b>Груп в системі:</b> {{ data.all_groups_count }} <br>
             </div>
             <div class="col-md-6">
-                <b>Активних за сьогодні:</b> {% if data.all_users_count %}{{ data.active_today_users_count }} (
-                {{ (data.active_today_users_count / data.all_users_count * 100)|round(1, 'floor') }}%){% else %}
+                <b>Активних за сьогодні:</b> {% if data.all_users_count %}{{ data.active_today_users_count }}
+                ({{ (data.active_today_users_count / data.all_users_count * 100)|round(1, 'floor') }}%){% else %}
                 0{% endif %}<br>
-                <b>Активних за вчора:</b> {% if data.all_users_count %}{{ data.active_yesterday_users_count }} (
-                {{ (data.active_yesterday_users_count / data.all_users_count * 100)|round(1, 'floor') }}%){% else %}
+                <b>Активних за вчора:</b> {% if data.all_users_count %}{{ data.active_yesterday_users_count }}
+                ({{ (data.active_yesterday_users_count / data.all_users_count * 100)|round(1, 'floor') }}%){% else %}
                 0{% endif %}<br>
-                <b>Активних за тиждень:</b> {% if data.all_users_count %}{{ data.active_week_users_count }} (
-                {{ (data.active_week_users_count / data.all_users_count * 100)|round(1, 'floor') }}%){% else %}
+                <b>Активних за тиждень:</b> {% if data.all_users_count %}{{ data.active_week_users_count }}
+                ({{ (data.active_week_users_count / data.all_users_count * 100)|round(1, 'floor') }}%){% else %}
                 0{% endif %}<br>
             </div>
         </div>

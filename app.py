@@ -32,6 +32,8 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
 
     try:
 
+        raw_group = group
+
         def get_teachers_last_name_and_initials(full_name):
 
             if len(full_name.split()) == 3:
@@ -48,7 +50,7 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
                 if group.lower() == possible_group.lower():
                     return possible_group
 
-        group = get_valid_case_group(group)
+        group = get_valid_case_group(raw_group)
 
         http_headers = {
             'User-Agent': settings.HTTP_USER_AGENT,
@@ -76,7 +78,7 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
             teacher = get_teachers_last_name_and_initials(teacher)
             request_params['OBJ_name'] = teacher.encode('windows-1251')
 
-        response = requests.get(settings.API_LINK, params=request_params, headers=http_headers, timeout=30)
+        response = requests.get(settings.API_LINK, params=request_params, headers=http_headers, timeout=45)
 
         timetable = xmltodict.parse(response.text)
 
@@ -122,17 +124,19 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
             all_days_lessons.append(d[day])
 
         if settings.USE_CACHE:
-            request_key = '{}{}:{}-{}'.format(group.lower(), teacher, sdate, edate)
+            request_key = '{}{}:{}-{}'.format(group, teacher, sdate, edate)
             _json = json.dumps(all_days_lessons, sort_keys=True, ensure_ascii=False, separators=(',', ':'), indent=2)
             core.Cache.put_in_cache(request_key, _json)
 
     except Exception as ex:
 
         core.log(msg='Помилка при відправленні запиту: {}\n.'.format(str(ex)), is_error=True)
-        bot.send_message('204560928', f'Помилка {ex},\n\n {user_id}', reply_markup=keyboard)
+        if settings.SEND_ERRORS_TO_ADMIN:
+            message = f'\U000026A0\n**UserID:** {user_id}\n**Group:** {group} ({raw_group})\n\n{ex}'
+            bot.send_message('204560928', message, reply_markup=keyboard, parse_mode='markdown')
 
         if settings.USE_CACHE:
-            request_key = '{}{}:{}-{}'.format(group.lower(), teacher, sdate, edate)
+            request_key = '{}{}:{}-{}'.format(group, teacher, sdate, edate)
             cached_timetable = core.Cache.get_from_cache(request_key)
 
             if cached_timetable:
@@ -144,6 +148,9 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
                 core.log(msg='Розклад видано з кешу')
                 bot.send_message('204560928', 'Розклад видано з кешу', reply_markup=keyboard)
                 return json.loads(cached_timetable[0][1])
+            else:
+                bot.send_message(user_id, '\U0001F680 На сайті ведуться технічні роботи. Спробуй пізніше', reply_markup=keyboard)
+                return
 
         return []
 
@@ -159,7 +166,7 @@ def render_day_timetable(day_data, show_current=False, user_id=''):
     now_time = datetime.datetime.now().time()
     today = datetime.datetime.now()
 
-    if show_current:
+    if show_current and settings.SHOW_TIME_TO_LESSON_END:
 
         for i, lesson in enumerate(settings.lessons_time):
             if datetime.time(*lesson['start_time']) <= now_time <= datetime.time(*lesson['end_time']):
@@ -494,19 +501,18 @@ def week_schedule_handler(call_back):
 
     timetable_for_week = ''
 
+    bot.delete_message(chat_id=user.get_id(), message_id=call_back.message.message_id)
+
     if timetable_data:
         for timetable_day in timetable_data:
             timetable_for_week += render_day_timetable(timetable_day, user_id=user.get_id())
+
+        bot.send_message(text=timetable_for_week, chat_id=user.get_id(), parse_mode="HTML", reply_markup=keyboard)
 
     elif isinstance(timetable_data, list) and not len(timetable_data):
         timetable_for_week = "На тиждень пар не знайдено."
         bot.delete_message(chat_id=user.get_id(), message_id=call_back.message.message_id)
         bot_send_message_and_post_check_group(user.get_id(), timetable_for_week, user_group)
-        return
-
-    bot.delete_message(chat_id=user.get_id(), message_id=call_back.message.message_id)
-    bot.send_message(text=timetable_for_week, chat_id=user.get_id(),
-                     parse_mode="HTML", reply_markup=keyboard)
 
 
 @bot.callback_query_handler(func=lambda call_back: call_back.data.startswith('SET_GP'))
@@ -640,6 +646,8 @@ def schedule_teacher_time_handler(call_back):
     time_type, teacher_name = call_back.data.split(':')
     teacher_name = core.get_teacher_fullname_by_first_symbols(teacher_name)
 
+    bot.delete_message(chat_id=user.get_id(), message_id=call_back.message.message_id)
+
     if time_type == '_S':  # Today
 
         today = datetime.date.today().strftime('%d.%m.%Y')
@@ -648,9 +656,10 @@ def schedule_teacher_time_handler(call_back):
         if timetable_data:
             timetable_for_today = '\U0001F464 Пари для <b>{}</b> на сьогодні:\n\n'.format(teacher_name)
             timetable_for_today += render_day_timetable(timetable_data[0], show_current=True, user_id=user.get_id())
-        else:
+        elif isinstance(timetable_data, list) and not len(timetable_data):
             timetable_for_today = 'На сьогодні пар у <b>{}</b> не знайдено.'.format(teacher_name)
-
+        else:
+            return
         bot.send_message(user.get_id(), timetable_for_today, reply_markup=keyboard, parse_mode='HTML')
 
     if time_type == '_Z':  # Tomorrow
@@ -661,13 +670,15 @@ def schedule_teacher_time_handler(call_back):
         timetable_data = get_timetable(teacher=teacher_name, sdate=tom_day, edate=tom_day, user_id=user.get_id())
 
         if timetable_data:
-            timetable_for_tomorrow = '\U0001F464 Пари для <b>{}</b> на завтра:\n\n'.format(teacher_name)
-            timetable_for_tomorrow += render_day_timetable(timetable_data[0], user_id=user.get_id())
+            timetable_for_a_week = '\U0001F464 Пари для <b>{}</b> на завтра:\n\n'.format(teacher_name)
+            timetable_for_a_week += render_day_timetable(timetable_data[0], user_id=user.get_id())
 
+        elif isinstance(timetable_data, list) and not len(timetable_data):
+            timetable_for_a_week = 'На завтра пар для викладача <b>{}</b> не знайдено.'.format(teacher_name)
         else:
-            timetable_for_tomorrow = 'На завтра пар для викладача <b>{}</b> не знайдено.'.format(teacher_name)
+            return
 
-        bot.send_message(user.get_id(), timetable_for_tomorrow, parse_mode='HTML', reply_markup=keyboard)
+        bot.send_message(user.get_id(), timetable_for_a_week, parse_mode='HTML', reply_markup=keyboard)
 
     if time_type == '_W':  # Week
 
@@ -676,18 +687,18 @@ def schedule_teacher_time_handler(call_back):
         in_week_day = in_week.strftime('%d.%m.%Y')
         today = datetime.date.today().strftime('%d.%m.%Y')
 
-        rozklad_data = get_timetable(teacher=teacher_name, sdate=today, edate=in_week_day, user_id=user.get_id())
+        timetable_data = get_timetable(teacher=teacher_name, sdate=today, edate=in_week_day, user_id=user.get_id())
 
-        if rozklad_data:
-            rozklad_for_week = '\U0001F464 Розклад на тиждень у <b>{}</b>:\n\n'.format(teacher_name)
-            for rozklad_day in rozklad_data:
-                rozklad_for_week += render_day_timetable(rozklad_day, user_id=user.get_id())
+        if timetable_data:
+            timetable_for_a_week = '\U0001F464 Розклад на тиждень у <b>{}</b>:\n\n'.format(teacher_name)
+            for timetable_day in timetable_data:
+                timetable_for_a_week += render_day_timetable(timetable_day, user_id=user.get_id())
+        elif isinstance(timetable_data, list) and not len(timetable_data):
+            timetable_for_a_week = '\U0001f914 На тиждень пар у викладача <b>{}</b> не знайдено.'.format(teacher_name)
         else:
-            rozklad_for_week = '\U0001f914 На тиждень пар у викладача <b>{}</b> не знайдено.'.format(teacher_name)
+            return
 
-        bot.send_message(user.get_id(), rozklad_for_week, reply_markup=keyboard, parse_mode='HTML')
-
-    bot.delete_message(chat_id=user.get_id(), message_id=call_back.message.message_id)
+        bot.send_message(user.get_id(), timetable_for_a_week, reply_markup=keyboard, parse_mode='HTML')
 
 
 @bot.callback_query_handler(func=lambda call_back: call_back.data == 'Ввести прізвище'
@@ -1136,6 +1147,38 @@ def admin_user_statistics(user_id, msg=''):
     return render_template('user_stat.html', data=data)
 
 
+@app.route('/fl/settings', methods=['POST', 'GET'])
+def admin_settings():
+
+    # TODO done it or delete
+
+    if not session.get('login'):
+        return admin_login()
+
+    if request.method == 'GET':
+        return render_template('settings.html')
+
+    timetable = request.form.get('set_timetable')
+
+    lessons_full_time = timetable.split(';')  # Split to the single rows
+    lessons_full_time = map(lambda s: s.strip(), lessons_full_time)  # Delete \n\r in the string
+
+    lessons_time_generated = []
+
+    for lesson_time in lessons_full_time:
+        lesson_start_time = lesson_time.split('-')[0]
+        lesson_end_time = lesson_time.split('-')[1]
+        lessons_time_generated.append(
+            {
+                'start_time': [lesson_start_time.split(':')[0], lesson_start_time.split(':')[1]],  # 0 hour, 1 - minutes
+                'end_time': [lesson_end_time.split(':')[0], lesson_end_time.split(':')[1]],
+            }
+        )
+
+    print(lessons_time_generated)
+
+    return render_template('settings.html')
+
 @app.route('/fl/upd_cache_cron')
 def admin_update_cache():
 
@@ -1246,7 +1289,7 @@ def main_menu(message):
             bot.send_message(user.get_id(), timetable_for_today, parse_mode='HTML', reply_markup=keyboard)
 
         elif isinstance(timetable_data, list) and not len(timetable_data):
-            timetable_for_today = "На сьогодні пар не знайдено."
+            timetable_for_today = 'Сьогодні пар немає'
             bot_send_message_and_post_check_group(user.get_id(), timetable_for_today, user_group)
             return
 
@@ -1262,7 +1305,7 @@ def main_menu(message):
             bot.send_message(user.get_id(), timetable_for_tomorrow, parse_mode='HTML', reply_markup=keyboard)
 
         elif isinstance(timetable_data, list) and not len(timetable_data):
-            timetable_for_tomorrow = "На завтра пар не знайдено."
+            timetable_for_tomorrow = 'Завтра пар немає'
             bot_send_message_and_post_check_group(user.get_id(), timetable_for_tomorrow, user_group)
             return
 
@@ -1295,46 +1338,25 @@ def main_menu(message):
                 bot_send_message_and_post_check_group(user.get_id(), timetable_for_week, user_group)
                 return
 
-        week_type_keyboard = telebot.types.InlineKeyboardMarkup()
-        week_type_keyboard.row(
-            *[telebot.types.InlineKeyboardButton(text=name, callback_data=name) for
-              name in ['\U00002B07 Поточний', '\U000027A1 Наступний']]
-        )
+        else:
+            week_type_keyboard = telebot.types.InlineKeyboardMarkup()
+            week_type_keyboard.row(
+                *[telebot.types.InlineKeyboardButton(text=name, callback_data=name) for
+                  name in ['\U00002B07 Поточний', '\U000027A1 Наступний']]
+            )
 
-        bot.send_message(user.get_id(), 'На який тиждень?', reply_markup=week_type_keyboard)
-
-    elif request == KEYBOARD['TIMETABLE']:
-
-        t = '{} - 9:00 - 10:20\n'.format(emoji_numbers[1])
-        t += '{} - 10:30 - 11:50\n'.format(emoji_numbers[2])
-        t += '{} - 12:10 - 13:30\n'.format(emoji_numbers[3])
-        t += '{} - 13:40 - 15:00\n'.format(emoji_numbers[4])
-        t += '{} - 15:20 - 16:40 \n'.format(emoji_numbers[5])
-        t += '{} - 16:50 - 18:10 \n'.format(emoji_numbers[6])
-        t += '{} - 18:20 - 19:40 \n'.format(emoji_numbers[7])
-
-        bot.send_message(user.get_id(), t, reply_markup=keyboard)
+            bot.send_message(user.get_id(), 'На який тиждень?', reply_markup=week_type_keyboard)
 
     elif request == KEYBOARD['HELP']:
 
-        try:
-            forecast_update_date = os.path.getmtime(os.path.join(settings.BASE_DIR, 'forecast.txt'))
-            mod_time = datetime.datetime.fromtimestamp(forecast_update_date).strftime('%H:%M')
-
-        except Exception:
-            mod_time = '-'
-
-        t = '\U0001F552 <b>Час пар:</b>\n'
-        t += '{} - 9:00 - 10:20\n'.format(emoji_numbers[1])
-        t += '{} - 10:30 - 11:50\n'.format(emoji_numbers[2])
-        t += '{} - 12:10 - 13:30\n'.format(emoji_numbers[3])
-        t += '{} - 13:40 - 15:00\n'.format(emoji_numbers[4])
-        t += '{} - 15:20 - 16:40 \n'.format(emoji_numbers[5])
-        t += '{} - 16:50 - 18:10 \n'.format(emoji_numbers[6])
-        t += '{} - 18:20 - 19:40 \n\n'.format(emoji_numbers[7])
-
-        msg = t
-        # msg += '\U0001F4CA Статистика - /stats\n\n'
+        msg = '\U0001F552 <b>Час пар:</b>\n'
+        msg += f'{emoji_numbers[1]} - 9:00 - 10:20\n'
+        msg += f'{emoji_numbers[2]} - 10:30 - 11:50\n'
+        msg += f'{emoji_numbers[3]} - 12:10 - 13:30\n'
+        msg += f'{emoji_numbers[4]} - 13:40 - 15:00\n'
+        msg += f'{emoji_numbers[5]} - 15:20 - 16:40 \n'
+        msg += f'{emoji_numbers[6]} - 16:50 - 18:10 \n'
+        msg += f'{emoji_numbers[7]} - 18:20 - 19:40 \n\n'
 
         msg += "\U0001F4C6 <b>Для пошуку по датам:</b>\n<i>15.05</i>\n<i>15.05-22.05</i>\n<i>1.1.18-10.1.18</i>\n\n" \
                "<b>Твоя група:</b> <code>{}</code> (\U0001F465 {})\n\n" \
@@ -1402,7 +1424,7 @@ def main_menu(message):
                 telebot.types.InlineKeyboardButton('\U0001F50D Ввести прізвище', callback_data='Ввести прізвище')
             )
 
-            msg = 'Вибери викладача із списку або натисни \U0001F50D Ввести прізвище'
+            msg = 'Вибери викладача із списку або натисни "\U0001F50D Ввести прізвище"'
             bot.send_message(user.get_id(), msg, reply_markup=last_teachers_kb)
 
     elif re.search(r'^(\d{1,2})\.(\d{1,2})$', request):
@@ -1431,16 +1453,9 @@ def main_menu(message):
         s_date = message.text.split('-')[0] + '.' + str(datetime.date.today().year)
         e_date = message.text.split('-')[1] + '.' + str(datetime.date.today().year)
         timetable_for_days = ''
-        timetable_data = get_timetable(group=user_group, sdate=s_date, edate=e_date, user_id=user.get_id())
+        timetable_days = get_timetable(group=user_group, sdate=s_date, edate=e_date, user_id=user.get_id())
 
-        if timetable_data:
-            for timetable_day in timetable_data:
-                timetable_for_days += render_day_timetable(timetable_day, user_id=user.get_id())
-                if len(timetable_for_days) > 4000:
-                    timetable_for_days += '\n\U00002139 Досягнуто ліміт по довжині повідомлення. Введи менший проміжок часу.'
-                    break
-
-        elif isinstance(timetable_data, list) and not len(timetable_data):
+        if isinstance(timetable_days, list) and not len(timetable_days):
             msg = 'Щоб подивитися розклад на конкретний день, введи дату в такому форматі:' \
                   '\n<b>05.03</b> або <b>5.3</b>\nПо кільком дням: \n<b>5.03-15.03</b>\n' \
                   '\nДата вводиться без пробілів (день.місяць)<b> рік вводити не треба</b> '
@@ -1449,7 +1464,25 @@ def main_menu(message):
                                                                                                         user_group,
                                                                                                         msg)
 
-        bot.send_message(user.get_id(), timetable_for_days, parse_mode='HTML', reply_markup=keyboard)
+            bot.send_message(user.get_id(), timetable_for_days, parse_mode='HTML', reply_markup=keyboard)
+            return
+
+        current_number = 1
+
+        while timetable_days:
+            timetable_day = timetable_days.pop(0)
+
+            timetable_for_days += render_day_timetable(timetable_day, user_id=user.get_id())
+
+            if current_number < settings.LIMIT_OF_DAYS_PER_ONE_MESSAGE_IN_TO_DATE_TIMETABLE:
+                current_number += 1
+            else:
+                current_number = 1
+                bot.send_message(user.get_id(), timetable_for_days, parse_mode='HTML', reply_markup=keyboard)
+                timetable_for_days = ''
+
+        if timetable_for_days:
+            bot.send_message(user.get_id(), timetable_for_days, parse_mode='HTML', reply_markup=keyboard)
 
     elif re.search(r'^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$', request):
 
@@ -1474,16 +1507,9 @@ def main_menu(message):
         s_date = request.split('-')[0]
         e_date = request.split('-')[1]
         timetable_for_days = ''
-        timetable_data = get_timetable(group=user_group, sdate=s_date, edate=e_date, user_id=user.get_id())
+        timetable_days = get_timetable(group=user_group, sdate=s_date, edate=e_date, user_id=user.get_id())
 
-        if timetable_data:
-            for timetable_day in timetable_data:
-                timetable_for_days += render_day_timetable(timetable_day, user_id=user.get_id())
-                if len(timetable_for_days) > 4000:
-                    timetable_for_days += '\n\U00002139 Досягнуто ліміт по довжині повідомлення. Введи менший проміжок часу.'
-                    break
-
-        elif isinstance(timetable_data, list) and not len(timetable_data):
+        if isinstance(timetable_days, list) and not len(timetable_days):
             msg = 'Щоб подивитися розклад на конкретний день, введи дату в такому форматі:' \
                   '\n<b>05.03</b> або <b>5.3</b>\nПо кільком дням: \n<b>5.03-15.03</b>\n' \
                   '\nДата вводиться без пробілів (день.місяць)<b> рік вводити не треба</b> '
@@ -1492,12 +1518,31 @@ def main_menu(message):
                                                                                                         user_group,
                                                                                                         msg)
 
-        bot.send_message(user.get_id(), timetable_for_days, parse_mode='HTML', reply_markup=keyboard)
+            bot.send_message(user.get_id(), timetable_for_days, parse_mode='HTML', reply_markup=keyboard)
+            return
+
+        current_number = 1
+
+        while timetable_days:
+            timetable_day = timetable_days.pop(0)
+
+            timetable_for_days += render_day_timetable(timetable_day, user_id=user.get_id())
+
+            if current_number < settings.LIMIT_OF_DAYS_PER_ONE_MESSAGE_IN_TO_DATE_TIMETABLE:
+                current_number += 1
+            else:
+                current_number = 1
+                bot.send_message(user.get_id(), timetable_for_days, parse_mode='HTML', reply_markup=keyboard)
+                timetable_for_days = ''
+
+        if timetable_for_days:
+            bot.send_message(user.get_id(), timetable_for_days, parse_mode='HTML', reply_markup=keyboard)
 
     elif any(map(str.isdigit, request)):
 
-        msg = '\U00002139 Якщо ти хочеш подивитися розклад по датам - вводь дату в такому форматі:\n\n' \
-              '<i>[ДЕНЬ.МІСЯЦЬ], наприклад</i>\n<i>15.5</i>\n<i>15.5-22.5</i>\n<i>1.1.18-10.1.18</i>'
+        msg = '\U0001F446 Якщо ти хочеш подивитися розклад по датам - вводь дату у форматі <b>ДЕНЬ.МІСЯЦЬ</b>\n' \
+              '\n  <i>наприклад:</i>\n  <i>15.5</i>\n  <i>15.5-22.5</i>\n  <i>1.1.18-10.1.18</i>\n\n' \
+              '\U0001F446 Щоб змінити групу, зайди в {}'.format(KEYBOARD['HELP'])
 
         bot.send_message(user.get_id(), msg, parse_mode='HTML', reply_markup=keyboard)
 
@@ -1527,7 +1572,7 @@ def main():
     bot.delete_webhook()
 
     core.log(msg='Запуск...')
-    bot.polling(none_stop=True, interval=settings.POLLING_INTERVAL)
+    bot.infinity_polling(interval=settings.POLLING_INTERVAL, timeout=5, none_stop=True)
 
 
 if __name__ == "__main__":

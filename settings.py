@@ -17,7 +17,7 @@ ADMIN_PASSWORD = '<pass>'
 POLLING_INTERVAL = 2
 
 # Use cache
-USE_CACHE = False
+USE_CACHE = True
 
 # Use webhook instead polling
 USE_WEBHOOK = False
@@ -25,7 +25,8 @@ USE_WEBHOOK = False
 # Address bot running. For example https://mydomain.com
 WEBHOOK_DOMAINS = {
     '1': 'https://openbiblio.zu.edu.ua',
-    '2': 'https://bot.zu.edu.ua',
+    '2': 'https://bot.zu.edu.ua:8443',
+    '3': 'https://koocherov.pythonanywhere.com',
 }
 
 # Path that telegram sends updates
@@ -42,6 +43,12 @@ HTTP_USER_AGENT = 'Telegram-SmartySBot'
 
 # Number of teachers to save
 NUMBER_OF_TEACHERS_TO_SAVE = 4
+
+# Limit how many days can contain one message. When user gets timetable by dates
+LIMIT_OF_DAYS_PER_ONE_MESSAGE_IN_TO_DATE_TIMETABLE = 6
+
+# Show time to end
+SHOW_TIME_TO_LESSON_END = True
 
 # If it True, bot would send errors to admins in list below
 SEND_ERRORS_TO_ADMIN = True
