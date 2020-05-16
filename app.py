@@ -52,6 +52,9 @@ def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=
 
         group = get_valid_case_group(raw_group)
 
+        if not group:
+            return []
+
         http_headers = {
             'User-Agent': settings.HTTP_USER_AGENT,
         }
