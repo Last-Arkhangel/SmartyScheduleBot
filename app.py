@@ -28,7 +28,7 @@ keyboard.row(KEYBOARD['FOR_A_TEACHER'], KEYBOARD['FOR_A_GROUP'], KEYBOARD['HELP'
 emoji_numbers = ['0⃣', '1⃣', '2⃣', '3⃣', '4⃣', '5⃣', '6⃣', '7⃣', '8⃣', '9⃣']
 
 
-def get_timetable(faculty='', teacher='', group='', sdate='', edate='', user_id=None):
+def get_timetable(teacher='', group='', sdate='', edate='', user_id=None):
 
     try:
 
@@ -1181,6 +1181,7 @@ def admin_settings():
     print(lessons_time_generated)
 
     return render_template('settings.html')
+
 
 @app.route('/fl/upd_cache_cron')
 def admin_update_cache():
