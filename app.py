@@ -939,7 +939,7 @@ def admin_metrics():
     active_yesterday_users_count = core.MetricsManager.get_active_yesterday_users_count()
     active_week_users_count = core.MetricsManager.get_active_week_users_count()
     top_groups_by_users = core.MetricsManager.get_top_groups(15)
-    top_groups_by_requests = core.MetricsManager.get_top_request_groups_during_the_week(15)
+    top_groups_by_requests = core.MetricsManager.get_top_request_groups_during_the_week(15) or []
     top_teachers = core.Teachers.get_top_teachers(15)
     saved_teachers_count = core.Teachers.get_users_saved_teachers_count()
 

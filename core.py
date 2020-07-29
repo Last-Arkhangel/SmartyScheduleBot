@@ -303,15 +303,22 @@ class MetricsManager:
     def get_all_users_count(cls):
 
         query = "SELECT COUNT(*) FROM users"
+        result = DBManager.execute_query(query)
+        if isinstance(result, int):
+            return 0
 
-        return DBManager.execute_query(query)[0][0]
+        return result[0][0]
 
     @classmethod
     def get_all_groups_count(cls):
 
         query = "SELECT COUNT (DISTINCT u_group) FROM users"
 
-        return DBManager.execute_query(query)[0][0]
+        result = DBManager.execute_query(query)
+        if isinstance(result, int):
+            return 0
+
+        return result[0][0]
 
     @classmethod
     def get_active_today_users_count(cls):
