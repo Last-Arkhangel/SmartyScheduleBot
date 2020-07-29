@@ -495,14 +495,17 @@ def week_schedule_handler(call_back):
     next_week_first_day = today + datetime.timedelta(days=diff_between_saturday_and_today + 2)
     next_week_last_day = today + datetime.timedelta(days=diff_between_saturday_and_today + 7)
 
+    timetable_data = list()
+    timetable_for_week = str()
+
     if req == '\U00002B07 Поточний':
+        timetable_for_week = 'На цей тиждень пар не знайдено.'
         timetable_data = get_timetable(group=user_group, sdate=today.strftime('%d.%m.%Y'),
                                        edate=last_week_day.strftime('%d.%m.%Y'), user_id=user.get_id())
     if req == '\U000027A1 Наступний':
+        timetable_for_week = 'На наступний тиждень пар не знайдено.'
         timetable_data = get_timetable(group=user_group, sdate=next_week_first_day.strftime('%d.%m.%Y'),
                                        edate=next_week_last_day.strftime('%d.%m.%Y'), user_id=user.get_id())
-
-    timetable_for_week = ''
 
     bot.delete_message(chat_id=user.get_id(), message_id=call_back.message.message_id)
 
@@ -513,7 +516,6 @@ def week_schedule_handler(call_back):
         bot.send_message(text=timetable_for_week, chat_id=user.get_id(), parse_mode="HTML", reply_markup=keyboard)
 
     elif isinstance(timetable_data, list) and not len(timetable_data):
-        timetable_for_week = "На тиждень пар не знайдено."
         bot_send_message_and_post_check_group(user.get_id(), timetable_for_week, user_group)
 
 
