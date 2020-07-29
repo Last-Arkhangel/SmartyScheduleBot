@@ -133,9 +133,9 @@ class User:
                 'first_name': user[2],
                 'last_name': user[3] or '-',
                 'group': user[4],
-                'register_date': user[6],
-                'last_use_date': user[7],
-                'requests_count': user[8],
+                'register_date': user[5],
+                'last_use_date': user[6],
+                'requests_count': user[7],
             })
 
         return users
