@@ -83,7 +83,6 @@ class User:
                       first_name TEXT,
                       last_name TEXT,
                       u_group TEXT,
-                      last_teacher TEXT,
                       register_date TEXT DEFAULT (datetime('now', 'localtime')),
                       last_use_date DEFAULT (datetime('now', 'localtime')),
                       requests_count INTEGER DEFAULT 0) WITHOUT ROWID"""
