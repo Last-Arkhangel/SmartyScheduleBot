@@ -1,26 +1,27 @@
 # -*- coding: utf-8 -*-
 import os
+import json
 
 # Database name
 DATABASE = 'SmartyS_DB.sqlite'
 
 # Telegram Bot token
-BOT_TOKEN = '<token>'
+BOT_TOKEN = os.getenv('SSB_TOKEN') or ''
 
 # OpenWeatherMap.org token
 OPEN_WEATHER_MAP_TOKEN = '<token>'
 
 # Admin password
-ADMIN_PASSWORD = '<pass>'
+ADMIN_PASSWORD = os.getenv('SSB_ADMIN_PWD') or '<pass>'
 
 # Interval to polling telegram servers (Uses if USE_WEBHOOK sets False)
 POLLING_INTERVAL = 2
 
 # Use cache
-USE_CACHE = True
+USE_CACHE = os.getenv('SSB_USE_CACHE') or True
 
 # Use webhook instead polling
-USE_WEBHOOK = False
+USE_WEBHOOK = os.getenv('SSB_USE_WEBHOOK') or False
 
 # Address bot running. For example https://mydomain.com
 WEBHOOK_DOMAINS = {
@@ -33,10 +34,10 @@ WEBHOOK_DOMAINS = {
 WEBHOOK_PATH = ADMIN_PASSWORD
 
 # Timetable URL
-TIMETABLE_URL = 'https://dekanat.zu.edu.ua/cgi-bin/timetable.cgi'
+TIMETABLE_URL = os.getenv('SSB_TIMETABLE_URL') or 'https://dekanat.zu.edu.ua/cgi-bin/timetable.cgi'
 
 # Export URL
-API_LINK = 'https://dekanat.zu.edu.ua/cgi-bin/timetable_export.cgi'
+API_LINK = os.getenv('SSB_API_LINK') or 'https://dekanat.zu.edu.ua/cgi-bin/timetable_export.cgi'
 
 # Http user agent sends to requests
 HTTP_USER_AGENT = 'Telegram-SmartySBot'
@@ -57,7 +58,7 @@ SEND_ERRORS_TO_ADMIN = True
 SHOW_LESSONS_FROM_THE_FIRST = True
 
 # Admins IDS. My, Vlad, Mum, Yaroslav
-ADMINS_ID = ['204560928', '203448442', '525808450', '947097358']
+ADMINS_ID = ['204560928', '203448442', '525808450']
 
 # Base folder
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -81,56 +82,18 @@ KEYBOARD = {
     'INPUT_GROUP': '\U0000270F Ввести іншу групу',
 }
 
-lessons_time = ({
-                    'start_time': (9, 0),
-                    'end_time': (10, 20)
-                },
-                {
-                    'start_time': (10, 30),
-                    'end_time': (11, 50)
-                },
-                {
-                    'start_time': (12, 10),
-                    'end_time': (13, 30)
-                },
-                {
-                    'start_time': (13, 40),
-                    'end_time': (15, 0)
-                },
-                {
-                    'start_time': (15, 20),
-                    'end_time': (16, 40)
-                },
-                {
-                    'start_time': (16, 50),
-                    'end_time': (18, 10)
-                },
-                {
-                    'start_time': (18, 20),
-                    'end_time': (19, 40)
-                })
+if os.path.exists(os.path.join('data', 'lessons_time.json')):
+    load_file = os.path.join('data', 'lessons_time.json')
+else:
+    load_file = os.path.join('data', 'default_lessons_time.json')
 
-breaks_time = ({
-                   'start_time': (10, 20),
-                   'end_time': (10, 30)
-               },
-               {
-                   'start_time': (11, 50),
-                   'end_time': (12, 10)
-               },
-               {
-                   'start_time': (13, 30),
-                   'end_time': (13, 40)
-               },
-               {
-                   'start_time': (15, 00),
-                   'end_time': (15, 20)
-               },
-               {
-                   'start_time': (16, 40),
-                   'end_time': (16, 50)
-               },
-               {
-                   'start_time': (18, 10),
-                   'end_time': (18, 20)
-               })
+with open(load_file) as file:
+    lessons_time = json.loads(file.read())
+
+if os.path.exists(os.path.join('data', 'breaks_time.json')):
+    load_file = os.path.join('data', 'breaks_time.json')
+else:
+    load_file = os.path.join('data', 'default_breaks_time.json')
+
+with open(load_file) as file:
+    lessons_time = json.loads(file.read())

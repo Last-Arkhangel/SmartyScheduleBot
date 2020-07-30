@@ -1,8 +1,8 @@
 /venv/
 /SmartyS_DB.sqlite
-/valid_case_groups.txt
-/teachers.txt
-/groups.txt
 /.idea/
 /bot_log.txt
 /error_log.txt
+/data/groups.json
+/data/teachers.json
+/data/valid_case_groups.json

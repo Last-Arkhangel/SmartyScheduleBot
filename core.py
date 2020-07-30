@@ -572,10 +572,10 @@ def update_all_groups():
 
     [groups.append(g.lower()) for g in tmp_groups]
 
-    with open(os.path.join(settings.BASE_DIR, 'groups.txt'), 'w', encoding="utf-8") as file:
+    with open(os.path.join(settings.BASE_DIR, 'data', 'groups.json'), 'w', encoding="utf-8") as file:
         file.write(json.dumps(groups, sort_keys=True, ensure_ascii=False, separators=(',', ':'), indent=2))
 
-    with open(os.path.join(settings.BASE_DIR, 'valid_case_groups.txt'), 'w', encoding="utf-8") as file:
+    with open(os.path.join(settings.BASE_DIR, 'data', 'valid_case_groups.json'), 'w', encoding="utf-8") as file:
         file.write(json.dumps(tmp_groups, sort_keys=True, ensure_ascii=False, separators=(',', ':'), indent=2))
 
     return groups
@@ -586,7 +586,7 @@ def is_group_valid(user_group=''):
     user_group = user_group.lower().strip()
 
     try:
-        with open(os.path.join(settings.BASE_DIR, 'groups.txt'), 'r', encoding='utf-8') as file:
+        with open(os.path.join(settings.BASE_DIR, 'data', 'groups.json'), 'r', encoding='utf-8') as file:
             all_groups = json.loads(file.read())
 
         return user_group in all_groups
@@ -599,7 +599,7 @@ def is_group_valid(user_group=''):
 
 def get_possible_groups(user_group='', variants=4):
 
-    with open(os.path.join(settings.BASE_DIR, 'groups.txt'), 'r', encoding="utf-8") as file:
+    with open(os.path.join(settings.BASE_DIR, 'data', 'groups.json'), 'r', encoding="utf-8") as file:
         all_groups = json.loads(file.read())
 
     return difflib.get_close_matches(user_group, all_groups, n=variants)
@@ -607,7 +607,7 @@ def get_possible_groups(user_group='', variants=4):
 
 def get_possible_teacher_by_lastname(last_name='', variants=1):
 
-    with open(os.path.join(settings.BASE_DIR, 'teachers.txt'), 'r', encoding="utf-8") as file:
+    with open(os.path.join(settings.BASE_DIR, 'data', 'teachers.json'), 'r', encoding="utf-8") as file:
         all_teachers_fullnames = json.loads(file.read())
 
     all_teachers_lastnames = [teacher_fullname.split()[0].upper() for teacher_fullname in all_teachers_fullnames]
@@ -633,7 +633,7 @@ def update_all_teachers():
     else:
         teachers = []
 
-    with open(os.path.join(settings.BASE_DIR, 'teachers.txt'), 'w', encoding="utf-8") as file:
+    with open(os.path.join(settings.BASE_DIR, 'data', 'teachers.json'), 'w', encoding="utf-8") as file:
         file.write(json.dumps(teachers, sort_keys=True, ensure_ascii=False, separators=(',', ':'), indent=2))
 
     return teachers
@@ -644,7 +644,7 @@ def is_teacher_valid(fullname):
     fullname = fullname.strip()
 
     try:
-        with open(os.path.join(settings.BASE_DIR, 'teachers.txt'), 'r', encoding='utf-8') as file:
+        with open(os.path.join(settings.BASE_DIR, 'data', 'teachers.json'), 'r', encoding='utf-8') as file:
             all_teachers = json.loads(file.read())
 
         return fullname in all_teachers
@@ -657,7 +657,7 @@ def is_teacher_valid(fullname):
 
 def get_teacher_fullname_by_first_symbols(name):
 
-    with open(os.path.join(settings.BASE_DIR, 'teachers.txt'), 'r', encoding='utf-8') as file:
+    with open(os.path.join(settings.BASE_DIR, 'data', 'teachers.json'), 'r', encoding='utf-8') as file:
         all_teachers = json.loads(file.read())
 
     for teacher in all_teachers:

@@ -10,3 +10,4 @@ requests
 flask
 html5lib
 xmltodict
+GitPython

@@ -43,7 +43,7 @@ def get_timetable(teacher='', group='', sdate='', edate='', user_id=None):
 
         def get_valid_case_group(group):
 
-            with open(os.path.join(settings.BASE_DIR, 'valid_case_groups.txt'), 'r', encoding="utf-8") as file:
+            with open(os.path.join(settings.BASE_DIR, 'data', 'valid_case_groups.json'), 'r', encoding="utf-8") as file:
                 all_groups = json.loads(file.read())
 
             for possible_group in all_groups:
@@ -753,7 +753,7 @@ def select_teacher_by_second_name(message):
     possible_teaches = []
 
     try:
-        with open(os.path.join(settings.BASE_DIR, 'teachers.txt'), 'r', encoding="utf-8") as file:
+        with open(os.path.join(settings.BASE_DIR, 'data', 'teachers.json'), 'r', encoding="utf-8") as file:
             all_teachers = json.loads(file.read())
     except Exception as ex:
         bot.send_message(message.chat.id, 'Даний функціонал тимчасово не працює.', reply_markup=keyboard)
@@ -944,13 +944,13 @@ def admin_metrics():
     saved_teachers_count = core.Teachers.get_users_saved_teachers_count()
 
     try:
-        forecast_update_date = os.path.getmtime(os.path.join(settings.BASE_DIR, 'groups.txt'))
+        forecast_update_date = os.path.getmtime(os.path.join(settings.BASE_DIR, 'data', 'groups.json'))
         groups_update_time = datetime.datetime.fromtimestamp(forecast_update_date).strftime('%d.%m.%Y %H:%M')
     except Exception:
         groups_update_time = '-'
 
     try:
-        forecast_update_date = os.path.getmtime(os.path.join(settings.BASE_DIR, 'teachers.txt'))
+        forecast_update_date = os.path.getmtime(os.path.join(settings.BASE_DIR, 'data', 'teachers.json'))
         teachers_update_time = datetime.datetime.fromtimestamp(forecast_update_date).strftime('%d.%m.%Y %H:%M')
     except Exception:
         teachers_update_time = '-'
@@ -1179,8 +1179,6 @@ def admin_settings():
             }
         )
 
-    print(lessons_time_generated)
-
     return render_template('settings.html')
 
 
@@ -1252,6 +1250,17 @@ def webhook():
     bot.process_new_updates([update])
 
     return "ok", 200
+
+
+@app.route('/fl/git_pull', methods=['POST', 'GET'])
+def git_pull_handler():
+
+    import git
+
+    g = git.cmd.Git(settings.BASE_DIR)
+    result = g.pull()
+
+    return result
 
 
 @bot.message_handler(content_types=["text"])
