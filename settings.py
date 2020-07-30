@@ -6,13 +6,13 @@ import json
 DATABASE = 'SmartyS_DB.sqlite'
 
 # Telegram Bot token
-BOT_TOKEN = os.getenv('SSB_TOKEN') or ''
+BOT_TOKEN = os.getenv('SSB_TOKEN') or '365877050:AAGCozKtl75HLyZpxWvfZbVyq0EHdoCIBJA'
 
 # OpenWeatherMap.org token
 OPEN_WEATHER_MAP_TOKEN = '<token>'
 
 # Admin password
-ADMIN_PASSWORD = os.getenv('SSB_ADMIN_PWD') or '<pass>'
+ADMIN_PASSWORD = os.getenv('SSB_ADMIN_PWD') or '2site'
 
 # Interval to polling telegram servers (Uses if USE_WEBHOOK sets False)
 POLLING_INTERVAL = 2
@@ -21,7 +21,7 @@ POLLING_INTERVAL = 2
 USE_CACHE = os.getenv('SSB_USE_CACHE') or True
 
 # Use webhook instead polling
-USE_WEBHOOK = os.getenv('SSB_USE_WEBHOOK') or False
+USE_WEBHOOK = os.getenv('SSB_USE_WEBHOOK') or True
 
 # Address bot running. For example https://mydomain.com
 WEBHOOK_DOMAINS = {
@@ -82,18 +82,18 @@ KEYBOARD = {
     'INPUT_GROUP': '\U0000270F Ввести іншу групу',
 }
 
-if os.path.exists(os.path.join('data', 'lessons_time.json')):
-    load_file = os.path.join('data', 'lessons_time.json')
+if os.path.exists(os.path.join(BASE_DIR, 'data', 'lessons_time.json')):
+    load_file = os.path.join(BASE_DIR, 'data', 'lessons_time.json')
 else:
-    load_file = os.path.join('data', 'default_lessons_time.json')
+    load_file = os.path.join(BASE_DIR, 'data', 'default_lessons_time.json')
 
 with open(load_file) as file:
     lessons_time = json.loads(file.read())
 
-if os.path.exists(os.path.join('data', 'breaks_time.json')):
-    load_file = os.path.join('data', 'breaks_time.json')
+if os.path.exists(os.path.join(BASE_DIR, 'data', 'breaks_time.json')):
+    load_file = os.path.join(BASE_DIR, 'data', 'breaks_time.json')
 else:
-    load_file = os.path.join('data', 'default_breaks_time.json')
+    load_file = os.path.join(BASE_DIR, 'data', 'default_breaks_time.json')
 
 with open(load_file) as file:
     lessons_time = json.loads(file.read())
