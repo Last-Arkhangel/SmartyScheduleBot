@@ -1209,7 +1209,7 @@ def admin_update_cache():
 @app.route('/fl/init')
 def admin_init_redirect():
 
-    return admin_init(1)
+    return admin_init(100)
 
 
 @app.route('/fl/init/<number>')
@@ -1220,7 +1220,7 @@ def admin_init(number):
 
     core.DBManager.create_db_tables()
 
-    domain = settings.WEBHOOK_DOMAINS.get(number, settings.WEBHOOK_DOMAINS['1'])
+    domain = settings.WEBHOOK_DOMAINS.get(number, request.host_url)
 
     try:
         status = bot.set_webhook(f'{domain}/fl/{settings.WEBHOOK_PATH}', max_connections=2)
