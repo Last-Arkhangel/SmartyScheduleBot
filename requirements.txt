@@ -11,3 +11,4 @@ flask
 html5lib
 xmltodict
 GitPython
+gunicorn
