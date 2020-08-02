@@ -6,13 +6,13 @@ import json
 DATABASE = 'SmartyS_DB.sqlite'
 
 # Telegram Bot token
-BOT_TOKEN = os.getenv('SSB_TOKEN') or '365877050:AAGCozKtl75HLyZpxWvfZbVyq0EHdoCIBJA'
+BOT_TOKEN = os.getenv('SSB_TOKEN') or ''
 
 # OpenWeatherMap.org token
 OPEN_WEATHER_MAP_TOKEN = '<token>'
 
 # Admin password
-ADMIN_PASSWORD = os.getenv('SSB_ADMIN_PWD') or '2site'
+ADMIN_PASSWORD = os.getenv('SSB_ADMIN_PWD') or ''
 
 # Interval to polling telegram servers (Uses if USE_WEBHOOK sets False)
 POLLING_INTERVAL = 2
