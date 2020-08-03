@@ -14,7 +14,7 @@ import random
 import hashlib
 import xmltodict
 from settings import KEYBOARD
-from flask import Flask, request, render_template, jsonify, session
+from flask import Flask, request, render_template, jsonify, session, redirect, url_for
 
 app = Flask(__name__, template_folder='site', static_folder='site/static', static_url_path='/fl/static')
 app.secret_key = hashlib.md5(settings.ADMIN_PASSWORD.encode('utf-8')).hexdigest()
@@ -890,14 +890,14 @@ def process_menu(message):
         bot.send_message(message.chat.id, 'Не розумію :(', parse_mode='HTML', reply_markup=keyboard)
 
 
-@app.route('/fl/login', methods=['POST', 'GET'])
+@app.route('/fl/login/', methods=['POST', 'GET'])
 def admin_login():
 
     if not settings.BOT_TOKEN:
         return 'Set bot token in settings.py'
 
     if session.get('login'):
-        return admin_metrics()
+        return redirect(url_for('admin_metrics'))
 
     if request.method == 'GET':
         return render_template('login.html')
@@ -909,7 +909,7 @@ def admin_login():
         session['login'] = True
         msg = f'Авторизація в панелі адміністратора.\n<b>IP: </b>{req_ip}\n<b>UA: </b>{req_agent}'
         bot.send_message('204560928', msg, parse_mode='HTML')
-        return admin_metrics()
+        return redirect(url_for('admin_metrics'))
 
     else:
 
@@ -921,7 +921,7 @@ def admin_login():
         return 'Неправильний пароль'
 
 
-@app.route('/fl/logout')
+@app.route('/fl/logout/')
 def admin_logout():
 
     if session.get('login'):
@@ -929,7 +929,7 @@ def admin_logout():
     return admin_login()
 
 
-@app.route('/fl/metrics')
+@app.route('/fl/metrics/')
 def admin_metrics():
 
     if not session.get('login'):
@@ -1001,7 +1001,7 @@ def admin_del_user(user_id):
     return render_template('users.html', data=data)
 
 
-@app.route('/fl/users')
+@app.route('/fl/users/')
 def admin_users():
 
     if not session.get('login'):
@@ -1255,6 +1255,9 @@ def webhook():
 
 @app.route('/fl/git_pull', methods=['POST', 'GET'])
 def git_pull_handler():
+
+    if not session.get('login'):
+        return admin_login()
 
     import git
 
