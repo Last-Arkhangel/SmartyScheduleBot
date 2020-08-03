@@ -893,6 +893,9 @@ def process_menu(message):
 @app.route('/fl/login', methods=['POST', 'GET'])
 def admin_login():
 
+    if not settings.BOT_TOKEN:
+        return 'Set bot token in settings.py'
+
     if session.get('login'):
         return admin_metrics()
 
@@ -1206,21 +1209,19 @@ def admin_update_cache():
     return msg
 
 
-@app.route('/fl/init')
-def admin_init_redirect():
-
-    return admin_init(100)
-
-
-@app.route('/fl/init/<number>')
-def admin_init(number):
+@app.route('/fl/init/')
+def admin_init():
 
     if not session.get('login'):
         return admin_login()
 
+    if request.args.get('hook_id') == '0':
+        bot.delete_webhook()
+        return 'Webhook deleted'
+
     core.DBManager.create_db_tables()
 
-    domain = settings.WEBHOOK_DOMAINS.get(number, request.host_url)
+    domain = settings.WEBHOOK_DOMAINS.get(request.args.get('hook_id'), request.host_url)
 
     try:
         status = bot.set_webhook(f'{domain}/fl/{settings.WEBHOOK_PATH}', max_connections=2)
@@ -1239,7 +1240,7 @@ def admin_init(number):
 
         return f'Успіх<br><br> Встановлено вебхук на: {url}'
     else:
-        return f'Помилка<br><br>{error_text}'
+        return f'{domain}<br><br>Помилка<br><br>{error_text}'
 
 
 @app.route(f'/fl/{settings.WEBHOOK_PATH}', methods=['POST'])

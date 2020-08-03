@@ -70,7 +70,7 @@
                 </table>
             </div>
             <div class="col-md-4 col-sm-12">
-                <h4>Топ {{ data.top_teachers|length }} виккладачів із {{ data.saved_teachers_count }}:</h4>
+                <h4>Топ {{ data.top_teachers|length }} викладачів із {{ data.saved_teachers_count }}:</h4>
                 <table class="table table-bordered">
                     <thead>
                     <tr>
@@ -134,9 +134,12 @@
             </div>
         </div>
         <br>
-        <a class="btn btn-outline-info" href="/fl/init/1" role="button" target="_blank">Встановити openbiblio.zu.edu.ua</a>
-        <a class="btn btn-outline-secondary" href="/fl/init/2" role="button" target="_blank">Встановити bot.zu.edu.ua</a>
-
+        <a class="btn btn-outline-info" href="/fl/init/?hook_id=1" role="button" target="_blank">Встановити openbiblio.zu.edu.ua</a>
+        <a class="btn btn-outline-secondary" href="/fl/init/?hook_id=2" role="button" target="_blank">Встановити bot.zu.edu.ua</a>
+        <a class="btn btn-outline-success" href="/fl/init/" role="button" target="_blank">На поточний домен</a>
+        <a class="btn btn-outline-danger" href="/fl/init/?hook_id=0" role="button" target="_blank">Видалити</a>
+        <br> <br>
+        <a class="btn btn-outline-warning" href="/fl/git_pull" role="button" target="_blank">Git pull</a>
     </div>
     <br>
 

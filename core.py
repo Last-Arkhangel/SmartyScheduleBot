@@ -326,7 +326,11 @@ class MetricsManager:
         FROM metrics 
         WHERE request_datetime > datetime('now', 'localtime', 'start of day')"""
 
-        return DBManager.execute_query(query)[0][0]
+        result = DBManager.execute_query(query)
+        if isinstance(result, int):
+            return 0
+
+        return result[0][0]
 
     @classmethod
     def get_active_yesterday_users_count(cls):
@@ -357,7 +361,11 @@ class MetricsManager:
         and register_date < datetime('now', 'localtime', 'start of day', '+1 day')
         """
 
-        return DBManager.execute_query(query)[0][0]
+        result = DBManager.execute_query(query)
+        if isinstance(result, int):
+            return 0
+
+        return result[0][0]
 
     @classmethod
     def get_statistics_by_types_during_the_week(cls):
@@ -459,7 +467,8 @@ class MetricsManager:
                 'GROUP BY u_group ORDER BY count(*) DESC LIMIT {}'.format(n)
 
         groups = DBManager.execute_query(query)
-
+        if not groups:
+            return []
         return groups
 
     @staticmethod
