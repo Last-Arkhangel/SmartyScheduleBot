@@ -1,7 +1,7 @@
 /venv/
 /SmartyS_DB.sqlite
 /.idea/
-/bot_log.txt
+/bot_log.log
 /error_log.txt
 /data/groups.json
 /data/teachers.json

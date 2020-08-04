@@ -179,7 +179,7 @@ def log(chat=None, msg='', is_error=False):
 
     now_time = datetime.datetime.now().strftime('%d-%m %H:%M:%S')
 
-    filename = 'error_log.txt' if is_error else 'bot_log.txt'
+    filename = 'error_log.txt' if is_error else 'bot_log.log'
 
     with open(os.path.join(settings.BASE_DIR, filename), 'a', encoding="utf-8") as log_file:
         if chat:

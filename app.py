@@ -297,7 +297,7 @@ def get_log_file(message):
         bot.send_message(user.get_id(), 'Немає доступу :(')
         return
 
-    with open(os.path.join(settings.BASE_DIR, 'bot_log.txt'), 'r', encoding="utf-8") as log_file:
+    with open(os.path.join(settings.BASE_DIR, 'bot_log.log'), 'r', encoding="utf-8") as log_file:
         bot.send_document(user.get_id(), log_file)
 
     with open(os.path.join(settings.BASE_DIR, 'error_log.txt'), 'r', encoding="utf-8") as error_log_file:
@@ -330,7 +330,7 @@ def get_logs(message):
     else:
         count = 65
 
-    with open(os.path.join(settings.BASE_DIR, 'bot_log.txt'), 'r', encoding="utf-8") as log_file:
+    with open(os.path.join(settings.BASE_DIR, 'bot_log.log'), 'r', encoding="utf-8") as log_file:
         log_lines = log_file.readlines()
 
     logs = ''
@@ -927,6 +927,14 @@ def admin_logout():
     if session.get('login'):
         session['login'] = False
     return admin_login()
+
+
+@app.route('/fl/debug/')
+def admin_logout():
+
+    import os
+
+    return str(os.environ)
 
 
 @app.route('/fl/metrics/')
