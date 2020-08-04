@@ -902,7 +902,7 @@ def admin_login():
     if request.method == 'GET':
         return render_template('login.html')
 
-    req_ip = request.remote_addr
+    req_ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
     req_agent = request.user_agent
 
     if request.method == 'POST' and request.form.get('password') == settings.ADMIN_PASSWORD:
