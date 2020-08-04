@@ -8,9 +8,6 @@ DATABASE = 'SmartyS_DB.sqlite'
 # Telegram Bot token
 BOT_TOKEN = os.getenv('SSB_TOKEN') or ''
 
-# OpenWeatherMap.org token
-OPEN_WEATHER_MAP_TOKEN = '<token>'
-
 # Admin password
 ADMIN_PASSWORD = os.getenv('SSB_ADMIN_PASSWD') or ''
 
@@ -21,7 +18,7 @@ POLLING_INTERVAL = 2
 USE_CACHE = os.getenv('SSB_USE_CACHE') or True
 
 # Use webhook instead polling
-USE_WEBHOOK = os.getenv('SSB_USE_WEBHOOK') or True
+USE_WEBHOOK = os.getenv('SSB_USE_WEBHOOK') or False
 
 # Address bot running. For example https://mydomain.com
 WEBHOOK_DOMAINS = {
