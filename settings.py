@@ -12,7 +12,7 @@ BOT_TOKEN = os.getenv('SSB_TOKEN') or ''
 OPEN_WEATHER_MAP_TOKEN = '<token>'
 
 # Admin password
-ADMIN_PASSWORD = os.getenv('SSB_ADMIN_PWD') or ''
+ADMIN_PASSWORD = os.getenv('SSB_ADMIN_PASSWD') or ''
 
 # Interval to polling telegram servers (Uses if USE_WEBHOOK sets False)
 POLLING_INTERVAL = 2
