@@ -2,7 +2,7 @@ function update_request_hours_chart(){
 
   var request = new XMLHttpRequest();
 
-  request.open('GET','last_hours_statistics',true);
+  request.open('GET','/fl/last_hours_statistics',true);
   request.addEventListener('readystatechange', function() {
 
     if ((request.readyState==4) && (request.status==200)) {

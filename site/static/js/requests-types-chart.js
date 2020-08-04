@@ -2,7 +2,7 @@ function update_request_types_chart(){
   
   var request = new XMLHttpRequest();
 
-  request.open('GET','statistics_by_types_during_the_week',true);
+  request.open('GET','/fl/statistics_by_types_during_the_week',true);
   request.addEventListener('readystatechange', function() {
     
     if ((request.readyState==4) && (request.status==200)) {

@@ -930,7 +930,7 @@ def admin_logout():
 
 
 @app.route('/fl/debug/')
-def admin_logout():
+def admin_debug():
 
     import os
 

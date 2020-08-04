@@ -2,7 +2,7 @@ function update_request_days_chart(){
   
   var request = new XMLHttpRequest();
 
-  request.open('GET','last_days_statistics',true);
+  request.open('GET','/fl/last_days_statistics',true);
   request.addEventListener('readystatechange', function() {
     
     if ((request.readyState==4) && (request.status==200)) {
