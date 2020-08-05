@@ -169,7 +169,8 @@ def render_day_timetable(day_data, show_current=False, user_id=''):
     now_time = datetime.datetime.now().time()
     today = datetime.datetime.now()
 
-    if show_current and settings.SHOW_TIME_TO_LESSON_END:
+    if show_current and settings.SHOW_TIME_TO_LESSON_END and \
+            hasattr(settings, 'lessons_time') and hasattr(settings, 'breaks_time'):
 
         for i, lesson in enumerate(settings.lessons_time):
             if datetime.time(*lesson['start_time']) <= now_time <= datetime.time(*lesson['end_time']):

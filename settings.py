@@ -51,7 +51,8 @@ SHOW_TIME_TO_LESSON_END = True
 # If it True, bot would send errors to admins in list below
 SEND_ERRORS_TO_ADMIN = True
 
-# Show lessons from the first even it isn`t
+# Show lessons from the first even it isn`t.
+# If it is True, "data/lessons_time.json" and "data/breaks_time.json" should exists
 SHOW_LESSONS_FROM_THE_FIRST = True
 
 # Admins IDS. My, Vlad, Mum, Yaroslav
@@ -81,16 +82,12 @@ KEYBOARD = {
 
 if os.path.exists(os.path.join(BASE_DIR, 'data', 'lessons_time.json')):
     load_file = os.path.join(BASE_DIR, 'data', 'lessons_time.json')
-else:
-    load_file = os.path.join(BASE_DIR, 'data', 'default_lessons_time.json')
 
-with open(load_file) as file:
-    lessons_time = json.loads(file.read())
+    with open(load_file) as file:
+        lessons_time = json.loads(file.read())
 
 if os.path.exists(os.path.join(BASE_DIR, 'data', 'breaks_time.json')):
     load_file = os.path.join(BASE_DIR, 'data', 'breaks_time.json')
-else:
-    load_file = os.path.join(BASE_DIR, 'data', 'default_breaks_time.json')
 
-with open(load_file) as file:
-    lessons_time = json.loads(file.read())
+    with open(load_file) as file:
+        breaks_time = json.loads(file.read())
