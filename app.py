@@ -1123,12 +1123,15 @@ def admin_update_groups():
     if not session.get('login'):
         return admin_login()
 
-    updated = core.update_all_groups()
+    try:
+        updated = core.update_all_groups()
 
-    if updated:
-        msg = 'Список груп оновлено. Завантажено {} груп.<br>'.format(len(updated))
-        msg += str(updated)
-        return msg
+        if updated:
+            msg = 'Список груп оновлено. Завантажено {} груп.<br>'.format(len(updated))
+            msg += str(updated)
+            return msg
+    except Exception as ex:
+        return f'Помилка<br><br>{str(ex)}'
     return 'Помилка при оновленні'
 
 
