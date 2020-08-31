@@ -457,8 +457,8 @@ def start_handler(message):
 
     start_text_file = open(os.path.join(settings.BASE_DIR, 'data', 'start.txt'), 'r', encoding="utf-8")
 
-    msg = 'Хай, {} 😊. {}, ' \
-          '<b>змінити ти її зможеш в пункті меню {}</b>'.format(message.chat.first_name,
+    msg = 'Хай, {} 😊. {}' \
+          '<b>Змінити ти її зможеш в пункті меню {}</b>'.format(message.chat.first_name,
                                                                 start_text_file.read(),
                                                                 KEYBOARD['HELP'])
     start_text_file.close()
