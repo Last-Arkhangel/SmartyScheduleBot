@@ -675,6 +675,29 @@ def get_teacher_fullname_by_first_symbols(name):
     return ''
 
 
+def get_str_timetable_list():
+
+    lessons_time_file = open(os.path.join('data', 'lessons_time.json'))
+    lessons_time = json.loads(lessons_time_file.read())
+
+    timetable = []
+
+    def get_str_minutes(m):
+
+        result = str(m)
+        if len(result) == 1:
+            return f'0{result}'
+        return result
+
+    for lesson in lessons_time:
+        timetable.append(
+            f'{lesson["start_time"][0]}:{get_str_minutes(lesson["start_time"][1])}–'
+            f'{lesson["end_time"][0]}:{get_str_minutes(lesson["end_time"][1])}'
+        )
+
+    return timetable
+
+
 class AdService:
 
     @classmethod

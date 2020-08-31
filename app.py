@@ -216,8 +216,7 @@ def render_day_timetable(day_data, show_current=False, user_id=''):
             end_index = i
             break
 
-    timetable = ['9:00 - 10:20', '10:30 - 11:50', '12:10 - 13:30', '13:40 - 15:00',
-                 '15:20 - 16:40 ', '16:50 - 18:10', '18:20 - 19:40', '-']
+    timetable = core.get_str_timetable_list()
 
     for i in range(start_index, end_index + 1):
         if i == current_break:
@@ -498,13 +497,14 @@ def week_schedule_handler(call_back):
 
     timetable_data = list()
     timetable_for_week = str()
+    timetable_for_week_empty = str()
 
     if req == '\U00002B07 Поточний':
-        timetable_for_week = 'На цей тиждень пар не знайдено.'
+        timetable_for_week_empty = 'На цей тиждень пар не знайдено.'
         timetable_data = get_timetable(group=user_group, sdate=today.strftime('%d.%m.%Y'),
                                        edate=last_week_day.strftime('%d.%m.%Y'), user_id=user.get_id())
     if req == '\U000027A1 Наступний':
-        timetable_for_week = 'На наступний тиждень пар не знайдено.'
+        timetable_for_week_empty = 'На наступний тиждень пар не знайдено.'
         timetable_data = get_timetable(group=user_group, sdate=next_week_first_day.strftime('%d.%m.%Y'),
                                        edate=next_week_last_day.strftime('%d.%m.%Y'), user_id=user.get_id())
 
@@ -517,7 +517,7 @@ def week_schedule_handler(call_back):
         bot.send_message(text=timetable_for_week, chat_id=user.get_id(), parse_mode="HTML", reply_markup=keyboard)
 
     elif isinstance(timetable_data, list) and not len(timetable_data):
-        bot_send_message_and_post_check_group(user.get_id(), timetable_for_week, user_group)
+        bot_send_message_and_post_check_group(user.get_id(), timetable_for_week_empty, user_group)
 
 
 @bot.callback_query_handler(func=lambda call_back: call_back.data.startswith('SET_GP'))
