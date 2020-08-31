@@ -455,10 +455,13 @@ def start_handler(message):
         bot.send_message(chat_id=user.get_id(), text=msg, parse_mode='HTML')
         return
 
-    msg = 'Хай, {} 😊. Я Бот розкладу для студентів ЖДУ ім.Івана Франка. Я можу показати твій розклад на сьогодні, ' \
-          'на завтра, по викладачу, по групі і так далі.\n' \
-          'Для початку скажи мені свою групу (Напр. 33Бд-СОінф), ' \
-          '<b>змінити ти її зможеш в пункті меню {}</b>'.format(message.chat.first_name, KEYBOARD['HELP'])
+    start_text_file = open(os.path.join('data', 'start.txt'), 'r', encoding="utf-8")
+
+    msg = 'Хай, {} 😊. {}, ' \
+          '<b>змінити ти її зможеш в пункті меню {}</b>'.format(message.chat.first_name,
+                                                                start_text_file.read(),
+                                                                KEYBOARD['HELP'])
+    start_text_file.close()
 
     sent = bot.send_message(chat_id=user.get_id(), text=msg, parse_mode='HTML')
     bot.register_next_step_handler(sent, set_group)
@@ -1378,21 +1381,22 @@ def main_menu(message):
 
     elif request == KEYBOARD['HELP']:
 
-        msg = '\U0001F552 <b>Час пар:</b>\n'
-        msg += f'{emoji_numbers[1]} - 9:00 - 10:20\n'
-        msg += f'{emoji_numbers[2]} - 10:30 - 11:50\n'
-        msg += f'{emoji_numbers[3]} - 12:10 - 13:30\n'
-        msg += f'{emoji_numbers[4]} - 13:40 - 15:00\n'
-        msg += f'{emoji_numbers[5]} - 15:20 - 16:40 \n'
-        msg += f'{emoji_numbers[6]} - 16:50 - 18:10 \n'
-        msg += f'{emoji_numbers[7]} - 18:20 - 19:40 \n\n'
+        str_timetable_list = core.get_str_timetable_list()
 
-        msg += "\U0001F4C6 <b>Для пошуку по датам:</b>\n<i>15.05</i>\n<i>15.05-22.05</i>\n<i>1.1.18-10.1.18</i>\n\n" \
+        msg = '\U0001F552 <b>Час пар:</b>\n'
+        for number, lesson in enumerate(str_timetable_list):
+            msg += f'{emoji_numbers[number+1]} - {lesson}\n'
+
+        help_text = open(os.path.join('data', 'help.txt'), 'r', encoding="utf-8")
+
+        msg += "\n\U0001F4C6 <b>Для пошуку по датам:</b>\n<i>15.05</i>\n<i>15.05-22.05</i>\n<i>1.1.18-10.1.18</i>\n\n" \
                "<b>Твоя група:</b> <code>{}</code> (\U0001F465 {})\n\n" \
-               "<b>Група ЖДУ:</b> @zdu_live\n" \
-               "<b>Новини університету:</b> @zueduua\n" \
-               "<b>Канал:</b> @zdu_news\n" \
-               "<b>Розробник:</b> @Koocherov\n".format(user.get_group(), user.get_users_count_from_group())
+               "{}" \
+               "<b>Розробник:</b> @Koocherov\n".format(user.get_group(),
+                                                       user.get_users_count_from_group(),
+                                                       help_text.read())
+
+        help_text.close()
 
         help_kb = telebot.types.InlineKeyboardMarkup()
         help_kb.row(
