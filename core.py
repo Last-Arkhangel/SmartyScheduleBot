@@ -677,7 +677,7 @@ def get_teacher_fullname_by_first_symbols(name):
 
 def get_str_timetable_list():
 
-    lessons_time_file = open(os.path.join('data', 'lessons_time.json'))
+    lessons_time_file = open(os.path.join('data', 'lessons_time.json'), 'r', encoding="utf-8")
     lessons_time = json.loads(lessons_time_file.read())
 
     timetable = []

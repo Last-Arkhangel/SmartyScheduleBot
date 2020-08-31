@@ -63,7 +63,6 @@ def get_timetable(teacher='', group='', sdate='', edate='', user_id=None):
             'req_type': 'rozklad',
             'dep_name': '',
             'OBJ_ID': '',
-            # 'ros_text': 'separated',
             'ros_text': 'united',
             'begin_date': sdate,
             'end_date': edate,
