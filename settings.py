@@ -56,7 +56,7 @@ SEND_ERRORS_TO_ADMIN = True
 SHOW_LESSONS_FROM_THE_FIRST = True
 
 # Admins IDS. My, Vlad, Mum, Yaroslav
-ADMINS_ID = ['204560928', '203448442', '525808450']
+ADMINS_ID = ['204560928', '203448442', '525808450', '947097358']
 
 # Base folder
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
