@@ -52,7 +52,7 @@ def get_timetable(teacher='', group='', sdate='', edate='', user_id=None):
 
         group = get_valid_case_group(raw_group)
 
-        if not group:
+        if not group and not teacher:
             return []
 
         http_headers = {
@@ -131,7 +131,7 @@ def get_timetable(teacher='', group='', sdate='', edate='', user_id=None):
             core.Cache.put_in_cache(request_key, _json)
 
     except Exception as ex:
-
+        print(str(ex))
         core.log(msg='Помилка при відправленні запиту: {}\n.'.format(str(ex)), is_error=True)
         if settings.SEND_ERRORS_TO_ADMIN:
             message = f'\U000026A0\n**UserID:** {user_id}\n**Group:** {group} ({raw_group})\n\n{ex}'
