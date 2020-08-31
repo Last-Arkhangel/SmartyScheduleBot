@@ -455,7 +455,7 @@ def start_handler(message):
         bot.send_message(chat_id=user.get_id(), text=msg, parse_mode='HTML')
         return
 
-    start_text_file = open(os.path.join('data', 'start.txt'), 'r', encoding="utf-8")
+    start_text_file = open(os.path.join(settings.BASE_DIR, 'data', 'start.txt'), 'r', encoding="utf-8")
 
     msg = 'Хай, {} 😊. {}, ' \
           '<b>змінити ти її зможеш в пункті меню {}</b>'.format(message.chat.first_name,
@@ -1387,8 +1387,7 @@ def main_menu(message):
         for number, lesson in enumerate(str_timetable_list):
             msg += f'{emoji_numbers[number+1]} - {lesson}\n'
 
-        help_text = open(os.path.join('data', 'help.txt'), 'r', encoding="utf-8")
-
+        help_text = open(os.path.join(settings.BASE_DIR, 'data', 'help.txt'), 'r', encoding="utf-8")
         msg += "\n\U0001F4C6 <b>Для пошуку по датам:</b>\n<i>15.05</i>\n<i>15.05-22.05</i>\n<i>1.1.18-10.1.18</i>\n\n" \
                "<b>Твоя група:</b> <code>{}</code> (\U0001F465 {})\n\n" \
                "{}" \
