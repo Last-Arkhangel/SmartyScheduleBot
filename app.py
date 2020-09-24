@@ -67,7 +67,7 @@ def get_timetable(teacher='', group='', sdate='', edate='', user_id=None):
             'begin_date': sdate,
             'end_date': edate,
             'req_format': 'xml',
-            'coding_mode': 'UTF8',
+            'coding_mode': 'WINDOWS-1251',
             'bs': 'ok',
             'show_empty': 'no',
         }
@@ -84,7 +84,10 @@ def get_timetable(teacher='', group='', sdate='', edate='', user_id=None):
 
         timetable = xmltodict.parse(response.text)
 
-        if not timetable.get('psrozklad_export').get('roz_items'):
+        if 'psrozklad_export' in timetable:
+            timetable = timetable.get('psrozklad_export')
+
+        if not timetable.get('roz_items'):
             return []
 
         d = {}
@@ -108,14 +111,14 @@ def get_timetable(teacher='', group='', sdate='', edate='', user_id=None):
 
             return text
 
-        for lesson in timetable.get('psrozklad_export').get('roz_items').get('item'):
+        for lesson in timetable.get('roz_items').get('item'):
             d[lesson.get('date')] = {
                 'day': get_day_name_by_date(lesson.get('date')),
                 'date': lesson.get('date')[:5],
                 'lessons': [],
             }
 
-        for lesson in timetable.get('psrozklad_export').get('roz_items').get('item'):
+        for lesson in timetable.get('roz_items').get('item'):
             d[lesson.get('date')].get('lessons').append(
                 clear_text(lesson.get('lesson_description'))
             )
@@ -131,7 +134,7 @@ def get_timetable(teacher='', group='', sdate='', edate='', user_id=None):
             core.Cache.put_in_cache(request_key, _json)
 
     except Exception as ex:
-        print(str(ex))
+
         core.log(msg='Помилка при відправленні запиту: {}\n.'.format(str(ex)), is_error=True)
         if settings.SEND_ERRORS_TO_ADMIN:
             message = f'\U000026A0\n**UserID:** {user_id}\n**Group:** {group} ({raw_group})\n\n{ex}'
@@ -983,6 +986,8 @@ def admin_metrics():
         'teachers_update_time': teachers_update_time,
         'saved_teachers_count': saved_teachers_count,
         'webhook': bot.get_webhook_info(),
+        'timetable_url': settings.TIMETABLE_URL,
+        'api_url': settings.API_LINK,
     }
 
     return render_template('metrics.html', data=metrics_values)
