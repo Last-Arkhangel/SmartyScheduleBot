@@ -225,12 +225,13 @@ def render_day_timetable(day_data, show_current=False, user_id=''):
             day_timetable += '\U000026F3 <b>Зараз перерва</b>  (<i>\U0001F55C {}</i>)\n\n'.format(str_to_end)
 
         if lessons[i]:
+            lesson = lessons[i].replace('<span class="remote_work">дист.</span>', '(дистанційно \U0001F3E1)\n')
             if i + 1 == current_lesson:
                 day_timetable += '<b>{} > {}</b> (<i>\U0001F55C {}</i>)\n<b>{}\n\n</b>'.format(emoji_numbers[i + 1],
                                                                                                timetable[i], str_to_end,
-                                                                                               lessons[i])
+                                                                                               lesson)
             else:
-                day_timetable += '{} > <b>{}</b> \n{}\n\n'.format(emoji_numbers[i + 1], timetable[i], lessons[i])
+                day_timetable += '{} > <b>{}</b> \n{}\n\n'.format(emoji_numbers[i + 1], timetable[i], lesson)
         else:
             if i + 1 == current_lesson:
                 day_timetable += '<b>{} > {} </b>(<i>\U0001F55C {}</i>)\n<b>Вікно\U000026A1\n\n</b>'.format(emoji_numbers[i + 1],
