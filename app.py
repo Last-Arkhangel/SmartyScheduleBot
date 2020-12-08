@@ -12,6 +12,7 @@ import json
 import schedule_updater
 import random
 import hashlib
+import re
 import xmltodict
 from settings import KEYBOARD
 from flask import Flask, request, render_template, jsonify, session, redirect, url_for
@@ -106,8 +107,11 @@ def get_timetable(teacher='', group='', sdate='', edate='', user_id=None):
         def clear_text(text):
 
             if text:
+                print(text)
                 # text = text.replace('<br> ', '\n', text.count('<br>') - 1)
                 text = text.replace('<br>', '')
+                cleanr = re.compile('<.*?>')
+                text = re.sub(cleanr, '', text)
 
             return text
 
@@ -1610,7 +1614,7 @@ def main():
     bot.delete_webhook()
 
     core.log(msg='Запуск...')
-    bot.infinity_polling(interval=settings.POLLING_INTERVAL, timeout=5, none_stop=True)
+    bot.polling(interval=settings.POLLING_INTERVAL, timeout=5)
 
 
 if __name__ == "__main__":
