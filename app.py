@@ -107,7 +107,6 @@ def get_timetable(teacher='', group='', sdate='', edate='', user_id=None):
         def clear_text(text):
 
             if text:
-                print(text)
                 # text = text.replace('<br> ', '\n', text.count('<br>') - 1)
                 text = text.replace('<br>', '')
                 cleanr = re.compile('<.*?>')
