@@ -194,14 +194,20 @@ def render_day_timetable(day_data, show_current=False, user_id=''):
 
         str_to_end = core.datetime_to_string(seconds_to_end)
 
-    if str(user_id) in ('204560928', '437220616',):
-        emoji = ('\U0001f31d', '\U0001F41F', '\U0001F41D', '\U0001F422', '\U0001F42C', '\U0001F43C', '\U0001F525',
-                 '\U0001F537', '\U0001F608', '\U0001F31A', '\U0001F680', '\U0001F697', '\U0001F346', '\U0001F340',
-                 '\U0001F33A', '\U0001F388', '\U0001F365', '\U0001F33F')
+    if str(user_id) in ('204560928', '437220616',) or True:
+        # Show random emoji for all users
+        emoji = ('\U0001F41D', '\U0001F422', '\U0001F42C', '\U0001F43C', '\U0001F525',
+                 '\U0001F537', '\U0001F608', '\U0001F697', '\U0001F346', '\U0001F340',
+                 '\U0001F33A', '\U0001F388', '\U0001F365', '\U0001F33F',
+                 '\U0001F648', '\U0001F649', '\U0001F6A9', '\U0001F937',
+                 '\U000026F3', '\U00002B50', '\U0001F335', '\U0001F33B',
+                 '\U0001F534', '\U0001F536', '\U0001F537', '\U0001F681')
 
         random_emoji_header = random.choice(emoji)
-        day_timetable = '....:::: <b>{} {}</b> <i>{}</i> ::::....\n\n'.format(random_emoji_header, day_data['day'], day_data['date'])
+        day_timetable = '....:::: <b>{} {}</b> <i>{}</i> ::::....\n\n'.format(random_emoji_header,
+                                                                              day_data['day'], day_data['date'])
     else:
+        # TODO Delete it
         day_timetable = '....:::: <b>\U0001F4CB {}</b> <i>{}</i> ::::....\n\n'.format(day_data['day'], day_data['date'])
 
     lessons = day_data['lessons']
