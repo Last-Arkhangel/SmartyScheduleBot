@@ -12,12 +12,13 @@ import json
 import schedule_updater
 import random
 import hashlib
-import re
 import xmltodict
 from settings import KEYBOARD
 from flask import Flask, request, render_template, jsonify, session, redirect, url_for
+from flask_sslify import SSLify
 
 app = Flask(__name__, template_folder='site', static_folder='site/static', static_url_path='/fl/static')
+sslify = SSLify(app)
 app.secret_key = hashlib.md5(settings.ADMIN_PASSWORD.encode('utf-8')).hexdigest()
 
 bot = telebot.TeleBot(settings.BOT_TOKEN, threaded=True)
@@ -141,7 +142,7 @@ def get_timetable(teacher='', group='', sdate='', edate='', user_id=None):
         core.log(msg='Помилка при відправленні запиту: {}\n.'.format(str(ex)), is_error=True)
         if settings.SEND_ERRORS_TO_ADMIN:
             message = f'\U000026A0\n**UserID:** {user_id}\n**Group:** {group} ({raw_group})\n\n{ex}'
-            bot.send_message('204560928', message, reply_markup=keyboard, parse_mode='markdown')
+            bot.send_message(settings.ADMINS_ID, message, reply_markup=keyboard, parse_mode='markdown')
 
         if settings.USE_CACHE:
             request_key = '{}{}:{}-{}'.format(group, teacher, sdate, edate)
@@ -154,7 +155,7 @@ def get_timetable(teacher='', group='', sdate='', edate='', user_id=None):
                     '(теоретично, його вже могли змінити)'.format(cached_timetable[0][2][11:])
                 bot.send_message(user_id, m, reply_markup=keyboard)
                 core.log(msg='Розклад видано з кешу')
-                bot.send_message('204560928', 'Розклад видано з кешу', reply_markup=keyboard)
+                bot.send_message(settings.ADMINS_ID, 'Розклад видано з кешу', reply_markup=keyboard)
                 return json.loads(cached_timetable[0][1])
             else:
                 bot.send_message(user_id, '\U0001F680 На сайті ведуться технічні роботи. Спробуй пізніше', reply_markup=keyboard)
@@ -194,7 +195,7 @@ def render_day_timetable(day_data, show_current=False, user_id=''):
 
         str_to_end = core.datetime_to_string(seconds_to_end)
 
-    if str(user_id) in ('204560928', '437220616',) or True:
+    if str(user_id) in (settings.ADMINS_ID,) or True:
         # Show random emoji for all users
         emoji = ('\U0001F41D', '\U0001F422', '\U0001F42C', '\U0001F43C', '\U0001F525',
                  '\U0001F537', '\U0001F608', '\U0001F697', '\U0001F346', '\U0001F340',
@@ -389,7 +390,7 @@ def bot_admin_get_webhook_info(message):
 
     webhook = bot.get_webhook_info()
 
-    msg = f"*URL:* {webhook.url or '-'}\n*Счікує обробки:* {webhook.pending_update_count}\n" \
+    msg = f"*URL:* {webhook.url or '-'}\n*Очікує обробки:* {webhook.pending_update_count}\n" \
           f"*Остання помилка:* {webhook.last_error_message} ({webhook.last_error_date})"
 
     bot.send_message(user.get_id(), msg, reply_markup=keyboard, parse_mode='markdown')
@@ -464,13 +465,13 @@ def start_handler(message):
         return
 
     if user.get_id() < 0:
-        msg = 'Сорі, братан, мене у групу нізя додавати) Якщо тут якась помилка, напиши сюди - @koocherov'
+        msg = 'Сорі, братан, мене у групу нізя додавати) Якщо тут якась помилка, напиши сюди - @***_CBA_Bot'
         bot.send_message(chat_id=user.get_id(), text=msg, parse_mode='HTML')
         return
 
     start_text_file = open(os.path.join(settings.BASE_DIR, 'data', 'start.txt'), 'r', encoding="utf-8")
 
-    msg = 'Хай, {} 😊. {}' \
+    msg = 'Вітаю, {} 😊. {}' \
           '<b>Змінити ти її зможеш в пункті меню {}</b>'.format(message.chat.first_name,
                                                                 start_text_file.read(),
                                                                 KEYBOARD['HELP'])
@@ -547,7 +548,7 @@ def update_group_handler(call_back):
 
     if group == 'INPUT':
 
-        sent = bot.send_message(user.get_id(), 'Введи назву групи')
+        sent = bot.send_message(user.get_id(), 'Введи назву групи (Наприклад: 029-18-1)')
         bot.register_next_step_handler(sent, set_group)
 
     else:
@@ -630,7 +631,7 @@ def set_group(message):
         return
 
     if group in list(KEYBOARD.values()):
-        msg = 'Введи назву групи'
+        msg = 'Введи назву групи (Наприклад: 029-18-1)'
         sent = bot.send_message(message.chat.id, msg, parse_mode='HTML')
         bot.register_next_step_handler(sent, set_group)
         return
@@ -873,7 +874,7 @@ def add_ad(message):
         return
 
     msg = core.AdService.render_ads()
-    bot.send_message('204560928', '\U00002139 <b>@{}</b> >  {}'.format(username, text), reply_markup=keyboard, parse_mode='HTML')
+    bot.send_message(settings.ADMINS_ID, '\U00002139 <b>@{}</b> >  {}'.format(username, text), reply_markup=keyboard, parse_mode='HTML')
     bot.send_message(user_id, '\U00002705 Оголошення додано!')
     bot.send_message(user_id, msg, reply_markup=keyboard, parse_mode='HTML')
 
@@ -883,7 +884,7 @@ def process_menu(message):
     if message.text == KEYBOARD['AD_ADD']:
 
         if not message.chat.username:
-            bot.send_message(message.chat.id, 'Щоб додавати оголошення постав логін. '
+            bot.send_message(message.chat.id, 'Щоб додавати оголошення постав ім\'я користувача (псевдонім). '
                                               'Зробити це можна в налаштуваннях Телеграму.', reply_markup=keyboard)
             return
 
@@ -924,7 +925,7 @@ def admin_login():
     if request.method == 'POST' and request.form.get('password') == settings.ADMIN_PASSWORD:
         session['login'] = True
         msg = f'Авторизація в панелі адміністратора.\n<b>IP: </b>{req_ip}\n<b>UA: </b>{req_agent}'
-        bot.send_message('204560928', msg, parse_mode='HTML')
+        bot.send_message(settings.ADMINS_ID, msg, parse_mode='HTML')
         return redirect(url_for('admin_metrics'))
 
     else:
@@ -932,7 +933,7 @@ def admin_login():
         msg = f'Неправильний пароль під час авторизації в панелі адміністратора.\n' \
               f'<b>IP: </b>{req_ip}\n<b>UA: </b>{req_agent}'
 
-        bot.send_message('204560928', msg, parse_mode='HTML')
+        bot.send_message(settings.ADMINS_ID, msg, parse_mode='HTML')
 
         return 'Неправильний пароль'
 
@@ -940,8 +941,13 @@ def admin_login():
 @app.route('/fl/logout/')
 def admin_logout():
 
+    req_ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+    req_agent = request.user_agent
+    
     if session.get('login'):
         session['login'] = False
+        msg = f'Вихід з панелі адміністратора.\n<b>IP: </b>{req_ip}\n<b>UA: </b>{req_agent}'
+        bot.send_message(settings.ADMINS_ID, msg, parse_mode='HTML')    
     return admin_login()
 
 
@@ -1217,7 +1223,7 @@ def admin_settings():
 @app.route('/fl/upd_cache_cron')
 def admin_update_cache():
 
-    bot.send_message('204560928', 'Починаю оновлення розкладу через крон.', reply_markup=keyboard, parse_mode='HTML')
+    bot.send_message(settings.ADMINS_ID, 'Починаю оновлення розкладу через крон.', reply_markup=keyboard, parse_mode='HTML')
     core.log(msg='Оновлення розкладу через крон')
 
     msg = schedule_updater.update_cache(60)
@@ -1230,7 +1236,7 @@ def admin_update_cache():
     if updated_teachers:
         msg += '\nСписок викладачів - {}.'.format(len(updated_teachers))
 
-    bot.send_message('204560928', msg, reply_markup=keyboard, parse_mode='HTML')
+    bot.send_message(settings.ADMINS_ID, msg, reply_markup=keyboard, parse_mode='HTML')
 
     core.log(msg='Розклад по крону оновлено.')
     msg = '<!doctype html>\n<head><meta charset="utf-8"><head>\n<body>' + msg + '</body></html>'
@@ -1260,7 +1266,7 @@ def admin_init():
         error_text = ex.result.json().get('description')
 
     if status:
-        bot.send_message('204560928', f'Запуск через /fl/init\nВебхук: {bot.get_webhook_info().url}')
+        bot.send_message(settings.ADMINS_ID, f'Запуск через /fl/init\nВебхук: {bot.get_webhook_info().url}')
         core.log(msg='Запуск через url. Веб-хук встановлено: {}.'.format(bot.get_webhook_info().url))
 
         url = bot.get_webhook_info().url
@@ -1406,7 +1412,7 @@ def main_menu(message):
         msg += "\n\U0001F4C6 <b>Для пошуку по датам:</b>\n<i>15.05</i>\n<i>15.05-22.05</i>\n<i>1.1.18-10.1.18</i>\n\n" \
                "<b>Твоя група:</b> <code>{}</code> (\U0001F465 {})\n\n" \
                "{}" \
-               "<b>Розробник:</b> @Koocherov\n".format(user.get_group(),
+               "<b>Розробник:</b> @_CBA_Bot\n".format(user.get_group(),
                                                        user.get_users_count_from_group(),
                                                        help_text.read())
 
@@ -1420,15 +1426,15 @@ def main_menu(message):
             telebot.types.InlineKeyboardButton(KEYBOARD['CHANGE_GROUP'], callback_data=KEYBOARD['CHANGE_GROUP'])
         )
 
-        kb = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-        kb.row(KEYBOARD['MAIN_MENU'])
-        kb.row(KEYBOARD['CHANGE_GROUP'])
+        #kb = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        #kb.row(KEYBOARD['MAIN_MENU'])
+        #kb.row(KEYBOARD['CHANGE_GROUP'])
 
         bot.send_message(message.chat.id, msg, reply_markup=help_kb, parse_mode='HTML')
 
     elif request == KEYBOARD['FOR_A_GROUP']:
         sent = bot.send_message(message.chat.id,
-                                'Для того щоб подивитись розклад будь якої групи на тиждень введи її назву')
+                                'Для того щоб подивитись розклад будь якої групи на тиждень введи її назву (Приклад: 029-18-1)')
         bot.register_next_step_handler(sent, show_other_group)
 
     elif request == KEYBOARD['ADS']:
@@ -1619,8 +1625,8 @@ def main():
     bot.delete_webhook()
 
     core.log(msg='Запуск...')
-    bot.polling(interval=settings.POLLING_INTERVAL, timeout=5)
+    bot.polling(interval=settings.POLLING_INTERVAL, timeout=settings.POLLING_TIMEOUT)
 
 
 if __name__ == "__main__":
-    app.run(debug=True) if len(sys.argv) > 1 else main()
+    app.run(host=settings.WEBHOOK_LISTEN, port=settings.WEBHOOK_PORT, ssl_context=(settings.WEBHOOK_SSL_CERT, settings.WEBHOOK_SSL_PRIV), debug=settings.WEBHOOK_DEBUG) if len(sys.argv) > 1 else main()

@@ -12,3 +12,5 @@ html5lib
 xmltodict
 GitPython
 gunicorn
+hashlib
+flask_sslify

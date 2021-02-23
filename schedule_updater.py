@@ -12,7 +12,7 @@ import requests
 def get_timetable_to_cache(faculty='', teacher='', group='', sdate='', edate=''):
 
     http_headers = {
-            'User-Agent': 'Telegram-SmartySBot CacheUpdater',
+            'User-Agent': '***_SS_Bot CacheUpdater',
             'Accept': 'text/html',
     }
 
