@@ -11,3 +11,105 @@
 #del-btn{
   margin-bottom: 20px;
 }
+
+/* Zebra user */
+
+	.table-bordered tr:nth-of-type(odd) { 
+		background: #d9edf7; 
+	}
+	.table-bordered tr:nth-of-type(even) { 
+		background: #fcf8e3; 
+	}
+	.table-hover tbody tr:hover { 
+		background-color: #CCFFCC;
+	}
+	.table-bordered td { 
+		vertical-align: middle;
+		text-align: center;
+	}
+	.table-bordered thead th { 
+		vertical-align: middle;
+	}
+	.table-bordered th { 
+		background: #f3ecff; 
+		text-align: center;
+	}
+
+/* Zebra users */
+
+	.table-borderedt a { 
+		font-weight: bold;
+	}
+	.table-borderedt thead th{
+		vertical-align: middle;
+		border: 1px solid black;
+	}
+	.table-borderedt tr:nth-of-type(odd) { 
+		background: #d9edf7; 
+	}
+	.table-borderedt tr:nth-of-type(even) { 
+		background: #fcf8e3; 
+	}
+	.table-hovert tbody tr:hover { 
+		background-color: #CCFFCC;
+	}	
+	.table-borderedt th { 
+		padding: 5px;
+		background: #f3ecff; 
+		text-align: center;
+	}
+	.table-borderedt td { 
+		padding: 5px; 
+		border: 1px solid black; 
+		text-align: left; 
+		vertical-align: middle;
+	}
+
+@media only screen 
+and (max-width: 992px),	(min-device-width: 992px) 
+and (max-device-width: 992px)  {
+
+	.table-borderedt table, .table-borderedt tbody, .table-borderedt thead, .table-borderedt th, .table-borderedt td, .table-borderedt tr {
+		display: block;
+	}
+	.table-borderedt { 
+		border: 2px solid black;
+	}
+	.table-borderedt thead tr {
+		position: absolute;
+		top: -9999px;
+		left: -9999px;
+	}
+	.table-borderedt tr {
+		border: 1px solid #333;
+	}
+	.table-borderedt thead {
+		border: 0px;
+	}	
+	.table-borderedt td {
+		border: none;
+		border-bottom: 1px solid #333;
+		position: relative;
+		padding-left: 50%;
+	}	
+	.table-borderedt td:before {
+		position: absolute;
+		top: 6px;
+		left: 6px;
+		width: 45%;
+		padding-right: 10px;
+		white-space: nowrap;
+	}
+	.table-borderedt td:after {
+		content: '\A0';
+	}
+	.table-borderedt td:nth-of-type(1):before { content: "Телеграм ID"; font-weight:bold; }
+	.table-borderedt td:nth-of-type(2):before { content: "Псевдонім"; font-weight:bold; }
+	.table-borderedt td:nth-of-type(3):before { content: "Ім'я"; font-weight:bold; }
+	.table-borderedt td:nth-of-type(4):before { content: "Прізвище"; font-weight:bold; }
+	.table-borderedt td:nth-of-type(5):before { content: "Група"; font-weight:bold; }
+	.table-borderedt td:nth-of-type(6):before { content: "Реєстрація"; font-weight:bold; }
+	.table-borderedt td:nth-of-type(7):before { content: "Останній запит"; font-weight:bold; }
+	.table-borderedt td:nth-of-type(8):before { content: "Кількість запитів"; font-weight:bold; }	
+
+}
