@@ -1,62 +1,52 @@
 [
   {
     "start_time": [
-      10,
+      7,
+      50
+    ],
+    "end_time": [
+      8,
+      0
+    ]
+  },
+  {
+    "start_time": [
+      9,
       20
     ],
     "end_time": [
-      10,
+      9,
       30
     ]
   },
   {
     "start_time": [
-      11,
+      10,
       50
+    ],
+    "end_time": [
+      11,
+      10
+    ]
+  },
+  {
+    "start_time": [
+      12,
+      30
     ],
     "end_time": [
       12,
-      10
-    ]
-  },
-  {
-    "start_time": [
-      13,
-      30
-    ],
-    "end_time": [
-      13,
       40
     ]
   },
   {
     "start_time": [
-      15,
+      14,
       0
     ],
     "end_time": [
-      15,
-      20
-    ]
-  },
-  {
-    "start_time": [
-      16,
-      40
-    ],
-    "end_time": [
-      16,
-      50
-    ]
-  },
-  {
-    "start_time": [
-      18,
+      14,
       10
-    ],
-    "end_time": [
-      18,
-      20
     ]
   }
 ]
