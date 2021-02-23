@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}SmartySBot список користувачів{% endblock %}
+{% block title %}DACTE_SS_Bot список користувачів{% endblock %}
 
 {% block content %}
 
@@ -14,23 +14,23 @@
 
 
    {% if data.users %}
-    <table class="table table-bordered  table-hover">
+    <table class="table table-borderedt  table-hovert">
       <thead>
         <tr>
-          <th scope="col">TID</th>
-          <th scope="col">Логін</th>
+          <th scope="col">Телеграм ID</th>
+          <th scope="col">Псевдонім</th>
           <th scope="col">Ім'я</th>
           <th scope="col">Прізвище</th>
           <th scope="col">Група</th>
           <th scope="col">Реєстрація</th>
           <th scope="col">Останній запит</th>
-          <th scope="col">К-сть запитів</th>
+          <th scope="col">Кількість запитів</th>
         </tr>
       </thead>
       <tbody>
        {% for user in data.users %}
         <tr>
-          <th scope="row"><a href="/fl/user/{{ user.telegram_id }}" target="_blank">{{ user.telegram_id }}</a></th>
+          <td scope="row"><a href="/fl/user/{{ user.telegram_id }}" target="_blank">{{ user.telegram_id }}</a></td>
           <td>{{ user.username }}</td>
           <td>{{ user.first_name }}</td>
           <td>{{ user.last_name }}</td>

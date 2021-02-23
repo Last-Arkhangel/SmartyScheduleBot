@@ -11,14 +11,14 @@
     <link rel="stylesheet" href="{{ url_for('static', filename = 'css/style.css') }}">
     <link rel="icon" href="{{ url_for('static', filename = 'icon.ico') }}" type="image/x-icon">
 
-    <title>{% block title %}SBot{% endblock %}</title>
+    <title>{% block title %}_SS_Bot{% endblock %}</title>
   </head>
   <body>
     <div class="container">
       <div class="header">
         <ul class="nav">
           <li class="nav-item">
-            <a class="nav-link brand-title" href="/fl/metrics">SmartySBot</a>
+            <a class="nav-link brand-title" href="/fl/metrics">_SS_Bot</a>
           </li>
           <li class="nav-item">
             <a class="nav-link active" href="/fl/metrics">Статистика</a>
@@ -26,10 +26,8 @@
           <li class="nav-item">
             <a class="nav-link" href="/fl/users">Користувачі</a>
           </li>
+{#           <a class="nav-link" href="/fl/settings">Налаштування</a>#}{#        </li>#}{#          <li class="nav-item">#}
           <li class="nav-item">
-{#            <a class="nav-link" href="/fl/settings">Налаштування</a>#}
-{#          </li>#}
-{#          <li class="nav-item">#}
             <a class="nav-link" href="/fl/logout">Вихід</a>
           </li>
         </ul>
