@@ -975,6 +975,9 @@ def admin_login():
 @app.route('/fl/logout/')
 def admin_logout():
 
+    req_ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+    req_agent = request.user_agent
+    
     if session.get('login'):
         session['login'] = False
         msg = f'Вихід з панелі адміністратора.\n<b>IP: </b>{req_ip}\n<b>UA: </b>{req_agent}'
